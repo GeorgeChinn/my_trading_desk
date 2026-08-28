@@ -10,9 +10,8 @@
 5. 每天用 `journal/TEMPLATE.md` 复盘
 
 ## 工具怎么选
-- 规则没写清：只用对话模型（Grok / ChatGPT）
-- 规则已稳定、要筛选和回测：再上 Codex / Grok Build
-- 不要一上来建自动交易平台
+- 规则没写清：只用对话模型（Grok ）
+- 规则已稳定、要筛选和回测：再上Grok Build
 
 ## 目录
 ```text
