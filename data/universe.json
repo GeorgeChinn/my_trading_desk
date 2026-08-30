@@ -1,0 +1,142 @@
+[
+  {
+    "code": "600519",
+    "name": "贵州茅台",
+    "float_mcap_yi": 18000,
+    "is_st": false,
+    "index_member": [
+      "沪深300",
+      "上证50",
+      "沪股通"
+    ],
+    "tags": []
+  },
+  {
+    "code": "600036",
+    "name": "招商银行",
+    "float_mcap_yi": 9000,
+    "is_st": false,
+    "index_member": [
+      "沪深300",
+      "上证50",
+      "沪股通"
+    ],
+    "tags": []
+  },
+  {
+    "code": "601318",
+    "name": "中国平安",
+    "float_mcap_yi": 8000,
+    "is_st": false,
+    "index_member": [
+      "沪深300",
+      "上证50",
+      "沪股通"
+    ],
+    "tags": []
+  },
+  {
+    "code": "600900",
+    "name": "长江电力",
+    "float_mcap_yi": 6200,
+    "is_st": false,
+    "index_member": [
+      "沪深300",
+      "上证50",
+      "沪股通"
+    ],
+    "tags": []
+  },
+  {
+    "code": "000858",
+    "name": "五粮液",
+    "float_mcap_yi": 5500,
+    "is_st": false,
+    "index_member": [
+      "沪深300",
+      "沪股通"
+    ],
+    "tags": []
+  },
+  {
+    "code": "000333",
+    "name": "美的集团",
+    "float_mcap_yi": 4800,
+    "is_st": false,
+    "index_member": [
+      "沪深300",
+      "沪股通"
+    ],
+    "tags": []
+  },
+  {
+    "code": "601398",
+    "name": "工商银行",
+    "float_mcap_yi": 17000,
+    "is_st": false,
+    "index_member": [
+      "沪深300",
+      "上证50",
+      "沪股通"
+    ],
+    "tags": []
+  },
+  {
+    "code": "600276",
+    "name": "恒瑞医药",
+    "float_mcap_yi": 3200,
+    "is_st": false,
+    "index_member": [
+      "沪深300",
+      "沪股通"
+    ],
+    "tags": []
+  },
+  {
+    "code": "600030",
+    "name": "中信证券",
+    "float_mcap_yi": 3100,
+    "is_st": false,
+    "index_member": [
+      "沪深300",
+      "上证50"
+    ],
+    "tags": []
+  },
+  {
+    "code": "300348",
+    "name": "长亮科技",
+    "float_mcap_yi": 80,
+    "is_st": false,
+    "index_member": [],
+    "tags": [
+      "小盘题材"
+    ]
+  },
+  {
+    "code": "600010",
+    "name": "包钢股份",
+    "float_mcap_yi": 700,
+    "is_st": false,
+    "index_member": [],
+    "tags": []
+  },
+  {
+    "code": "600745",
+    "name": "闻泰科技",
+    "float_mcap_yi": 420,
+    "is_st": false,
+    "index_member": [],
+    "tags": [
+      "连板"
+    ]
+  },
+  {
+    "code": "600081",
+    "name": "东风科技",
+    "float_mcap_yi": 40,
+    "is_st": true,
+    "index_member": [],
+    "tags": []
+  }
+]
