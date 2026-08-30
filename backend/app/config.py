@@ -30,7 +30,8 @@ KDJ_HIGH = 80.0
 DIF_LOOKBACK = 20
 HHV_LOOKBACK = 20
 
-ALLOWED_STATUS = ("排除", "观察", "等待", "试仓", "标准仓", "禁止")
+ALLOWED_STATUS = ("排除", "观察", "等待", "买入", "减仓", "清仓")
+GATES = ("排除", "观察", "等待", "买入", "减仓", "清仓")
 SCAN_SUMMARY_BUCKETS = ("符合", "继续跟踪", "观察", "排除")
 
 BUILTIN_CONDITIONS = [

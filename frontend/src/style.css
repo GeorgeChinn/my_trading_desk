@@ -165,8 +165,9 @@ h1 { font-size: 22px; letter-spacing: 0.01em; }
 .badge.排除 { background: #24313a; color: #b7c4ce; }
 .badge.观察 { background: rgba(110, 168, 255, 0.16); color: var(--blue); }
 .badge.等待 { background: rgba(230, 195, 92, 0.16); color: var(--amber); }
-.badge.试仓 { background: var(--cyan-dim); color: var(--cyan); }
-.badge.标准仓 { background: rgba(125, 206, 138, 0.16); color: var(--green); }
+.badge.买入 { background: var(--cyan-dim); color: var(--cyan); }
+.badge.减仓 { background: rgba(224, 163, 92, 0.18); color: var(--copper); }
+.badge.清仓 { background: rgba(227, 106, 106, 0.16); color: var(--red); }
 .badge.禁止 { background: rgba(227, 106, 106, 0.16); color: var(--red); }
 .badge.符合 { background: var(--copper-dim); color: var(--copper); }
 .badge.继续跟踪 { background: rgba(230, 195, 92, 0.16); color: var(--amber); }

@@ -23,7 +23,7 @@ from .config import (
 )
 from .engine.bars import attach_indicators, list_csv_files, load_bars, ts_code
 from .engine.live import pull_one, sync_live
-from .engine.scanner import classify_stock, scan_universe, summarize
+from .engine.scanner import classify_stock, funnel_reminders, scan_universe, summarize
 from .engine.scheduler import schedule_snapshot, start_scheduler, stop_scheduler
 from .engine.watch import queue_counts, refresh_watch
 from .journal_io import list_journals, read_journal, today_str, write_journal
@@ -199,19 +199,20 @@ def home():
         "queues": queues,
         "scan_summary": summary["summary"],
         "by_gate": summary["by_gate"],
-        "position_block": "仓位阈值空缺，不得升到试仓/标准仓",
+        "position_block": "总闸「买入」只表示路径到达，不是成交指令",
         "market_regime": load_settings().get("market_regime"),
         "person_present": load_settings().get("person_present"),
         "pool_count": len(load_universe()),
         "pool_trade_date": load_settings().get("last_trade_date") or "",
         "data_source": load_settings().get("data_source") or "csv",
+        "reminders": funnel_reminders(load_settings()),
     }
 
 
 @app.get("/api/scan")
 def scan():
     rows = _scan_rows()
-    grouped = {key: [] for key in ("排除", "观察", "等待", "试仓", "标准仓", "禁止")}
+    grouped = {key: [] for key in ("排除", "观察", "等待", "买入", "减仓", "清仓")}
     for row in rows:
         grouped.setdefault(row["status"], []).append(row)
     snap = load_pool_snapshot()
@@ -219,7 +220,8 @@ def scan():
         "rows": rows,
         **summarize(rows),
         "grouped": grouped,
-        "position_block": "仓位阈值空缺，不得升到试仓/标准仓",
+        "position_block": "总闸：排除 → 观察 → 等待 → 买入 → 减仓 / 清仓。买入不是成交指令。",
+        "reminders": funnel_reminders(load_settings()),
         "pool": {
             "count": len(rows),
             "trade_date": snap.get("trade_date") or load_settings().get("last_trade_date"),
@@ -318,10 +320,10 @@ def watch_viewed(watch_id: str):
 @app.post("/api/watch/{watch_id}/judgement")
 def watch_judge(watch_id: str, payload: JudgementIn):
     if payload.status not in ALLOWED_STATUS:
-        raise HTTPException(400, "状态只能是：排除、观察、等待、试仓、标准仓、禁止")
+        raise HTTPException(400, "状态只能是：排除、观察、等待、买入、减仓、清仓")
     warning = None
-    if payload.status in ("试仓", "标准仓"):
-        warning = "RULES 未给出仓位数字。这是你自己的判断记录，不是系统升级，系统不得把路径匹配写成可开仓。"
+    if payload.status == "买入":
+        warning = "总闸买入只表示路径到达。这是你自己的判断记录，不是成交指令。"
     items = load_watches()
     found = None
     for item in items:
@@ -398,7 +400,7 @@ def journal_today():
 def rules():
     return {
         "editable": False,
-        "banner": "我的规则只读。仓位上限以 RULES.md 为准，网站不能改数字。当前文中无试仓/标准仓阈值，扫描不得升到这两档。",
+        "banner": "我的规则只读。仓位上限以 RULES.md 为准，网站不能改数字。总闸买入只表示路径到达，不是成交指令。",
         "profile": PROFILE_PATH.read_text(encoding="utf-8") if PROFILE_PATH.exists() else "",
         "rules": RULES_PATH.read_text(encoding="utf-8") if RULES_PATH.exists() else "",
     }

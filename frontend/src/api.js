@@ -49,5 +49,5 @@ export const api = {
   seed: () => request("/api/seed", { method: "POST" }),
 };
 
-export const STATUSES = ["排除", "观察", "等待", "试仓", "标准仓", "禁止"];
-export const GATES = ["排除", "观察", "等待", "试仓", "标准仓", "禁止"];
+export const STATUSES = ["排除", "观察", "等待", "买入", "减仓", "清仓"];
+export const GATES = ["排除", "观察", "等待", "买入", "减仓", "清仓"];

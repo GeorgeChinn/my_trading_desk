@@ -2,11 +2,12 @@
   <div>
     <h1>首页</h1>
     <p class="sub">
-      主路径 {{ path }} · 输出状态只使用 排除 / 观察 / 等待 / 试仓 / 标准仓 / 禁止。
-      仓位数字空缺时扫描停在等待。
+      主路径 {{ path }} · 总闸：排除 → 观察 → 等待 → 买入 → 减仓 / 清仓。
+      买入只表示路径到达，不是成交指令。
     </p>
 
     <div class="warn-banner">{{ positionBlock }} · 人{{ personPresent ? "在场" : "不在场" }} · 大盘开关：{{ marketRegime }} · RULES 池子 {{ poolCount }} 只{{ poolDate ? "（确认收盘 " + poolDate + "）" : "" }}</div>
+    <div class="warn-banner" v-for="(r, i) in reminders" :key="i">{{ r }}</div>
 
     <div class="card flash" style="margin-bottom:16px">
       <h2>你设置的 {{ triggeredCount }} 个观察条件已触发</h2>
@@ -54,7 +55,7 @@
 
     <div class="card">
       <h2>今天规则扫描</h2>
-      <p class="sub">摘要只数。符合 ≠ 可以开仓。阈值空缺不得升到试仓 / 标准仓。</p>
+      <p class="sub">摘要只数。符合 = 总闸到达买入。符合 ≠ 成交指令。</p>
       <div class="grid cols-4">
         <div class="stat"><div class="n">{{ scan.符合 ?? 0 }}</div><div class="k">符合</div></div>
         <div class="stat"><div class="n">{{ scan.继续跟踪 ?? 0 }}</div><div class="k">继续跟踪</div></div>
@@ -69,7 +70,7 @@
     <div class="modal-mask" v-if="judgeCard" @click.self="judgeCard = null">
       <div class="modal">
         <h2>记录我的判断 · {{ judgeCard.code }}</h2>
-        <p class="sub">系统扫描不会给出试仓 / 标准仓。若你自己写下这两档，只是个人记录。</p>
+        <p class="sub">判断按总闸记录。买入只表示路径到达，不是成交指令。</p>
         <label class="field">
           <span>状态</span>
           <select v-model="judgeStatus">
@@ -80,8 +81,8 @@
           <span>备注</span>
           <textarea v-model="judgeNote"></textarea>
         </label>
-        <p class="sub" v-if="['试仓','标准仓'].includes(judgeStatus)">
-          RULES 未给出仓位数字。这不会被系统当成规则升级。
+        <p class="sub" v-if="judgeStatus === '买入'">
+          总闸买入不是成交指令。
         </p>
         <div class="row-btns" style="margin-top:12px;justify-content:flex-end">
           <button class="btn ghost" @click="judgeCard = null">取消</button>
@@ -106,6 +107,7 @@ const marketRegime = ref("未设置");
 const personPresent = ref(true);
 const poolCount = ref(0);
 const poolDate = ref("");
+const reminders = ref([]);
 const judgeCard = ref(null);
 const judgeStatus = ref("观察");
 const judgeNote = ref("");
@@ -146,6 +148,7 @@ async function load() {
   personPresent.value = data.person_present;
   poolCount.value = data.pool_count || 0;
   poolDate.value = data.pool_trade_date || "";
+  reminders.value = data.reminders || [];
 }
 onMounted(load);
 </script>

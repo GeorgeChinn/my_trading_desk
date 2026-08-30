@@ -3,12 +3,13 @@
     <h1>规则扫描</h1>
     <p class="sub">
       {{ (data.pool && data.pool.note) || "按 RULES 漏斗与总闸分类。" }}
-      阈值空缺不得升到试仓 / 标准仓。
+      总闸：排除 → 观察 → 等待 → 买入 → 减仓 / 清仓。买入不是成交指令。
     </p>
     <div class="warn-banner">
       {{ data.position_block }}
       <span v-if="data.pool"> · 池子 {{ data.pool.count }} 只 · 优先样本 {{ data.pool.preferred ?? "—" }} · {{ data.pool.source }} {{ data.pool.trade_date }}</span>
     </div>
+    <div class="warn-banner" v-for="(r, i) in (data.reminders || [])" :key="'rm'+i">{{ r }}</div>
     <div class="grid cols-4" style="margin-bottom:16px">
       <div class="card stat" v-for="k in ['符合','继续跟踪','观察','排除']" :key="k">
         <div class="n">{{ (data.summary && data.summary[k]) || 0 }}</div>
