@@ -1,0 +1,16 @@
+{
+  "updated_at": "2026-08-30 19:05:43",
+  "rules_hash": "2f015bf17832fbab",
+  "changed": false,
+  "flags": {
+    "wait_need_low_zone": true,
+    "buy_need_dif_near_min": true,
+    "buy_need_zero_axis": true,
+    "buy_need_price_low": true,
+    "cross_within_two_days": true
+  },
+  "unimplemented": [
+    "板块近3日相对大盘：扫描器尚未实现，不挡筛选"
+  ],
+  "note": "改 RULES.md 后刷新扫描页即可（已支持的开关）。每日定时也会重读 RULES 再扫一遍。扫描器不会自己改 Python。"
+}

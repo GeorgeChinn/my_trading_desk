@@ -16,6 +16,7 @@ IDEAS_PATH = DATA_DIR / "ideas.json"
 JOURNALS_INDEX = DATA_DIR / "journals.json"
 SETTINGS_PATH = DATA_DIR / "settings.json"
 JUDGEMENTS_PATH = DATA_DIR / "judgements.json"
+LAST_SCAN_PATH = DATA_DIR / "last_scan.json"
 
 # RULES.md numbers — read-only copies for the engine. Do not invent new ones.
 MACD_FAST = 7

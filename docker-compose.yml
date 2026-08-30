@@ -1,0 +1,25 @@
+services:
+  desk:
+    build: .
+    container_name: georgechin-trade
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      TZ: Asia/Shanghai
+      HOST: 0.0.0.0
+      PORT: "8000"
+      RELOAD: "0"
+      # 若前后端不同域名，逗号分隔，例如 https://trade.example.com
+      CORS_ORIGINS: ""
+    volumes:
+      - ./data:/app/data
+      - ./journal:/app/journal
+      - ./RULES.md:/app/RULES.md
+      - ./PROFILE.md:/app/PROFILE.md
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 8s
+      retries: 5
+      start_period: 40s

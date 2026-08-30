@@ -9,6 +9,11 @@
       {{ data.position_block }}
       <span v-if="data.pool"> · 池子 {{ data.pool.count }} 只 · 优先样本 {{ data.pool.preferred ?? "—" }} · {{ data.pool.source }} {{ data.pool.trade_date }}</span>
     </div>
+    <div class="warn-banner" v-if="data.rules_bind">
+      RULES 开关：零轴金叉 {{ onoff(data.rules_bind.flags && data.rules_bind.flags.buy_need_zero_axis) }}
+      · 低位 {{ onoff(data.rules_bind.flags && data.rules_bind.flags.wait_need_low_zone) }}
+      · 改 RULES.md 后刷新本页即可（已支持的开关）。买入 {{ (data.by_gate && data.by_gate.买入) || 0 }} 只。
+    </div>
     <div class="warn-banner" v-for="(r, i) in (data.reminders || [])" :key="'rm'+i">{{ r }}</div>
     <div class="grid cols-4" style="margin-bottom:16px">
       <div class="card stat" v-for="k in ['符合','继续跟踪','观察','排除']" :key="k">
@@ -84,6 +89,9 @@ const visible = computed(() => {
 });
 function fmt(v) {
   return v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(4);
+}
+function onoff(v) {
+  return v ? "开" : "关";
 }
 onMounted(async () => {
   try {

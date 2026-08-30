@@ -37,6 +37,9 @@ def _loop() -> None:
             save_settings({"schedule_last_fired": key})
             try:
                 sync_live(force_bars=False)
+                from ..jobs import run_rules_scan
+
+                run_rules_scan()
             except Exception:
                 pass
         _stop.wait(20)

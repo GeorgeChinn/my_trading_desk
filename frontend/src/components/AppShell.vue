@@ -1,5 +1,6 @@
 <template>
-  <div class="shell">
+  <div class="shell" :class="{ 'nav-open': navOpen }">
+    <div class="nav-mask" v-if="navOpen" @click="navOpen = false"></div>
     <aside class="sidebar">
       <div class="brand-mark">
         <div class="gc">GC</div>
@@ -9,7 +10,13 @@
         </div>
       </div>
       <nav class="nav">
-        <router-link v-for="item in nav" :key="item.to" :to="item.to" :class="{ active: isActive(item) }">
+        <router-link
+          v-for="item in nav"
+          :key="item.to"
+          :to="item.to"
+          :class="{ active: isActive(item) }"
+          @click="navOpen = false"
+        >
           <span v-html="item.icon"></span>
           <span>{{ item.label }}</span>
         </router-link>
@@ -21,6 +28,9 @@
     </aside>
     <div class="main">
       <header class="topbar">
+        <button class="menu-btn" type="button" aria-label="打开菜单" @click="navOpen = !navOpen">
+          <span></span><span></span><span></span>
+        </button>
         <div class="top-title">
           <b>GeorgeChin Personal Trade</b>
           <span> · 本地个人交易空间</span>
@@ -28,9 +38,9 @@
         <div class="top-actions">
           <span class="pill" :class="{ warn: !connected }">
             <i class="dot"></i>
-            {{ healthLabel }}
+            <span class="pill-text">{{ healthLabel }}</span>
           </span>
-          <button class="btn primary" @click="showIdea = true">+ 记录我的想法</button>
+          <button class="btn primary idea-btn" @click="showIdea = true">+ 记录我的想法</button>
         </div>
       </header>
       <div class="page">
@@ -42,7 +52,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { api } from "../api";
 import IdeaModal from "./IdeaModal.vue";
@@ -51,6 +61,14 @@ const route = useRoute();
 const connected = ref(false);
 const healthLabel = ref("正在检查本地数据");
 const showIdea = ref(false);
+const navOpen = ref(false);
+
+watch(
+  () => route.fullPath,
+  () => {
+    navOpen.value = false;
+  }
+);
 
 const icon = (d) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${d}</svg>`;
@@ -62,7 +80,7 @@ const nav = [
   { to: "/trades", label: "我的交易", icon: icon('<path d="M4 19V5"/><path d="M4 16l5-6 4 4 7-9"/>') },
   { to: "/journal", label: "我的复盘", icon: icon('<path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h6M9 16h4"/>') },
   { to: "/rules", label: "我的规则", icon: icon('<path d="M7 4h10v16H7z"/><path d="M10 8h4M10 12h4"/>') },
-  { to: "/settings", label: "数据与设置", icon: icon('<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.2-1.6l2-1.5-2-3.5-2.4 1a7 7 0 0 0-2.8-1.6L13 3h-2l-.6 2.8a7 7 0 0 0-2.8 1.6l-2.4-1-2 3.5 2 1.5A7 7 0 0 0 5 12c0 .5.1 1.1.2 1.6l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 2.8 1.6L11 21h2l.6-2.8a7 7 0 0 0 2.8-1.6l2.4 1 2-3.5-2-1.5c.1-.5.2-1.1.2-1.6z"/>') },
+  { to: "/settings", label: "数据与设置", icon: icon('<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.2-1.6l2-1.5-2-3.5-2.4 1a7 7 0 0 0-2.8-1.6L13 3h-2l.6 2.8a7 7 0 0 0-2.8 1.6l-2.4-1-2 3.5 2 1.5A7 7 0 0 0 5 12c0 .5.1 1.1.2 1.6l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 2.8 1.6L11 21h2l.6-2.8a7 7 0 0 0 2.8-1.6l2.4 1 2-3.5-2-1.5c.1-.5.2-1.1.2-1.6z"/>') },
 ];
 
 function isActive(item) {
@@ -74,7 +92,7 @@ onMounted(async () => {
   try {
     const h = await api.health();
     connected.value = !!h.connected;
-    healthLabel.value = h.label || "本地数据未连接";
+    healthLabel.value = h.label || "尚未连接真实行情";
   } catch {
     connected.value = false;
     healthLabel.value = "后端未启动";

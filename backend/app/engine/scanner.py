@@ -58,21 +58,52 @@ def _cross_up(fast: list, slow: list) -> bool:
     return _cross_up_at(fast, slow, len(fast) - 1)
 
 
-def recent_dif_golden_cross(dif: list, dea: list) -> tuple[bool, str]:
+def recent_dif_golden_cross(dif: list, dea: list) -> tuple[bool, str, int | None]:
     """金叉近一两日即可，不要求确认收盘当天正在上穿。"""
     last = len(dif) - 1
     if last < 1:
-        return False, "DIF/DEA 窗口不足"
+        return False, "DIF/DEA 窗口不足", None
     still = dif[last] is not None and dea[last] is not None and dif[last] > dea[last]
     for offset in (0, 1):
         idx = last - offset
         if _cross_up_at(dif, dea, idx):
             day = "当日" if offset == 0 else "前一日"
             if offset == 0 or still:
-                return True, f"{day} DIF 上穿 DEA（金叉）"
+                return True, f"{day} DIF 上穿 DEA（金叉）", idx
     if still:
-        return False, "DIF 在 DEA 上方，但近两日未见上穿"
-    return False, "DIF 尚未上穿 DEA"
+        return False, "DIF 在 DEA 上方，但近两日未见上穿", None
+    return False, "DIF 尚未上穿 DEA", None
+
+
+def nearer_to_window_low(series: list, last_val, label: str) -> tuple[bool | None, str]:
+    window = _recent(series, DIF_LOOKBACK)
+    if not window or last_val is None:
+        return None, f"近 20 日{label}窗口不足"
+    lo, hi = min(window), max(window)
+    if hi == lo:
+        return True, f"近 20 日{label}无波动，当前即窗口值"
+    if (last_val - lo) <= (hi - last_val):
+        return True, f"{label}更靠近近20日最低（低 {lo:.4f} / 高 {hi:.4f}）"
+    return False, f"{label}更靠近近20日高点，不在低位区（低 {lo:.4f} / 高 {hi:.4f}）"
+
+
+def zero_axis_golden(dif: list, dea: list, cross_idx: int | None) -> tuple[bool | None, str]:
+    """金叉在零轴下方，或刚过零轴附近。DIF/DEA 已远离零轴上方 → 不得买入。"""
+    idx = cross_idx if cross_idx is not None else len(dif) - 1
+    if idx < 0 or idx >= len(dif):
+        return None, "零轴判定窗口不足"
+    d, e = dif[idx], dea[idx]
+    if d is None or e is None:
+        return None, "DIF/DEA 不足，零轴无法核对"
+    if d <= 0 and e <= 0:
+        return True, f"金叉在零轴下方（DIF {d:.4f} / DEA {e:.4f}）"
+    for j in (idx, idx - 1):
+        if j < 0:
+            continue
+        dd, ee = dif[j], dea[j]
+        if (dd is not None and dd <= 0) or (ee is not None and ee <= 0):
+            return True, f"金叉刚过零轴附近（DIF {d:.4f} / DEA {e:.4f}）"
+    return False, f"DIF {d:.4f}、DEA {e:.4f} 已远离零轴上方，不得买入"
 
 
 def _just_red(hist: list, end_idx: int) -> bool:
@@ -95,17 +126,7 @@ def _green_shrink_not_new_low(hist: list, end_idx: int) -> bool:
 
 
 def dif_near_20d_low(dif: list, last_dif) -> tuple[bool | None, str]:
-    """靠近近20日 DIF 最小值：相对窗口高低点更靠近最低，用来挡高位金叉。"""
-    window = _recent(dif, DIF_LOOKBACK)
-    if not window or last_dif is None:
-        return None, "近 20 日 DIF 窗口不足"
-    dmin, dmax = min(window), max(window)
-    if dmax == dmin:
-        return True, "近 20 日 DIF 无波动，当前即窗口值"
-    nearer_low = (last_dif - dmin) <= (dmax - last_dif)
-    if nearer_low:
-        return True, f"DIF 更靠近近20日最低（低 {dmin:.4f} / 高 {dmax:.4f}）"
-    return False, f"DIF 更靠近近20日高点，视为高位金叉（低 {dmin:.4f} / 高 {dmax:.4f}）"
+    return nearer_to_window_low(dif, last_dif, "DIF")
 
 
 def macd_section5(hist: list) -> tuple[bool, str]:
@@ -192,11 +213,15 @@ def _snapshot(row: Optional[dict]) -> dict:
     return snap
 
 
-def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None) -> dict:
+def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None, flags: dict | None = None) -> dict:
     code = ts_code(str(meta.get("code", "")))
     name = meta.get("name") or code
     person_present = bool(settings.get("person_present", True))
     market_regime = settings.get("market_regime") or "未设置"
+    if flags is None:
+        from .rules_bind import parse_flags
+
+        flags = parse_flags()
 
     base = {
         "code": code,
@@ -328,6 +353,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None)
     d_line = [row.get("d") for row in bars]
     j_line = [row.get("j") for row in bars]
     h_line = [row.get("high") for row in bars]
+    c_line = [row.get("close") for row in bars]
 
     h0, h1 = hist[-2], hist[-1]
     cond_macd_watch, macd_watch_detail = macd_section5(hist)
@@ -363,7 +389,23 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None)
             notes.append("K/D 未金叉且未满足不创新低")
         base["missing_rules"].append("RULES §5 KDJ：" + "；".join(notes))
 
-    if not (cond_macd_watch and cond_kdj_watch):
+    if flags.get("wait_need_low_zone", True):
+        dif_low, dif_low_detail = nearer_to_window_low(dif, last.get("dif"), "DIF")
+        px_low, px_low_detail = nearer_to_window_low(c_line, last.get("close"), "收盘")
+        cond_low = dif_low is True and px_low is True
+        if cond_low:
+            base["hit_rules"].append("RULES §5 低位：" + dif_low_detail + "；" + px_low_detail)
+        else:
+            why = []
+            if dif_low is not True:
+                why.append(dif_low_detail)
+            if px_low is not True:
+                why.append(px_low_detail)
+            base["missing_rules"].append("RULES §5 低位（中高位缩短绿柱不得升等待）：" + "；".join(why))
+    else:
+        cond_low = True
+
+    if not (cond_macd_watch and cond_kdj_watch and cond_low):
         return base
 
     # §5 complete → 等待
@@ -371,7 +413,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None)
     base["gate"] = "等待"
     base["summary_bucket"] = "继续跟踪"
 
-    buy_cross, cross_detail = recent_dif_golden_cross(dif, dea)
+    buy_cross, cross_detail, cross_idx = recent_dif_golden_cross(dif, dea)
     hist_green_to_red = _just_red(hist, len(hist) - 1) or _just_red(hist, len(hist) - 2)
     already_gold = last.get("dif") is not None and last.get("dea") is not None and last["dif"] > last["dea"]
     cont = False
@@ -391,18 +433,39 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None)
     else:
         base["missing_rules"].append("RULES §6：绿柱未连续缩短向 0 收敛，且未见绿转红")
 
-    near_low, near_detail = dif_near_20d_low(dif, last.get("dif"))
-    if last.get("dif") is not None and _recent(dif, DIF_LOOKBACK):
-        base["facts"]["dif_20_min"] = min(_recent(dif, DIF_LOOKBACK))
-        base["facts"]["dif_to_20min"] = last["dif"] - min(_recent(dif, DIF_LOOKBACK))
-    if near_low is True:
-        base["hit_rules"].append("RULES §6：" + near_detail)
-    elif near_low is False:
-        base["missing_rules"].append("RULES §6：" + near_detail + "，不得买入")
+    if flags.get("buy_need_dif_near_min", True):
+        near_low, near_detail = nearer_to_window_low(dif, last.get("dif"), "DIF")
+        if last.get("dif") is not None and _recent(dif, DIF_LOOKBACK):
+            base["facts"]["dif_20_min"] = min(_recent(dif, DIF_LOOKBACK))
+            base["facts"]["dif_to_20min"] = last["dif"] - min(_recent(dif, DIF_LOOKBACK))
+        if near_low is True:
+            base["hit_rules"].append("RULES §6：" + near_detail)
+        elif near_low is False:
+            base["missing_rules"].append("RULES §6：" + near_detail + "，不得买入")
+        else:
+            base["missing_rules"].append("RULES §6：" + near_detail)
     else:
-        base["missing_rules"].append("RULES §6：" + near_detail)
+        near_low = True
 
-    if buy_cross and buy_hist and near_low is True:
+    if flags.get("buy_need_zero_axis", True):
+        zero_ok, zero_detail = zero_axis_golden(dif, dea, cross_idx)
+        if zero_ok is True:
+            base["hit_rules"].append("RULES §6：" + zero_detail)
+        else:
+            base["missing_rules"].append("RULES §6：" + zero_detail)
+    else:
+        zero_ok = True
+
+    if flags.get("buy_need_price_low", True):
+        px6, px6_detail = nearer_to_window_low(c_line, last.get("close"), "收盘")
+        if px6 is True:
+            base["hit_rules"].append("RULES §6 股价低位区：" + px6_detail)
+        else:
+            base["missing_rules"].append("RULES §6 股价不在近20日低位区（第二段加速金叉不得买入）：" + px6_detail)
+    else:
+        px6 = True
+
+    if buy_cross and buy_hist and near_low is True and zero_ok is True and px6 is True:
         base["status"] = "买入"
         base["gate"] = "买入"
         base["summary_bucket"] = "符合"
@@ -438,7 +501,10 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None)
 
 
 def scan_universe(universe: list[dict], settings: dict, trades: list[dict] | None = None) -> list[dict]:
-    rows = [classify_stock(meta, settings, trades) for meta in universe]
+    from .rules_bind import parse_flags
+
+    flags = parse_flags()
+    rows = [classify_stock(meta, settings, trades, flags=flags) for meta in universe]
     order = {name: i for i, name in enumerate(GATES)}
     rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))
     return rows

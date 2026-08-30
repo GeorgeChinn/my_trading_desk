@@ -1,0 +1,7 @@
+# 复制为云主机 /etc/caddy/Caddyfile 后改域名。
+# 安装 Caddy 见 README「域名与 HTTPS」。
+
+trade.example.com {
+    encode gzip
+    reverse_proxy 127.0.0.1:8000
+}

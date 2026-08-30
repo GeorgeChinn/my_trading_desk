@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import threading
 import uuid
 from contextlib import asynccontextmanager
@@ -57,15 +58,17 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="GeorgeChin Personal Trade", docs_url=None, redoc_url=None, lifespan=lifespan)
+_cors = [
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "http://127.0.0.1:5174",
+    "http://localhost:5174",
+    "http://127.0.0.1:8000",
+]
+_cors += [x.strip() for x in os.environ.get("CORS_ORIGINS", "").split(",") if x.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5173",
-        "http://localhost:5173",
-        "http://127.0.0.1:5174",
-        "http://localhost:5174",
-        "http://127.0.0.1:8000",
-    ],
+    allow_origins=_cors,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -216,12 +219,17 @@ def scan():
     for row in rows:
         grouped.setdefault(row["status"], []).append(row)
     snap = load_pool_snapshot()
+    from .engine.rules_bind import refresh_bind
+
+    bind = refresh_bind()
+    reminders = funnel_reminders(load_settings()) + list(bind.get("unimplemented") or [])
     return {
         "rows": rows,
         **summarize(rows),
         "grouped": grouped,
         "position_block": "总闸：排除 → 观察 → 等待 → 买入 → 减仓 / 清仓。买入不是成交指令。",
-        "reminders": funnel_reminders(load_settings()),
+        "reminders": reminders,
+        "rules_bind": bind,
         "pool": {
             "count": len(rows),
             "trade_date": snap.get("trade_date") or load_settings().get("last_trade_date"),

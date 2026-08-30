@@ -1,0 +1,17 @@
+.git
+.gitignore
+frontend/node_modules
+frontend/dist
+**/__pycache__
+**/*.pyc
+.venv
+venv
+data/csv
+data/settings.json
+data/watches.json
+data/trades.json
+data/ideas.json
+data/*.json
+*.tmp
+.DS_Store
+MEMORIZE.md

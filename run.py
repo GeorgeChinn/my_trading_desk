@@ -1,6 +1,7 @@
-"""Start the local desk API (and seed sample CSV on first run)."""
+"""Start the local desk API."""
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -10,7 +11,21 @@ sys.path.insert(0, str(ROOT / "backend"))
 import uvicorn  # noqa: E402
 
 if __name__ == "__main__":
+    backend = ROOT / "backend"
+    host = os.environ.get("HOST", "127.0.0.1")
+    port = int(os.environ.get("PORT", "8000"))
+    reload = os.environ.get("RELOAD", "1") not in ("0", "false", "False")
     print("GeorgeChin Personal Trade")
-    print("Open http://127.0.0.1:8000  (after frontend build)")
-    print("Or keep Vite at http://127.0.0.1:5173 with this API running.")
-    uvicorn.run("app.main:app", app_dir=str(ROOT / "backend"), host="127.0.0.1", port=8000, reload=False)
+    print(f"监听 {host}:{port}  reload={reload}")
+    print("前端热更新：http://127.0.0.1:5173")
+    kwargs = {
+        "app": "app.main:app",
+        "app_dir": str(backend),
+        "host": host,
+        "port": port,
+        "reload": reload,
+    }
+    if reload:
+        kwargs["reload_dirs"] = [str(backend)]
+        kwargs["reload_includes"] = ["*.py"]
+    uvicorn.run(**kwargs)

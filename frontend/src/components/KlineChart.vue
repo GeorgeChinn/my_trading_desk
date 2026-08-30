@@ -108,4 +108,7 @@ watch(() => props.triggerDate, render);
 
 <style scoped>
 .chart-box { width: 100%; height: 640px; }
+@media (max-width: 720px) {
+  .chart-box { height: 440px; }
+}
 </style>
