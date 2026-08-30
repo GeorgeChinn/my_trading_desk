@@ -8,6 +8,8 @@ RULES_PATH = ROOT / "RULES.md"
 PROFILE_PATH = ROOT / "PROFILE.md"
 
 UNIVERSE_PATH = DATA_DIR / "universe.json"
+POOL_SNAPSHOT_PATH = DATA_DIR / "pool_snapshot.json"
+SYNC_STATUS_PATH = DATA_DIR / "sync_status.json"
 WATCHES_PATH = DATA_DIR / "watches.json"
 TRADES_PATH = DATA_DIR / "trades.json"
 IDEAS_PATH = DATA_DIR / "ideas.json"

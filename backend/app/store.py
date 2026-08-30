@@ -10,7 +10,9 @@ from .config import (
     IDEAS_PATH,
     JOURNALS_INDEX,
     JUDGEMENTS_PATH,
+    POOL_SNAPSHOT_PATH,
     SETTINGS_PATH,
+    SYNC_STATUS_PATH,
     TRADES_PATH,
     UNIVERSE_PATH,
     WATCHES_PATH,
@@ -21,7 +23,12 @@ DEFAULT_SETTINGS = {
     "person_present": True,
     "market_regime": "未设置",
     "tushare_token": "",
-    "data_label": "本地 CSV（确认收盘）",
+    "data_label": "尚未连接真实行情",
+    "data_source": "",
+    "last_trade_date": "",
+    "schedule_enabled": True,
+    "schedule_times": ["15:40", "16:30"],
+    "schedule_last_fired": "",
 }
 
 
@@ -54,6 +61,28 @@ def write_json(path: Path, payload: Any) -> None:
 def load_universe() -> list[dict]:
     data = read_json(UNIVERSE_PATH, [])
     return data if isinstance(data, list) else []
+
+
+def save_universe(items: list[dict]) -> None:
+    write_json(UNIVERSE_PATH, items)
+
+
+def load_pool_snapshot() -> dict:
+    data = read_json(POOL_SNAPSHOT_PATH, {})
+    return data if isinstance(data, dict) else {}
+
+
+def save_pool_snapshot(payload: dict) -> None:
+    write_json(POOL_SNAPSHOT_PATH, payload)
+
+
+def load_sync_status() -> dict:
+    data = read_json(SYNC_STATUS_PATH, {"state": "idle", "message": "尚未同步真实行情"})
+    return data if isinstance(data, dict) else {"state": "idle"}
+
+
+def save_sync_status(payload: dict) -> None:
+    write_json(SYNC_STATUS_PATH, payload)
 
 
 def load_watches() -> list[dict]:

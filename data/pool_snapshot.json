@@ -1,0 +1,19 @@
+{
+  "listed": 5550,
+  "quote_rows": 5550,
+  "non_st": 5345,
+  "price_ok": 4855,
+  "mcap_ok": 574,
+  "amount_ok": 905,
+  "pool": 378,
+  "preferred": 159,
+  "trade_date": "2026-08-28",
+  "source": "sina+eastmoney",
+  "rules": {
+    "流通市值": "≥ 300 亿",
+    "日成交额": "≥ 5 亿",
+    "股价": "≥ 5 元",
+    "ST": "非 ST、非 *ST",
+    "优先样本": "沪股通 / 沪深300 / 上证50；其他过池股也保留"
+  }
+}

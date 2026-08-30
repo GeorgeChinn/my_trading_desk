@@ -6,7 +6,7 @@
       仓位数字空缺时扫描停在等待。
     </p>
 
-    <div class="warn-banner">{{ positionBlock }} · 人{{ personPresent ? "在场" : "不在场" }} · 大盘开关：{{ marketRegime }}</div>
+    <div class="warn-banner">{{ positionBlock }} · 人{{ personPresent ? "在场" : "不在场" }} · 大盘开关：{{ marketRegime }} · RULES 池子 {{ poolCount }} 只{{ poolDate ? "（确认收盘 " + poolDate + "）" : "" }}</div>
 
     <div class="card flash" style="margin-bottom:16px">
       <h2>你设置的 {{ triggeredCount }} 个观察条件已触发</h2>
@@ -104,6 +104,8 @@ const path = ref("波段持有");
 const positionBlock = ref("");
 const marketRegime = ref("未设置");
 const personPresent = ref(true);
+const poolCount = ref(0);
+const poolDate = ref("");
 const judgeCard = ref(null);
 const judgeStatus = ref("观察");
 const judgeNote = ref("");
@@ -142,6 +144,8 @@ async function load() {
   positionBlock.value = data.position_block;
   marketRegime.value = data.market_regime;
   personPresent.value = data.person_present;
+  poolCount.value = data.pool_count || 0;
+  poolDate.value = data.pool_trade_date || "";
 }
 onMounted(load);
 </script>

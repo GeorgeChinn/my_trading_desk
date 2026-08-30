@@ -39,6 +39,11 @@ export const api = {
     return request("/api/settings/csv", { method: "POST", body });
   },
   pullTushare: (code) => request("/api/settings/tushare", { method: "POST", body: { code } }),
+  pool: () => request("/api/pool"),
+  syncStatus: () => request("/api/sync"),
+  startSync: (force = false) => request(`/api/sync?force=${force ? "true" : "false"}`, { method: "POST" }),
+  sources: () => request("/api/sources"),
+  schedule: () => request("/api/schedule"),
   ideas: () => request("/api/ideas"),
   addIdea: (body) => request("/api/ideas", { method: "POST", body }),
   seed: () => request("/api/seed", { method: "POST" }),

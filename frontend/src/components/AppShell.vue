@@ -28,7 +28,7 @@
         <div class="top-actions">
           <span class="pill" :class="{ warn: !connected }">
             <i class="dot"></i>
-            {{ connected ? "本地数据已连接" : healthLabel }}
+            {{ healthLabel }}
           </span>
           <button class="btn primary" @click="showIdea = true">+ 记录我的想法</button>
         </div>

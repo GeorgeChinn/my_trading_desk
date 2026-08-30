@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import threading
 import uuid
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -19,15 +21,17 @@ from .config import (
     RULES_PATH,
     ensure_dirs,
 )
-from .engine.bars import attach_indicators, csv_path_for, list_csv_files, load_bars, ts_code
+from .engine.bars import attach_indicators, list_csv_files, load_bars, ts_code
+from .engine.live import pull_one, sync_live
 from .engine.scanner import classify_stock, scan_universe, summarize
-from .engine.tushare_client import pull_daily
+from .engine.scheduler import schedule_snapshot, start_scheduler, stop_scheduler
 from .engine.watch import queue_counts, refresh_watch
 from .journal_io import list_journals, read_journal, today_str, write_journal
-from .seed import seed as seed_sample
 from .store import (
     load_ideas,
+    load_pool_snapshot,
     load_settings,
+    load_sync_status,
     load_trades,
     load_universe,
     load_watches,
@@ -38,12 +42,30 @@ from .store import (
 )
 
 ensure_dirs()
-seed_sample(force=False)
 
-app = FastAPI(title="GeorgeChin Personal Trade", docs_url=None, redoc_url=None)
+_sync_lock = threading.Lock()
+_sync_thread: threading.Thread | None = None
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    start_scheduler()
+    if not load_universe():
+        threading.Thread(target=lambda: sync_live(False), daemon=True, name="boot-sync").start()
+    yield
+    stop_scheduler()
+
+
+app = FastAPI(title="GeorgeChin Personal Trade", docs_url=None, redoc_url=None, lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173", "http://127.0.0.1:8000"],
+    allow_origins=[
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:5174",
+        "http://localhost:5174",
+        "http://127.0.0.1:8000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -80,6 +102,7 @@ class SettingsIn(BaseModel):
     person_present: bool | None = None
     market_regime: str | None = None
     tushare_token: str | None = None
+    schedule_enabled: bool | None = None
 
 
 class JournalIn(BaseModel):
@@ -125,11 +148,20 @@ def _scan_rows() -> list[dict]:
 @app.get("/api/health")
 def health():
     files = list_csv_files()
+    settings = load_settings()
+    source = settings.get("data_source") or "csv"
+    live = source not in ("csv", "", None)
+    label = settings.get("data_label")
+    if not label:
+        label = "真实行情已连接" if live or files else "尚未连接真实行情"
     return {
         "ok": True,
-        "connected": len(files) > 0,
-        "label": "本地数据已连接" if files else "本地 CSV 为空",
+        "connected": bool(live) or len(load_universe()) > 0,
+        "label": label,
         "csv_count": len(files),
+        "pool_count": len(load_universe()),
+        "data_source": source,
+        "last_trade_date": settings.get("last_trade_date") or "",
         "person": "GeorgeChin",
         "space": "本地个人交易空间",
     }
@@ -170,6 +202,9 @@ def home():
         "position_block": "仓位阈值空缺，不得升到试仓/标准仓",
         "market_regime": load_settings().get("market_regime"),
         "person_present": load_settings().get("person_present"),
+        "pool_count": len(load_universe()),
+        "pool_trade_date": load_settings().get("last_trade_date") or "",
+        "data_source": load_settings().get("data_source") or "csv",
     }
 
 
@@ -179,7 +214,21 @@ def scan():
     grouped = {key: [] for key in ("排除", "观察", "等待", "试仓", "标准仓", "禁止")}
     for row in rows:
         grouped.setdefault(row["status"], []).append(row)
-    return {"rows": rows, **summarize(rows), "grouped": grouped, "position_block": "仓位阈值空缺，不得升到试仓/标准仓"}
+    snap = load_pool_snapshot()
+    return {
+        "rows": rows,
+        **summarize(rows),
+        "grouped": grouped,
+        "position_block": "仓位阈值空缺，不得升到试仓/标准仓",
+        "pool": {
+            "count": len(rows),
+            "trade_date": snap.get("trade_date") or load_settings().get("last_trade_date"),
+            "source": snap.get("source") or load_settings().get("data_source"),
+            "preferred": snap.get("preferred"),
+            "funnel": snap,
+            "note": "PROFILE 同时跟踪 100 只。下列按 RULES §3 全量列出，不截断。",
+        },
+    }
 
 
 @app.get("/api/scan/{code}")
@@ -364,6 +413,10 @@ def settings_get():
     public["tushare_token"] = "********" if token else ""
     public["csv_files"] = list_csv_files()
     public["csv_dir"] = str(CSV_DIR)
+    public["pool_count"] = len(load_universe())
+    public["pool_snapshot"] = load_pool_snapshot()
+    public["sync"] = load_sync_status()
+    public["schedule"] = schedule_snapshot()
     return public
 
 
@@ -397,10 +450,42 @@ async def upload_csv(file: UploadFile = File(...)):
 
 @app.post("/api/settings/tushare")
 def tushare_pull(payload: PullIn):
-    settings = load_settings()
-    token = settings.get("tushare_token") or ""
-    result = pull_daily(payload.code, token)
-    return result
+    return pull_one(payload.code)
+
+
+@app.get("/api/pool")
+def pool_get():
+    items = load_universe()
+    snap = load_pool_snapshot()
+    return {
+        "items": items,
+        "count": len(items),
+        "preferred": sum(1 for x in items if x.get("index_member")),
+        "snapshot": snap,
+        "profile_bandwidth": 100,
+        "note": "PROFILE 同时跟踪 100 只。股池按 RULES §3 全量保留，扫描不截断。",
+    }
+
+
+@app.get("/api/sync")
+def sync_status():
+    return load_sync_status()
+
+
+@app.post("/api/sync")
+def sync_start(force: bool = Query(False)):
+    global _sync_thread
+    current = load_sync_status()
+    if current.get("state") == "running" and _sync_thread and _sync_thread.is_alive():
+        return {"ok": True, "started": False, "message": "同步已在进行", "status": current}
+
+    def run():
+        with _sync_lock:
+            sync_live(force_bars=force)
+
+    _sync_thread = threading.Thread(target=run, daemon=True)
+    _sync_thread.start()
+    return {"ok": True, "started": True, "message": "已开始：按 RULES §3 筛全部入池股并拉取确认收盘"}
 
 
 @app.get("/api/ideas")
@@ -424,9 +509,25 @@ def idea_add(payload: IdeaIn):
     return {"item": item}
 
 
+@app.get("/api/sources")
+def sources_probe():
+    from .engine.eastmoney import probe_sources
+
+    return {
+        "chain": ["tencent", "sina", "eastmoney"],
+        "items": probe_sources(),
+        "note": "日线按腾讯 → 新浪 → 东财切换。全市场筛池优先新浪快照。不使用示例 CSV 当数据源。",
+    }
+
+
+@app.get("/api/schedule")
+def schedule_get():
+    return schedule_snapshot()
+
+
 @app.post("/api/seed")
 def seed_endpoint():
-    return seed_sample(force=True)
+    return {"ok": False, "message": "不再写入示例日线。请用腾讯/新浪/东财同步确认收盘。"}
 
 
 DIST = ROOT / "frontend" / "dist"

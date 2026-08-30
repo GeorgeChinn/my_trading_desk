@@ -1,7 +1,9 @@
 <template>
   <div>
     <h1>数据与设置</h1>
-    <p class="sub">日线 CSV 放在 data/csv，格式 code,date,open,high,low,close,volume。没有 Tushare token 时只用 CSV。</p>
+    <p class="sub">
+      数据源只用真实行情：日线腾讯 → 新浪 → 东财；筛池优先新浪全市场快照。不使用示例 CSV 当数据源。盘中不改写确认收盘。
+    </p>
     <div class="grid cols-2">
       <div class="card">
         <h3>在场与市况</h3>
@@ -23,85 +25,137 @@
         </label>
       </div>
       <div class="card">
-        <h3>Tushare（预留）</h3>
-        <p class="sub">未配置 token 时所有扫描走本地 CSV。</p>
+        <h3>定时更新（确认收盘）</h3>
+        <p class="sub">{{ schedule.why }}</p>
         <label class="field">
-          <span>Token</span>
-          <input v-model="token" type="password" placeholder="留空 = 只用 CSV" />
+          <span>交易日自动拉数</span>
+          <select v-model="scheduleOn" @change="saveSchedule">
+            <option :value="true">开（15:40 / 16:30 北京时间）</option>
+            <option :value="false">关</option>
+          </select>
         </label>
-        <label class="field" style="margin-top:10px">
-          <span>拉取代码（可选）</span>
-          <input v-model="pullCode" placeholder="600519" />
-        </label>
-        <div class="row-btns" style="margin-top:12px">
-          <button class="btn" @click="saveToken">保存 token</button>
-          <button class="btn" @click="pull">尝试拉取</button>
-        </div>
-        <p class="sub" v-if="pullMsg">{{ pullMsg }}</p>
+        <p class="sub" style="margin-top:10px">下次：{{ schedule.next_run || "—" }} · 上次触发：{{ schedule.last_fired || "—" }}</p>
+        <p class="sub">{{ dataLabel }} · 池子 {{ poolCount }} 只</p>
       </div>
     </div>
+
     <div class="card" style="margin-top:14px">
-      <h3>上传或放置 CSV</h3>
-      <p class="sub">目录：{{ csvDir }}</p>
-      <input type="file" accept=".csv" @change="upload" />
-      <table class="table" style="margin-top:12px">
-        <thead><tr><th>文件</th><th>代码</th><th>大小</th></tr></thead>
+      <h3>数据源探测</h3>
+      <p class="sub">链：腾讯 → 新浪 → 东财。一个源失败自动换下一个。</p>
+      <div class="row-btns" style="margin-bottom:12px">
+        <button class="btn" @click="probe">探测后备源</button>
+        <button class="btn primary" :disabled="syncing" @click="sync(false)">现在更新确认收盘</button>
+        <button class="btn" :disabled="syncing" @click="sync(true)">强制重拉日线</button>
+      </div>
+      <table class="table" v-if="sources.length">
+        <thead><tr><th>源</th><th>用途</th><th>状态</th><th>耗时</th><th>最近确认日</th></tr></thead>
         <tbody>
-          <tr v-for="f in files" :key="f.file">
-            <td>{{ f.file }}</td>
-            <td>{{ f.code }}</td>
-            <td>{{ f.bytes }}</td>
+          <tr v-for="s in sources" :key="s.name">
+            <td>{{ s.name }}</td>
+            <td>{{ s.role }}</td>
+            <td><span class="badge" :class="s.ok ? '观察' : '禁止'">{{ s.ok ? "通" : "断" }}</span></td>
+            <td>{{ s.ms }} ms</td>
+            <td>{{ s.last_date || s.error || "—" }}</td>
           </tr>
         </tbody>
       </table>
+      <p class="sub" style="margin-top:10px">{{ syncText }}</p>
+      <div v-if="syncing || barsTotal" class="sub">日线 {{ barsDone }} / {{ barsTotal }}</div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>RULES §3 漏斗（全市场 → 入池）</h3>
+      <p class="sub">流通市值 ≥ 300 亿 · 日成交额 ≥ 5 亿 · 非 ST · 股价 ≥ 5 元。优先样本只加标签。PROFILE 跟踪带宽 100 只，扫描不截断。</p>
+      <div class="grid cols-4" v-if="funnel && Object.keys(funnel).length">
+        <div class="stat"><div class="n">{{ funnel.listed || 0 }}</div><div class="k">上市 A 股</div></div>
+        <div class="stat"><div class="n">{{ funnel.non_st || 0 }}</div><div class="k">非 ST</div></div>
+        <div class="stat"><div class="n">{{ funnel.mcap_ok || 0 }}</div><div class="k">市值门槛过的行</div></div>
+        <div class="stat"><div class="n">{{ funnel.pool || 0 }}</div><div class="k">同时满足入池</div></div>
+      </div>
+      <p class="sub" v-if="funnel && funnel.preferred != null">其中优先样本 {{ funnel.preferred }} 只 · 确认收盘 {{ funnel.trade_date }} · 来源 {{ funnel.source }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { api } from "../api";
 
 const person = ref(true);
 const regime = ref("未设置");
-const token = ref("");
-const pullCode = ref("600519");
-const pullMsg = ref("");
-const files = ref([]);
-const csvDir = ref("");
+const poolCount = ref(0);
+const dataLabel = ref("");
+const funnel = ref({});
+const syncText = ref("");
+const syncing = ref(false);
+const barsDone = ref(0);
+const barsTotal = ref(0);
+const sources = ref([]);
+const schedule = ref({});
+const scheduleOn = ref(true);
+let timer = null;
 
 async function load() {
   const s = await api.settings();
   person.value = !!s.person_present;
   regime.value = s.market_regime || "未设置";
-  token.value = s.tushare_configured ? "********" : "";
-  files.value = s.csv_files || [];
-  csvDir.value = s.csv_dir || "";
+  poolCount.value = s.pool_count || 0;
+  dataLabel.value = s.data_label || "";
+  funnel.value = s.pool_snapshot || {};
+  schedule.value = s.schedule || {};
+  scheduleOn.value = schedule.value.enabled !== false;
+  applySync(s.sync || {});
+}
+function applySync(st) {
+  syncing.value = st.state === "running";
+  syncText.value = st.message || "";
+  barsDone.value = st.bars_done || 0;
+  barsTotal.value = st.bars_total || 0;
+  if (st.funnel) funnel.value = st.funnel;
+  if (st.pool_size) poolCount.value = st.pool_size;
+}
+async function poll() {
+  try {
+    const st = await api.syncStatus();
+    applySync(st);
+    if (st.state !== "running") {
+      stopPoll();
+      await load();
+    }
+  } catch {
+    stopPoll();
+  }
+}
+function startPoll() {
+  stopPoll();
+  timer = setInterval(poll, 1500);
+  poll();
+}
+function stopPoll() {
+  if (timer) clearInterval(timer);
+  timer = null;
 }
 async function save() {
   await api.saveSettings({ person_present: person.value, market_regime: regime.value });
 }
-async function saveToken() {
-  if (token.value && token.value !== "********") {
-    await api.saveSettings({ tushare_token: token.value });
-  }
+async function saveSchedule() {
+  await api.saveSettings({ schedule_enabled: scheduleOn.value });
+  schedule.value = await api.schedule();
+}
+async function sync(force) {
+  const r = await api.startSync(force);
+  syncText.value = r.message;
+  startPoll();
+}
+async function probe() {
+  const r = await api.sources();
+  sources.value = r.items || [];
+  syncText.value = r.note || "";
+}
+onMounted(async () => {
   await load();
-}
-async function pull() {
-  try {
-    const r = await api.pullTushare(pullCode.value);
-    pullMsg.value = r.message;
-    await load();
-  } catch (e) {
-    pullMsg.value = e.message;
-  }
-}
-async function upload(ev) {
-  const file = ev.target.files && ev.target.files[0];
-  if (!file) return;
-  await api.uploadCsv(file);
-  ev.target.value = "";
-  await load();
-}
-onMounted(load);
+  if (syncing.value) startPoll();
+  probe().catch(() => {});
+});
+onBeforeUnmount(stopPoll);
 </script>
