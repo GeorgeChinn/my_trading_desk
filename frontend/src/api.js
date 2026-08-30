@@ -17,6 +17,7 @@ export const api = {
   health: () => request("/api/health"),
   home: () => request("/api/home"),
   scan: () => request("/api/scan"),
+  cycles: () => request("/api/cycles"),
   scanOne: (code) => request(`/api/scan/${code}`),
   chart: (code) => request(`/api/chart/${code}`),
   watch: () => request("/api/watch"),

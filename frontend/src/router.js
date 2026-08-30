@@ -7,12 +7,14 @@ import Journal from "./views/Journal.vue";
 import Rules from "./views/Rules.vue";
 import Settings from "./views/Settings.vue";
 import Chart from "./views/Chart.vue";
+import Cycles from "./views/Cycles.vue";
 
 export default createRouter({
   history: createWebHistory(),
   routes: [
     { path: "/", name: "home", component: Home, meta: { title: "首页" } },
     { path: "/scan", name: "scan", component: Scan, meta: { title: "规则扫描" } },
+    { path: "/cycles", name: "cycles", component: Cycles, meta: { title: "规则轨迹" } },
     { path: "/watch", name: "watch", component: Watch, meta: { title: "我的观察" } },
     { path: "/trades", name: "trades", component: Trades, meta: { title: "我的交易" } },
     { path: "/journal", name: "journal", component: Journal, meta: { title: "我的复盘" } },

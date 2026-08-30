@@ -10,5 +10,8 @@ data/trades.json
 data/ideas.json
 data/journals.json
 data/judgements.json
+data/cycles.json
+data/last_scan.json
+data/rules_bind.json
 *.tmp
 .DS_Store

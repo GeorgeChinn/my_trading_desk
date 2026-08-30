@@ -23,6 +23,7 @@ from .config import (
     ensure_dirs,
 )
 from .engine.bars import attach_indicators, list_csv_files, load_bars, ts_code
+from .engine.cycles import cycles_page
 from .engine.live import pull_one, sync_live
 from .engine.scanner import classify_stock, funnel_reminders, scan_universe, summarize
 from .engine.scheduler import schedule_snapshot, start_scheduler, stop_scheduler
@@ -246,6 +247,13 @@ def scan_one(code: str):
     uni = _universe_map()
     meta = uni.get(ts_code(code)) or {"code": code, "name": _name_of(code)}
     return classify_stock(meta, load_settings(), load_trades())
+
+
+@app.get("/api/cycles")
+def cycles():
+    rows = _scan_rows()
+    buys = [{"code": r["code"], "name": r["name"]} for r in rows if r.get("status") == "买入"]
+    return cycles_page(buys)
 
 
 @app.get("/api/chart/{code}")

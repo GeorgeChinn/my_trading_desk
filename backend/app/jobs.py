@@ -35,6 +35,10 @@ def main() -> None:
     print(json.dumps({k: result.get(k) for k in ("state", "message", "source", "trade_date", "pool_size", "bars")}, ensure_ascii=False, indent=2))
     scan = run_rules_scan()
     print("scan", json.dumps(scan.get("by_gate"), ensure_ascii=False), "买入", scan.get("buy_count"))
+    from .engine.cycles import cycles_page
+
+    page = cycles_page(scan.get("buys") or [])
+    print("cycles open", len((page.get("live") or {}).get("open") or []), "rank", len(page.get("ranking") or []))
 
 
 if __name__ == "__main__":

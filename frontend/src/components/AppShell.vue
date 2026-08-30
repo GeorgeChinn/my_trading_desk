@@ -76,6 +76,7 @@ const icon = (d) =>
 const nav = [
   { to: "/", label: "首页", icon: icon('<path d="M4 11.5 12 4l8 7.5V20H4z"/><path d="M9 20v-6h6v6"/>') },
   { to: "/scan", label: "规则扫描", icon: icon('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>') },
+  { to: "/cycles", label: "规则轨迹", icon: icon('<path d="M4 16l4-6 4 3 8-9"/><path d="M4 20h16"/>') },
   { to: "/watch", label: "我的观察", icon: icon('<path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z"/><circle cx="12" cy="12" r="3"/>') },
   { to: "/trades", label: "我的交易", icon: icon('<path d="M4 19V5"/><path d="M4 16l5-6 4 4 7-9"/>') },
   { to: "/journal", label: "我的复盘", icon: icon('<path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h6M9 16h4"/>') },
