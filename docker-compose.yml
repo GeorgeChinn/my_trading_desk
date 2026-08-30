@@ -12,6 +12,7 @@ services:
       RELOAD: "0"
       # 若前后端不同域名，逗号分隔，例如 https://trade.example.com
       CORS_ORIGINS: ""
+      DESK_PASSWORD: "Abcd1234!"
     volumes:
       - ./data:/app/data
       - ./journal:/app/journal

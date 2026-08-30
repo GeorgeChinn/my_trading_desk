@@ -91,6 +91,28 @@ python run.py
 
 顶栏应显示「真实行情已连接」和确认收盘日。
 
+## 登录
+
+最简单口令登录。打开网站先输入密码。
+
+**密码：`Abcd1234!`**
+
+云端可用环境变量改掉（不要再把新密码写进公开仓库）：
+
+```bash
+# docker-compose.yml 里
+DESK_PASSWORD: "你自己的密码"
+```
+
+或本机：
+
+```powershell
+$env:DESK_PASSWORD="你自己的密码"
+python run.py
+```
+
+默认就是 `Abcd1234!`。Cookie 记 30 天，点顶栏「退出」可清掉。
+
 ## 每页干什么
 
 ### 顶栏 / 侧栏

@@ -7,12 +7,13 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from .auth import COOKIE, cookie_ok, expected_token, password_ok
 from .config import (
     ALLOWED_STATUS,
     BUILTIN_CONDITIONS,
@@ -74,6 +75,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def require_login(request: Request, call_next):
+    path = request.url.path
+    if request.method == "OPTIONS":
+        return await call_next(request)
+    if path in ("/api/login", "/api/logout", "/api/health", "/api/session") or not path.startswith("/api"):
+        return await call_next(request)
+    if cookie_ok(request.cookies.get(COOKIE)):
+        return await call_next(request)
+    return JSONResponse({"detail": "未登录"}, status_code=401)
+
+
+class LoginIn(BaseModel):
+    password: str = ""
 
 
 class WatchIn(BaseModel):
@@ -147,6 +164,27 @@ def _refreshed_watches() -> list[dict]:
 
 def _scan_rows() -> list[dict]:
     return scan_universe(load_universe(), load_settings(), load_trades())
+
+
+@app.get("/api/session")
+def session_get(request: Request):
+    return {"ok": cookie_ok(request.cookies.get(COOKIE))}
+
+
+@app.post("/api/login")
+def login(payload: LoginIn):
+    if not password_ok(payload.password):
+        raise HTTPException(401, "密码不对")
+    resp = JSONResponse({"ok": True})
+    resp.set_cookie(COOKIE, expected_token(), httponly=True, samesite="lax", path="/", max_age=60 * 60 * 24 * 30)
+    return resp
+
+
+@app.post("/api/logout")
+def logout():
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie(COOKIE, path="/")
+    return resp
 
 
 @app.get("/api/health")

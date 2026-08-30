@@ -41,6 +41,7 @@
             <span class="pill-text">{{ healthLabel }}</span>
           </span>
           <button class="btn primary idea-btn" @click="showIdea = true">+ 记录我的想法</button>
+          <button class="btn ghost" type="button" @click="logout">退出</button>
         </div>
       </header>
       <div class="page">
@@ -87,6 +88,11 @@ const nav = [
 function isActive(item) {
   if (item.to === "/") return route.path === "/" || route.path.startsWith("/chart");
   return route.path.startsWith(item.to);
+}
+
+async function logout() {
+  await api.logout().catch(() => {});
+  window.location.reload();
 }
 
 onMounted(async () => {

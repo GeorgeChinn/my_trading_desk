@@ -245,6 +245,27 @@ h1 { font-size: 22px; letter-spacing: 0.01em; }
 
 .empty { color: var(--muted); padding: 28px 8px; text-align: center; }
 
+.login-box {
+  max-width: 380px;
+  margin: 12vh auto 0;
+  padding: 28px 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.login-box .gc {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--copper);
+  color: #1a1208;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+}
+
 .menu-btn {
   display: none;
   width: 42px;

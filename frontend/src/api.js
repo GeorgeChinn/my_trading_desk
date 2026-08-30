@@ -4,7 +4,7 @@ async function request(path, options = {}) {
     headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(options.body);
   }
-  const res = await fetch(path, { ...options, headers });
+  const res = await fetch(path, { ...options, headers, credentials: "include" });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = data.detail || data.message || res.statusText;
@@ -14,6 +14,9 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  session: () => request("/api/session"),
+  login: (password) => request("/api/login", { method: "POST", body: { password } }),
+  logout: () => request("/api/logout", { method: "POST" }),
   health: () => request("/api/health"),
   home: () => request("/api/home"),
   scan: () => request("/api/scan"),
