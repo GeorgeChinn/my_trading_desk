@@ -198,6 +198,7 @@ npx vite --host
 ### 1. 登录云主机并安装 Docker
 
 ```bash
+ssh root@43.129.73.198
 ssh root@你的公网IP
 ```
 
