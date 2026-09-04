@@ -411,7 +411,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         base["facts"]["pe"] = pe
     if flags.get("pool_need_pe_positive", True):
         if pe is None:
-            pool_fail.append("动态市盈证据不足（§3 硬条件，排除）")
+            base["missing_rules"].append("RULES §3 动态市盈证据不足（快照无此字段，本条不挡入池；有值且 ≤0 才排除）")
         elif pe <= 0:
             pool_fail.append(f"动态市盈 {pe:.2f} ≤ 0（亏损票排除）")
         else:
