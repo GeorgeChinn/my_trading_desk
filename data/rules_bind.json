@@ -1,13 +1,18 @@
 {
-  "updated_at": "2026-09-02 16:31:32",
-  "rules_hash": "9b1945adf7eb43e7",
+  "updated_at": "2026-09-04 16:31:24",
+  "rules_hash": "15c082fb6508f6e4",
   "changed": false,
   "flags": {
     "wait_need_low_zone": true,
     "buy_need_dif_near_min": true,
     "buy_need_zero_axis": true,
     "buy_need_price_low": true,
-    "cross_within_two_days": true
+    "cross_within_two_days": false,
+    "pool_need_pe_positive": true,
+    "veto_kdj_overbought": true,
+    "veto_pullback_60": true,
+    "veto_ma30_down": true,
+    "wait_need_kdj_band": true
   },
   "unimplemented": [
     "板块近3日相对大盘：扫描器尚未实现，不挡筛选"
