@@ -115,7 +115,7 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
         raise RuntimeError("Tushare 股票列表为空")
     daily_basic = pro.daily_basic(
         trade_date=trade_date,
-        fields="ts_code,trade_date,close,circ_mv,total_mv",
+        fields="ts_code,trade_date,close,circ_mv,total_mv,pe,pe_ttm",
     )
     daily = pro.daily(
         trade_date=trade_date,
@@ -150,6 +150,7 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
             "流通市值": f"≥ {POOL_FLOAT_MCAP_YI:.0f} 亿",
             "日成交额": f"≥ {POOL_AMOUNT_YI:.0f} 亿",
             "股价": f"≥ {POOL_MIN_PRICE:.0f} 元",
+            "动态市盈": "> 0（亏损票排除）",
             "ST": "非 ST、非 *ST",
             "优先样本": "沪股通 / 沪深300 / 上证50；其他过池股也保留",
         },
@@ -193,6 +194,9 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
         if code_full in hs:
             members.append("沪股通")
         symbol = ts_code(str(rec.get("symbol") or code_full.split(".")[0]))
+        pe = _f(rec.get("pe_ttm"))
+        if pe is None:
+            pe = _f(rec.get("pe"))
         item = {
             "code": symbol,
             "ts_code": code_full,
@@ -200,6 +204,7 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
             "float_mcap_yi": round(float_mcap_yi, 2),
             "amount_yi": round(amount_yi, 2),
             "close": close,
+            "pe": round(pe, 3) if pe is not None else None,
             "is_st": False,
             "index_member": members,
             "tags": [],
@@ -306,6 +311,7 @@ def build_pool_akshare(log: Callable[[str], None] | None = None) -> tuple[list[d
             "流通市值": f"≥ {POOL_FLOAT_MCAP_YI:.0f} 亿",
             "日成交额": f"≥ {POOL_AMOUNT_YI:.0f} 亿",
             "股价": f"≥ {POOL_MIN_PRICE:.0f} 元",
+            "动态市盈": "> 0（亏损票排除）",
             "ST": "非 ST、非 *ST",
             "优先样本": "沪深300 / 上证50（沪股通名单此次未取到则不标）",
         },
@@ -336,6 +342,17 @@ def build_pool_akshare(log: Callable[[str], None] | None = None) -> tuple[list[d
             members.append("沪深300")
         if code in sse50:
             members.append("上证50")
+        pe = None
+        for key in ("市盈率-动态", "市盈率-TTM", "市盈率", "pe", "pe_ttm"):
+            if key in rec.index:
+                raw = rec.get(key)
+                try:
+                    val = float(raw)
+                except (TypeError, ValueError):
+                    continue
+                if val == val:
+                    pe = val
+                    break
         pool.append(
             {
                 "code": code,
@@ -344,6 +361,7 @@ def build_pool_akshare(log: Callable[[str], None] | None = None) -> tuple[list[d
                 "float_mcap_yi": round(float_mcap_yi, 2) if float_mcap_yi is not None else None,
                 "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
                 "close": close,
+                "pe": round(pe, 3) if pe is not None else None,
                 "is_st": False,
                 "index_member": members,
                 "tags": [],

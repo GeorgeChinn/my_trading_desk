@@ -326,6 +326,12 @@ def _num(rec: dict, *keys) -> float | None:
     return None
 
 
+def _round_or_none(val: float | None, ndigits: int = 3) -> float | None:
+    if val is None:
+        return None
+    return round(val, ndigits)
+
+
 def build_pool(log=None) -> tuple[list[dict], dict]:
     talk = log or (lambda _m: None)
     spot = fetch_spot(log=talk)
@@ -348,6 +354,7 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
             "流通市值": f"≥ {POOL_FLOAT_MCAP_YI:.0f} 亿",
             "日成交额": f"≥ {POOL_AMOUNT_YI:.0f} 亿",
             "股价": f"≥ {POOL_MIN_PRICE:.0f} 元",
+            "动态市盈": "> 0（亏损票排除）",
             "ST": "非 ST、非 *ST",
             "优先样本": "沪股通 / 沪深300 / 上证50；其他过池股也保留",
         },
@@ -362,6 +369,7 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
         close = _num(rec, "trade")
         amount = _num(rec, "amount")
         nmc = _num(rec, "nmc")  # 万元
+        pe = _num(rec, "per", "pe", "pe_ttm")
         amount_yi = amount / YI if amount is not None else None
         float_mcap_yi = nmc / 10_000.0 if nmc is not None else None
         if not st:
@@ -389,6 +397,7 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
                 "float_mcap_yi": round(float_mcap_yi, 2) if float_mcap_yi is not None else None,
                 "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
                 "close": close,
+                "pe": _round_or_none(pe),
                 "is_st": False,
                 "index_member": members,
                 "tags": [],
