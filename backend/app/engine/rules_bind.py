@@ -63,20 +63,22 @@ def unimplemented_hits(text: str | None = None) -> list[str]:
     return found
 
 
-def refresh_bind() -> dict:
-    raw = _text()
+def refresh_bind(text: str | None = None, ruleset_id: str = "rules") -> dict:
+    raw = text if text is not None else _text()
     digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
     prev = read_json(BIND_PATH, {}) if BIND_PATH.exists() else {}
     flags = parse_flags(raw)
     payload = {
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "ruleset": ruleset_id,
         "rules_hash": digest,
         "changed": prev.get("rules_hash") != digest,
         "flags": flags,
         "unimplemented": unimplemented_hits(raw),
-        "note": "改 RULES.md 后刷新扫描页即可（已支持的开关）。每日定时也会重读 RULES 再扫一遍。扫描器不会自己改 Python。",
+        "note": "改对应 RULES 文件后刷新扫描页即可（已支持的开关）。扫描器不会自己改 Python。",
     }
-    write_json(BIND_PATH, payload)
+    if ruleset_id == "rules":
+        write_json(BIND_PATH, payload)
     return payload
 
 

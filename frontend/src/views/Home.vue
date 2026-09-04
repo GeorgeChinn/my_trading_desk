@@ -12,7 +12,7 @@
     <div class="card flash" style="margin-bottom:16px">
       <h2>你设置的 {{ triggeredCount }} 个观察条件已触发</h2>
       <p class="sub">触发文案固定为：这是事实记录。当前行情不改写已确认收盘事实。</p>
-      <div v-if="!cards.length" class="empty">还没有触发。去「我的观察」添加代码和条件，或确认 CSV 已放入 data/csv。</div>
+      <div v-if="!cards.length" class="empty">还没有触发。确认 CSV 已放入 data/csv，或到规则扫描查看当日漏斗。</div>
       <div v-for="card in cards" :key="card.id" class="card" style="margin-top:12px;box-shadow:none">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
           <div>

@@ -380,7 +380,7 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
             funnel["mcap_ok"] += 1
         if amount_yi is not None and amount_yi >= POOL_AMOUNT_YI:
             funnel["amount_ok"] += 1
-        if not passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st):
+        if not passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st, pe=pe):
             continue
         members = []
         if code in hs300:

@@ -17,6 +17,7 @@ def pool_fail_reasons(
     amount_yi: float | None,
     float_mcap_yi: float | None,
     is_st: bool,
+    pe: float | None = None,
 ) -> list[str]:
     fail = []
     if is_st:
@@ -33,6 +34,8 @@ def pool_fail_reasons(
         fail.append("日成交额证据不足")
     elif amount_yi < POOL_AMOUNT_YI:
         fail.append(f"日成交额 {amount_yi:.2f} 亿 < {POOL_AMOUNT_YI:.0f} 亿")
+    if pe is not None and pe <= 0:
+        fail.append(f"动态市盈 {pe:.2f} ≤ 0（亏损票排除）")
     return fail
 
 

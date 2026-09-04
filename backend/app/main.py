@@ -26,6 +26,8 @@ from .config import (
 from .engine.bars import attach_indicators, list_csv_files, load_bars, ts_code
 from .engine.cycles import cycles_page
 from .engine.live import pull_one, sync_live
+from .engine.rules_bind import parse_flags, refresh_bind
+from .engine.rulesets import get_ruleset, list_rulesets, public_ruleset
 from .engine.scanner import classify_stock, funnel_reminders, scan_universe, summarize
 from .engine.scheduler import schedule_snapshot, start_scheduler, stop_scheduler
 from .engine.watch import queue_counts, refresh_watch
@@ -162,8 +164,27 @@ def _refreshed_watches() -> list[dict]:
     return out
 
 
-def _scan_rows() -> list[dict]:
-    return scan_universe(load_universe(), load_settings(), load_trades())
+def _scan_bundle(ruleset_id: str | None = None):
+    rs = get_ruleset(ruleset_id)
+    if rs is None:
+        return None
+    flags = parse_flags(rs["text"])
+    bind = refresh_bind(rs["text"], rs["id"])
+    rows = scan_universe(
+        load_universe(),
+        load_settings(),
+        load_trades(),
+        flags=flags,
+        engine=rs["engine"],
+    )
+    return rs, flags, bind, rows
+
+
+def _scan_rows(ruleset_id: str | None = None) -> list[dict]:
+    bundle = _scan_bundle(ruleset_id)
+    if not bundle:
+        return []
+    return bundle[3]
 
 
 @app.get("/api/session")
@@ -251,17 +272,24 @@ def home():
     }
 
 
+@app.get("/api/rulesets")
+def rulesets():
+    return {"items": [public_ruleset(item) for item in list_rulesets()]}
+
+
 @app.get("/api/scan")
-def scan():
-    rows = _scan_rows()
+def scan(ruleset: str = Query("rules")):
+    bundle = _scan_bundle(ruleset)
+    if not bundle:
+        raise HTTPException(404, "没有这个规则文件")
+    rs, _flags, bind, rows = bundle
     grouped = {key: [] for key in ("排除", "观察", "等待", "买入", "减仓", "清仓")}
     for row in rows:
         grouped.setdefault(row["status"], []).append(row)
     snap = load_pool_snapshot()
-    from .engine.rules_bind import refresh_bind
-
-    bind = refresh_bind()
     reminders = funnel_reminders(load_settings()) + list(bind.get("unimplemented") or [])
+    if not rs.get("engine_ok"):
+        reminders = [rs["engine_note"]] + reminders
     return {
         "rows": rows,
         **summarize(rows),
@@ -269,13 +297,15 @@ def scan():
         "position_block": "总闸：排除 → 观察 → 等待 → 买入 → 减仓 / 清仓。买入不是成交指令。",
         "reminders": reminders,
         "rules_bind": bind,
+        "ruleset": public_ruleset(rs),
+        "rulesets": [public_ruleset(item) for item in list_rulesets()],
         "pool": {
-            "count": len(rows),
+            "count": len(load_universe()),
             "trade_date": snap.get("trade_date") or load_settings().get("last_trade_date"),
             "source": snap.get("source") or load_settings().get("data_source"),
             "preferred": snap.get("preferred"),
             "funnel": snap,
-            "note": "PROFILE 同时跟踪 100 只。下列按 RULES §3 全量列出，不截断。",
+            "note": "PROFILE 同时跟踪 100 只。下列按当前规则全量列出，不截断。",
         },
     }
 
@@ -288,10 +318,14 @@ def scan_one(code: str):
 
 
 @app.get("/api/cycles")
-def cycles():
-    rows = _scan_rows()
-    buys = [{"code": r["code"], "name": r["name"]} for r in rows if r.get("status") == "买入"]
-    return cycles_page(buys)
+def cycles(ruleset: str = Query("rules")):
+    rs = get_ruleset(ruleset)
+    if rs is None:
+        raise HTTPException(404, "没有这个规则文件")
+    flags = parse_flags(rs["text"])
+    page = cycles_page(load_universe(), flags=flags, ruleset=rs)
+    page["rulesets"] = [public_ruleset(item) for item in list_rulesets()]
+    return page
 
 
 @app.get("/api/chart/{code}")

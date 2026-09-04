@@ -402,10 +402,15 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     else:
         pool_hit.append("非 ST")
 
+    pe = dyn_pe_value(meta)
+    if pe is not None:
+        base["facts"]["pe"] = pe
     if flags.get("pool_need_pe_positive", True):
-        pe = dyn_pe_value(meta)
         if pe is None:
-            base["missing_rules"].append("RULES §3 动态市盈证据不足（池子无此字段，本条不挡入池）")
+            if "pe" in meta:
+                pool_fail.append("动态市盈证据不足（亏损票无法核对，排除）")
+            else:
+                base["missing_rules"].append("RULES §3 动态市盈证据不足（当前快照无 pe 字段，同步后按硬闸排除亏损票）")
         elif pe <= 0:
             pool_fail.append(f"动态市盈 {pe:.2f} ≤ 0（亏损票排除）")
         else:
@@ -640,10 +645,19 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     return base
 
 
-def scan_universe(universe: list[dict], settings: dict, trades: list[dict] | None = None) -> list[dict]:
+def scan_universe(
+    universe: list[dict],
+    settings: dict,
+    trades: list[dict] | None = None,
+    flags: dict | None = None,
+    engine: str = "low_golden",
+) -> list[dict]:
     from .rules_bind import parse_flags
 
-    flags = parse_flags()
+    if engine != "low_golden":
+        return []
+    if flags is None:
+        flags = parse_flags()
     rows = [classify_stock(meta, settings, trades, flags=flags) for meta in universe]
     order = {name: i for i, name in enumerate(GATES)}
     rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))

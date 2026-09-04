@@ -139,6 +139,13 @@ h1 { font-size: 22px; letter-spacing: 0.01em; }
 .stat .k { color: var(--muted); font-size: 13px; margin-top: 6px; }
 
 .row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.tabs .btn { max-width: 100%; }
+.num { font-variant-numeric: tabular-nums; font-weight: 650; }
+.num.pos { color: var(--cyan); }
+.num.neg { color: var(--red); }
+.num.zero { color: var(--muted); }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 .btn {
   border: 1px solid var(--line);

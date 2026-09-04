@@ -13,8 +13,11 @@ from .scanner import (
     _green_shrink_not_new_low,
     _just_red,
     _recent,
+    kdj_overbought,
     macd_section5,
+    ma30_down_veto,
     nearer_to_window_low,
+    pullback_60_below_zero,
     recent_dif_golden_cross,
     zero_axis_golden,
 )
@@ -61,12 +64,28 @@ def is_buy_signal(s: dict, flags: dict) -> bool:
     last = s["last"]
     if last.get("dif") is None or last.get("hist") is None or last.get("k") is None:
         return False
+    if flags.get("veto_kdj_overbought", True):
+        ob, _ = kdj_overbought(last.get("k"), last.get("j"))
+        if ob is not False:
+            return False
+    if flags.get("veto_pullback_60", True):
+        pb, _, _ = pullback_60_below_zero(s["h"], last.get("close"), last.get("dif"))
+        if pb is True:
+            return False
+    if flags.get("veto_ma30_down", True):
+        m30, _, _ = ma30_down_veto(s["c"])
+        if m30 is True:
+            return False
     macd_ok, _ = macd_section5(s["hist"])
     kd_cross = _cross_up(s["k"], s["d"])
     k0, d0 = s["k"][-1], s["d"][-1]
     kd_le_20 = k0 is not None and d0 is not None and max(k0, d0) <= KDJ_LOW
     j_prev = _recent(s["j"], 20, skip_last=1)
     kdj_ok = bool((kd_cross and kd_le_20) or (j_prev and s["j"][-1] is not None and s["j"][-1] > min(j_prev)))
+    if flags.get("wait_need_kdj_band", True):
+        k_last, j_last = last.get("k"), last.get("j")
+        if k_last is None or j_last is None or not (j_last < 80 and k_last <= 50):
+            return False
     if flags.get("wait_need_low_zone", True):
         dif_low, _ = nearer_to_window_low(s["dif"], last.get("dif"), "DIF")
         px_low, _ = nearer_to_window_low(s["c"], last.get("close"), "收盘")
@@ -75,7 +94,9 @@ def is_buy_signal(s: dict, flags: dict) -> bool:
         low_ok = True
     if not (macd_ok and kdj_ok and low_ok):
         return False
-    buy_cross, _, cross_idx = recent_dif_golden_cross(s["dif"], s["dea"])
+    buy_cross, _, cross_idx = recent_dif_golden_cross(
+        s["dif"], s["dea"], within_two_days=bool(flags.get("cross_within_two_days", False))
+    )
     h0, h1 = (s["hist"][-2], s["hist"][-1]) if len(s["hist"]) > 1 else (None, s["hist"][-1])
     hist_green_to_red = _just_red(s["hist"], len(s["hist"]) - 1) or _just_red(s["hist"], len(s["hist"]) - 2)
     already_gold = last.get("dif") is not None and last.get("dea") is not None and last["dif"] > last["dea"]
@@ -157,6 +178,14 @@ def _cycle_stats(bars: list[dict], a: int, b: int, closed: bool = True) -> dict:
         peak = max(peak, px)
         if peak:
             mdd = min(mdd, px / peak - 1.0)
+    pnl_pct = round(ret * 100, 2)
+    pnl_ps = round(exit_px - entry_px, 4)
+    if closed:
+        result = "盈利" if ret > 0 else ("亏损" if ret < 0 else "持平")
+        status = "已结束"
+    else:
+        result = "浮动"
+        status = "进行中"
     return {
         "start_date": entry["date"],
         "end_date": last["date"] if closed else None,
@@ -164,158 +193,143 @@ def _cycle_stats(bars: list[dict], a: int, b: int, closed: bool = True) -> dict:
         "start_close": round(entry_px, 4),
         "end_close": round(exit_px, 4) if closed else None,
         "last_close": round(exit_px, 4),
-        "return_pct": round(ret * 100, 2) if closed else None,
-        "open_return_pct": round(ret * 100, 2),
+        "buy_date": entry["date"],
+        "buy_price": round(entry_px, 4),
+        "sell_date": last["date"] if closed else None,
+        "sell_price": round(exit_px, 4) if closed else None,
+        "mark_price": round(exit_px, 4),
+        "pnl_pct": pnl_pct,
+        "pnl_per_share": pnl_ps,
+        "status": status,
+        "result": result,
+        "return_pct": pnl_pct if closed else None,
+        "open_return_pct": pnl_pct,
         "max_drawdown_pct": round(mdd * 100, 2),
         "bars": len(path),
         "closed": closed,
         "win": bool(closed and ret > 0),
-        "path": [{"date": x["date"], "close": x["close"], "hist": x.get("hist"), "dif": x.get("dif")} for x in path],
     }
 
 
-def rank_stock(code: str, name: str, flags: dict | None = None) -> dict:
-    bars = attach_indicators(load_bars(code))
-    cycles, live = walk_cycles(bars, flags)
-    closed = [c for c in cycles if c["closed"]]
-    wins = sum(1 for c in closed if c["win"])
-    n = len(closed)
-    avg_ret = sum(c["return_pct"] or 0 for c in closed) / n if n else None
-    avg_mdd = sum(c["max_drawdown_pct"] for c in closed) / n if n else None
+def _segment_row(code: str, name: str, stats: dict, seq: int) -> dict:
     return {
+        "id": f"{code}-{stats.get('buy_date')}-{seq}",
+        "seq": seq,
         "code": ts_code(code),
         "name": name,
-        "samples": n,
+        "buy_date": stats.get("buy_date"),
+        "buy_price": stats.get("buy_price"),
+        "sell_date": stats.get("sell_date"),
+        "sell_price": stats.get("sell_price"),
+        "mark_price": stats.get("mark_price"),
+        "pnl_pct": stats.get("pnl_pct"),
+        "pnl_per_share": stats.get("pnl_per_share"),
+        "max_drawdown_pct": stats.get("max_drawdown_pct"),
+        "bars": stats.get("bars"),
+        "status": stats.get("status"),
+        "result": stats.get("result"),
+        "closed": bool(stats.get("closed")),
+        "win": bool(stats.get("win")),
+    }
+
+
+def walk_stock_segments(code: str, name: str, flags: dict) -> list[dict]:
+    bars = attach_indicators(load_bars(code))
+    closed, live = walk_cycles(bars, flags)
+    out = []
+    for i, item in enumerate(closed, start=1):
+        out.append(_segment_row(code, name, item, i))
+    if live:
+        out.append(_segment_row(code, name, live, len(closed) + 1))
+    return out
+
+
+def _empty_summary() -> dict:
+    return {
+        "open": 0,
+        "closed": 0,
+        "wins": 0,
+        "losses": 0,
+        "flat": 0,
+        "win_rate": None,
+        "avg_pnl_pct": None,
+        "total": 0,
+    }
+
+
+def summarize_segments(segments: list[dict]) -> dict:
+    closed = [s for s in segments if s.get("closed")]
+    open_n = sum(1 for s in segments if not s.get("closed"))
+    wins = sum(1 for s in closed if s.get("result") == "盈利")
+    losses = sum(1 for s in closed if s.get("result") == "亏损")
+    flat = sum(1 for s in closed if s.get("result") == "持平")
+    n = len(closed)
+    avg = sum(s.get("pnl_pct") or 0 for s in closed) / n if n else None
+    return {
+        "open": open_n,
+        "closed": n,
         "wins": wins,
+        "losses": losses,
+        "flat": flat,
         "win_rate": round(wins / n * 100, 1) if n else None,
-        "avg_return_pct": round(avg_ret, 2) if avg_ret is not None else None,
-        "avg_drawdown_pct": round(avg_mdd, 2) if avg_mdd is not None else None,
-        "cycles": [{k: c[k] for k in c if k != "path"} for c in closed],
-        "live": {k: live[k] for k in live if k != "path"} if live else None,
-        "evidence": "证据不足" if n == 0 else "这是事实记录（确认收盘回放）",
+        "avg_pnl_pct": round(avg, 2) if avg is not None else None,
+        "total": len(segments),
     }
 
 
-def rank_buy_pool(buy_rows: list[dict]) -> list[dict]:
-    flags = parse_flags()
-    ranked = [rank_stock(r["code"], r.get("name") or r["code"], flags) for r in buy_rows]
-    ranked.sort(
-        key=lambda x: (
-            x["win_rate"] is None,
-            -(x["win_rate"] or -1),
-            -(x["avg_return_pct"] or -999),
-            x["avg_drawdown_pct"] if x["avg_drawdown_pct"] is not None else 0,
-        )
-    )
-    for i, row in enumerate(ranked, start=1):
-        row["rank"] = i
-    return ranked
+def cycles_page(universe: list[dict], flags: dict | None = None, ruleset: dict | None = None) -> dict:
+    """One segment = listed in 买入 pool → §7 sell. Same stock may have many segments."""
+    from .rulesets import ENGINE_LOW_GOLDEN, public_ruleset
 
-
-def load_cycles() -> dict:
-    data = read_json(CYCLES_PATH, {"open": [], "closed": []})
-    if not isinstance(data, dict):
-        return {"open": [], "closed": []}
-    data.setdefault("open", [])
-    data.setdefault("closed", [])
-    return data
-
-
-def save_cycles(payload: dict) -> None:
-    write_json(CYCLES_PATH, payload)
-
-
-def update_live_episodes(buy_rows: list[dict]) -> dict:
-    """Open an episode when a name first appears in 买入; close when §7 hits."""
-    flags = parse_flags()
-    store = load_cycles()
-    open_map = {item["code"]: item for item in store.get("open", [])}
-    closed = list(store.get("closed", []))
-    today_buys = {ts_code(r["code"]): r for r in buy_rows}
-    asof = None
-    for code, row in today_buys.items():
-        bars = attach_indicators(load_bars(code))
-        if not bars:
+    flags = flags or parse_flags()
+    pub = public_ruleset(ruleset) if ruleset else None
+    engine = (ruleset or {}).get("engine") or ENGINE_LOW_GOLDEN
+    note = "一段轨迹 = 列入买入池（确认收盘）→ 卖出条件日。买入价/卖出价用当日收盘。这是事实记录，不是成交指令。"
+    if engine != ENGINE_LOW_GOLDEN:
+        payload = {
+            "fact_note": "这是事实记录",
+            "note": (ruleset or {}).get("engine_note") or note,
+            "ruleset": pub,
+            "segments": [],
+            "summary": _empty_summary(),
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        save_cycles(payload, (ruleset or {}).get("id") or "rules")
+        return payload
+    segments: list[dict] = []
+    for meta in universe:
+        code = ts_code(str(meta.get("code") or ""))
+        name = meta.get("name") or code
+        if not code:
             continue
-        asof = bars[-1]["date"]
-        s = _prefix_series(bars, len(bars) - 1)
-        if code not in open_map:
-            if is_buy_signal(s, flags):
-                stats = _cycle_stats(bars, len(bars) - 1, len(bars) - 1, closed=False)
-                open_map[code] = {
-                    "code": code,
-                    "name": row.get("name") or code,
-                    "listed_date": bars[-1]["date"],
-                    "new_yesterday": True,
-                    **{k: stats[k] for k in stats if k != "path"},
-                    "path": stats["path"],
-                }
-        else:
-            open_map[code]["new_yesterday"] = False
-            if is_exit_signal(s):
-                start = open_map[code]["start_date"]
-                idxs = [i for i, b in enumerate(bars) if b["date"] == start]
-                a = idxs[0] if idxs else 0
-                fin = _cycle_stats(bars, a, len(bars) - 1, closed=True)
-                closed.insert(
-                    0,
-                    {
-                        "code": code,
-                        "name": open_map[code].get("name") or code,
-                        "listed_date": open_map[code].get("listed_date"),
-                        **{k: fin[k] for k in fin if k != "path"},
-                        "path": fin["path"],
-                    },
-                )
-                del open_map[code]
-            else:
-                start = open_map[code]["start_date"]
-                idxs = [i for i, b in enumerate(bars) if b["date"] == start]
-                a = idxs[0] if idxs else 0
-                cur = _cycle_stats(bars, a, len(bars) - 1, closed=False)
-                open_map[code].update({k: cur[k] for k in cur})
-                open_map[code]["name"] = row.get("name") or open_map[code].get("name")
-    # still track names that left 买入 but have not met 清仓
-    for code, item in list(open_map.items()):
-        if code in today_buys:
-            continue
-        bars = attach_indicators(load_bars(code))
-        if not bars:
-            continue
-        s = _prefix_series(bars, len(bars) - 1)
-        if is_exit_signal(s):
-            start = item["start_date"]
-            idxs = [i for i, b in enumerate(bars) if b["date"] == start]
-            a = idxs[0] if idxs else 0
-            fin = _cycle_stats(bars, a, len(bars) - 1, closed=True)
-            closed.insert(0, {**item, **{k: fin[k] for k in fin}})
-            del open_map[code]
-        else:
-            start = item["start_date"]
-            idxs = [i for i, b in enumerate(bars) if b["date"] == start]
-            a = idxs[0] if idxs else 0
-            cur = _cycle_stats(bars, a, len(bars) - 1, closed=False)
-            item.update({k: cur[k] for k in cur})
-            item["new_yesterday"] = False
-    if asof is None and buy_rows:
-        asof = datetime.now().strftime("%Y-%m-%d")
+        segments.extend(walk_stock_segments(code, name, flags))
+    open_rows = [s for s in segments if not s.get("closed")]
+    closed_rows = [s for s in segments if s.get("closed")]
+    open_rows.sort(key=lambda s: (s.get("buy_date") or "", s.get("code") or ""), reverse=True)
+    closed_rows.sort(key=lambda s: (s.get("sell_date") or "", s.get("code") or ""), reverse=True)
+    segments = open_rows + closed_rows
     payload = {
+        "fact_note": "这是事实记录",
+        "note": note,
+        "ruleset": pub,
+        "segments": segments,
+        "summary": summarize_segments(segments),
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "asof": asof,
-        "note": "启动=首次列入买入（确认收盘）。结束=RULES §7 减仓/清仓条件。这是事实记录，不是成交指令。",
-        "open": list(open_map.values()),
-        "closed": closed[:200],
     }
-    save_cycles(payload)
+    save_cycles(payload, (ruleset or {}).get("id") or "rules")
     return payload
 
 
-def cycles_page(buy_rows: list[dict]) -> dict:
-    live = update_live_episodes(buy_rows)
-    ranking = rank_buy_pool(buy_rows)
-    return {
-        "fact_note": "这是事实记录",
-        "live": live,
-        "ranking": ranking,
-        "buy_count": len(buy_rows),
+def save_cycles(payload: dict, ruleset_id: str = "rules") -> None:
+    store = read_json(CYCLES_PATH, {})
+    if not isinstance(store, dict):
+        store = {}
+    store.pop("segments", None)
+    store.pop("summary", None)
+    store["cleared_at"] = store.get("cleared_at") or datetime.now().strftime("%Y-%m-%d")
+    store[ruleset_id] = {
+        "updated_at": payload.get("updated_at"),
+        "summary": payload.get("summary"),
+        "segment_count": len(payload.get("segments") or []),
     }
+    write_json(CYCLES_PATH, store)

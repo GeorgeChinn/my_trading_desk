@@ -183,7 +183,10 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
             funnel["mcap_ok"] += 1
         if amount_yi is not None and amount_yi >= POOL_AMOUNT_YI:
             funnel["amount_ok"] += 1
-        if not passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st):
+        pe = _f(rec.get("pe_ttm"))
+        if pe is None:
+            pe = _f(rec.get("pe"))
+        if not passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st, pe=pe):
             continue
         members = []
         code_full = str(ts)
@@ -194,9 +197,6 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
         if code_full in hs:
             members.append("沪股通")
         symbol = ts_code(str(rec.get("symbol") or code_full.split(".")[0]))
-        pe = _f(rec.get("pe_ttm"))
-        if pe is None:
-            pe = _f(rec.get("pe"))
         item = {
             "code": symbol,
             "ts_code": code_full,
@@ -335,13 +335,6 @@ def build_pool_akshare(log: Callable[[str], None] | None = None) -> tuple[list[d
             funnel["mcap_ok"] += 1
         if amount_yi is not None and amount_yi >= POOL_AMOUNT_YI:
             funnel["amount_ok"] += 1
-        if not passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st):
-            continue
-        members = []
-        if code in hs300:
-            members.append("沪深300")
-        if code in sse50:
-            members.append("上证50")
         pe = None
         for key in ("市盈率-动态", "市盈率-TTM", "市盈率", "pe", "pe_ttm"):
             if key in rec.index:
@@ -353,6 +346,13 @@ def build_pool_akshare(log: Callable[[str], None] | None = None) -> tuple[list[d
                 if val == val:
                     pe = val
                     break
+        if not passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st, pe=pe):
+            continue
+        members = []
+        if code in hs300:
+            members.append("沪深300")
+        if code in sse50:
+            members.append("上证50")
         pool.append(
             {
                 "code": code,

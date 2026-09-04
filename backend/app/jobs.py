@@ -11,8 +11,18 @@ from .store import load_settings, load_trades, load_universe, write_json
 
 
 def run_rules_scan() -> dict:
-    bind = refresh_bind()
-    rows = scan_universe(load_universe(), load_settings(), load_trades())
+    from .engine.rulesets import get_ruleset
+
+    rs = get_ruleset("rules")
+    text = rs["text"] if rs else None
+    bind = refresh_bind(text, "rules")
+    rows = scan_universe(
+        load_universe(),
+        load_settings(),
+        load_trades(),
+        flags=bind.get("flags"),
+        engine=(rs or {}).get("engine") or "low_golden",
+    )
     summary = summarize(rows)
     buys = [{"code": r["code"], "name": r["name"]} for r in rows if r["status"] == "买入"]
     payload = {
@@ -27,6 +37,10 @@ def run_rules_scan() -> dict:
 
 
 def main() -> None:
+    from .engine.cycles import cycles_page
+    from .engine.rulesets import get_ruleset, list_rulesets
+    from .engine.rules_bind import parse_flags
+
     bind = refresh_bind()
     print("RULES flags", json.dumps(bind.get("flags"), ensure_ascii=False))
     if bind.get("unimplemented"):
@@ -35,10 +49,13 @@ def main() -> None:
     print(json.dumps({k: result.get(k) for k in ("state", "message", "source", "trade_date", "pool_size", "bars")}, ensure_ascii=False, indent=2))
     scan = run_rules_scan()
     print("scan", json.dumps(scan.get("by_gate"), ensure_ascii=False), "买入", scan.get("buy_count"))
-    from .engine.cycles import cycles_page
-
-    page = cycles_page(scan.get("buys") or [])
-    print("cycles open", len((page.get("live") or {}).get("open") or []), "rank", len(page.get("ranking") or []))
+    for item in list_rulesets():
+        if not item.get("engine_ok"):
+            continue
+        flags = parse_flags(item["text"])
+        page = cycles_page(load_universe(), flags=flags, ruleset=item)
+        summary = page.get("summary") or {}
+        print("cycles", item["id"], "open", summary.get("open"), "closed", summary.get("closed"))
 
 
 if __name__ == "__main__":
