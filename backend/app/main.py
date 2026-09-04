@@ -262,7 +262,7 @@ def home():
         "queues": queues,
         "scan_summary": summary["summary"],
         "by_gate": summary["by_gate"],
-        "position_block": "总闸「买入」只表示路径到达，不是成交指令",
+        "position_block": "扫描默认最高停在等待。路径到达不是成交指令",
         "market_regime": load_settings().get("market_regime"),
         "person_present": load_settings().get("person_present"),
         "pool_count": len(load_universe()),

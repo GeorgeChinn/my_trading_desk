@@ -3,7 +3,7 @@
     <h1>首页</h1>
     <p class="sub">
       主路径 {{ path }} · 总闸：排除 → 观察 → 等待 → 买入 → 减仓 / 清仓。
-      买入只表示路径到达，不是成交指令。
+      扫描默认最高停在等待。符合 = 路径到达，待人确认，不是成交指令。
     </p>
 
     <div class="warn-banner">{{ positionBlock }} · 人{{ personPresent ? "在场" : "不在场" }} · 大盘开关：{{ marketRegime }} · RULES 池子 {{ poolCount }} 只{{ poolDate ? "（确认收盘 " + poolDate + "）" : "" }}</div>
@@ -55,7 +55,7 @@
 
     <div class="card">
       <h2>今天规则扫描</h2>
-      <p class="sub">摘要只数。符合 = 总闸到达买入。符合 ≠ 成交指令。</p>
+      <p class="sub">摘要只数。符合 = §6 路径到达。扫描不自动升到买入。</p>
       <div class="grid cols-4">
         <div class="stat"><div class="n">{{ scan.符合 ?? 0 }}</div><div class="k">符合</div></div>
         <div class="stat"><div class="n">{{ scan.继续跟踪 ?? 0 }}</div><div class="k">继续跟踪</div></div>

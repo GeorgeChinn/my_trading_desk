@@ -3,7 +3,7 @@
     <h1>规则扫描</h1>
     <p class="sub">
       {{ (data.pool && data.pool.note) || "按当前交易规则漏斗与总闸分类。" }}
-      总闸：排除 → 观察 → 等待 → 买入 → 减仓 / 清仓。买入不是成交指令。
+      总闸：排除 → 观察 → 等待 → 买入 → 减仓 / 清仓。扫描默认最高停在等待。路径到达 ≠ 买入。买入须人工确认，不是成交指令。
     </p>
     <div class="tabs">
       <button
@@ -27,7 +27,7 @@
       RULES 开关：零轴金叉 {{ onoff(data.rules_bind.flags && data.rules_bind.flags.buy_need_zero_axis) }}
       · 低位 {{ onoff(data.rules_bind.flags && data.rules_bind.flags.wait_need_low_zone) }}
       · 动态市盈 {{ onoff(data.rules_bind.flags && data.rules_bind.flags.pool_need_pe_positive) }}
-      · 买入 {{ (data.by_gate && data.by_gate.买入) || 0 }} 只。
+      · 路径到达 {{ pathReadyN }} 只 · 扫描买入闸 {{ (data.by_gate && data.by_gate.买入) || 0 }} 只（仅已有手工开仓）。
     </div>
     <div class="warn-banner" v-for="(r, i) in (data.reminders || [])" :key="'rm'+i">{{ r }}</div>
     <div class="grid cols-4" style="margin-bottom:16px">
@@ -112,6 +112,7 @@ const visible = computed(() => {
     return (r.code && r.code.includes(query)) || (r.name && r.name.includes(query));
   });
 });
+const pathReadyN = computed(() => (data.value.rows || []).filter((r) => r.path_ready).length);
 const emptyText = computed(() => {
   if (loading.value) return "正在按当前规则扫描…";
   if (currentRuleset.value && !currentRuleset.value.engine_ok) {

@@ -3,12 +3,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from ..config import CYCLES_PATH, HHV_LOOKBACK, KDJ_HIGH, KDJ_LOW
+from ..config import CYCLES_PATH, KDJ_LOW
 from ..store import read_json, write_json
 from .bars import attach_indicators, load_bars, ts_code
 from .rules_bind import parse_flags
+from .exits import evaluate_exit
 from .scanner import (
-    _cross_down,
     _cross_up,
     _green_shrink_not_new_low,
     _just_red,
@@ -41,23 +41,10 @@ def _prefix_series(bars: list[dict], end_idx: int) -> dict:
 
 
 def red_wave_peaks(hist: list) -> list[float]:
-    peaks: list[float] = []
-    cur = None
-    in_red = False
-    for h in hist:
-        if h is not None and h > 0:
-            if not in_red:
-                in_red = True
-                cur = h
-            else:
-                cur = max(cur, h)
-        elif in_red:
-            peaks.append(cur)
-            in_red = False
-            cur = None
-    if in_red and cur is not None:
-        peaks.append(cur)
-    return peaks
+    """保留给对照。离场请用 exits.this_and_prev_wave，不要拿全历史最后两峰。"""
+    from .exits import red_wave_spans
+
+    return [w["peak"] for w in red_wave_spans(hist)]
 
 
 def is_buy_signal(s: dict, flags: dict) -> bool:
@@ -122,22 +109,11 @@ def is_buy_signal(s: dict, flags: dict) -> bool:
     return bool(buy_cross and buy_hist and near_low and zero_ok and px6)
 
 
-def is_exit_signal(s: dict) -> bool:
-    last, prev = s["last"], s["prev"]
-    if not prev or last.get("dif") is None or prev.get("dif") is None:
+def is_exit_signal(s: dict, entry_idx: int | None = None) -> bool:
+    if entry_idx is None:
         return False
-    peaks = red_wave_peaks(s["hist"])
-    wave_ok = len(peaks) >= 2 and peaks[-1] < peaks[-2]
-    dif_down = last["dif"] < prev["dif"]
-    hhv = max(_recent(s["h"], HHV_LOOKBACK) or [last["high"]])
-    new_high = last["high"] >= hhv
-    kd_dead = _cross_down(s["k"], s["d"])
-    k0, d0 = s["k"][-1], s["d"][-1]
-    kd_high = k0 is not None and d0 is not None and min(k0, d0) >= KDJ_HIGH
-    j_prev = _recent(s["j"], 20, skip_last=1)
-    kdj_not_new_high = bool(j_prev) and s["j"][-1] is not None and s["j"][-1] < max(j_prev)
-    kdj_exit = bool((kd_dead and kd_high) or kdj_not_new_high)
-    return bool(wave_ok and dif_down and new_high and kdj_exit)
+    hit, _, _ = evaluate_exit(s, entry_idx)
+    return hit
 
 
 def walk_cycles(bars: list[dict], flags: dict | None = None) -> tuple[list[dict], dict | None]:
@@ -149,14 +125,13 @@ def walk_cycles(bars: list[dict], flags: dict | None = None) -> tuple[list[dict]
     open_i = None
     for i in range(40, n):
         s = _prefix_series(bars, i)
-        buy = is_buy_signal(s, flags)
-        ex = is_exit_signal(s)
         if open_i is None:
-            if buy:
+            if is_buy_signal(s, flags):
                 open_i = i
             continue
-        if i > open_i and ex:
-            cycles.append(_cycle_stats(bars, open_i, i))
+        hit, section, detail = evaluate_exit(s, open_i)
+        if i > open_i and hit:
+            cycles.append(_cycle_stats(bars, open_i, i, exit_section=section, exit_detail=detail))
             open_i = None
     live = None
     if open_i is not None:
@@ -164,7 +139,14 @@ def walk_cycles(bars: list[dict], flags: dict | None = None) -> tuple[list[dict]
     return cycles, live
 
 
-def _cycle_stats(bars: list[dict], a: int, b: int, closed: bool = True) -> dict:
+def _cycle_stats(
+    bars: list[dict],
+    a: int,
+    b: int,
+    closed: bool = True,
+    exit_section: str = "",
+    exit_detail: str = "",
+) -> dict:
     entry = bars[a]
     last = bars[b]
     path = bars[a : b + 1]
@@ -182,6 +164,10 @@ def _cycle_stats(bars: list[dict], a: int, b: int, closed: bool = True) -> dict:
     pnl_ps = round(exit_px - entry_px, 4)
     if closed:
         result = "盈利" if ret > 0 else ("亏损" if ret < 0 else "持平")
+        if exit_section == "7.1":
+            result = f"{result} · §7.1 失败离场"
+        elif exit_section == "7.2":
+            result = f"{result} · §7.2 波段离场"
         status = "已结束"
     else:
         result = "浮动"
@@ -208,6 +194,8 @@ def _cycle_stats(bars: list[dict], a: int, b: int, closed: bool = True) -> dict:
         "bars": len(path),
         "closed": closed,
         "win": bool(closed and ret > 0),
+        "exit_section": exit_section or None,
+        "exit_detail": exit_detail or None,
     }
 
 
@@ -230,6 +218,8 @@ def _segment_row(code: str, name: str, stats: dict, seq: int) -> dict:
         "result": stats.get("result"),
         "closed": bool(stats.get("closed")),
         "win": bool(stats.get("win")),
+        "exit_section": stats.get("exit_section"),
+        "exit_detail": stats.get("exit_detail"),
     }
 
 
@@ -284,7 +274,7 @@ def cycles_page(universe: list[dict], flags: dict | None = None, ruleset: dict |
     flags = flags or parse_flags()
     pub = public_ruleset(ruleset) if ruleset else None
     engine = (ruleset or {}).get("engine") or ENGINE_LOW_GOLDEN
-    note = "一段轨迹 = 列入买入池（确认收盘）→ 卖出条件日。买入价/卖出价用当日收盘。这是事实记录，不是成交指令。"
+    note = "一段轨迹 = 路径到达买入条件的确认收盘 → §7.1 失败离场或 §7.2 波段离场。买入价/卖出价用当日收盘。这是事实记录，不是成交指令。"
     if engine != ENGINE_LOW_GOLDEN:
         payload = {
             "fact_note": "这是事实记录",

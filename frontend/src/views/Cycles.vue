@@ -2,7 +2,7 @@
   <div>
     <h1>规则轨迹</h1>
     <p class="sub">
-      一段轨迹 = 列入买入池（确认收盘）→ 卖出条件日。同一只票可以有多段。
+      一段轨迹 = 路径到达买入条件的确认收盘 → §7.1 失败离场或 §7.2 波段离场。同一只票可以有多段。
       买入价 / 卖出价用当日收盘。{{ data.fact_note }}。买入不是成交指令。
     </p>
     <div class="tabs">
@@ -79,6 +79,7 @@
             <td>
               <span class="num" :class="pnlClass(ep.pnl_pct)">{{ signedPct(ep.pnl_pct) }}</span>
               <div class="sub" style="margin:4px 0 0">{{ ep.result }}</div>
+              <div class="sub" style="margin:4px 0 0" v-if="ep.exit_detail">{{ ep.exit_detail }}</div>
             </td>
             <td>
               <span class="num" :class="pnlClass(ep.pnl_per_share)">{{ signedMoney(ep.pnl_per_share) }}</span>

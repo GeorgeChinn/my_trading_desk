@@ -24,7 +24,11 @@ def run_rules_scan() -> dict:
         engine=(rs or {}).get("engine") or "low_golden",
     )
     summary = summarize(rows)
-    buys = [{"code": r["code"], "name": r["name"]} for r in rows if r["status"] == "买入"]
+    buys = [
+        {"code": r["code"], "name": r["name"]}
+        for r in rows
+        if r.get("path_ready") or r.get("status") == "买入"
+    ]
     payload = {
         "bind": bind,
         "by_gate": summary["by_gate"],

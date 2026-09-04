@@ -5,8 +5,6 @@ from typing import Optional
 from ..config import (
     DIF_LOOKBACK,
     GATES,
-    HHV_LOOKBACK,
-    KDJ_HIGH,
     KDJ_LOW,
     POOL_AMOUNT_YI,
     POOL_FLOAT_MCAP_YI,
@@ -316,6 +314,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         "market_regime": market_regime,
         "position_block": "总闸「买入」只表示 RULES 第6条路径到达，不是成交指令",
         "can_upgrade_position": False,
+        "path_ready": False,
         "data_ok": False,
         "index_member": meta.get("index_member") or [],
         "tags": meta.get("tags") or [],
@@ -346,6 +345,11 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
 
     amount = _num(last.get("amount")) or 0.0
     amount_yi = amount / YI
+    if amount_yi <= 0:
+        snap_amt = _num(meta.get("amount_yi"))
+        if snap_amt is not None and snap_amt > 0:
+            amount_yi = snap_amt
+            base["facts"]["amount_from"] = "池子快照"
     close = float(last["close"])
     float_mcap = _num(meta.get("float_mcap_yi"))
     is_st = bool(meta.get("is_st"))
@@ -407,10 +411,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         base["facts"]["pe"] = pe
     if flags.get("pool_need_pe_positive", True):
         if pe is None:
-            if "pe" in meta:
-                pool_fail.append("动态市盈证据不足（亏损票无法核对，排除）")
-            else:
-                base["missing_rules"].append("RULES §3 动态市盈证据不足（当前快照无 pe 字段，同步后按硬闸排除亏损票）")
+            pool_fail.append("动态市盈证据不足（§3 硬条件，排除）")
         elif pe <= 0:
             pool_fail.append(f"动态市盈 {pe:.2f} ≤ 0（亏损票排除）")
         else:
@@ -610,11 +611,13 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     else:
         base["hit_rules"].append("RULES §6：第4节否决全部未命中")
 
-    if buy_cross and buy_hist and near_low is True and zero_ok is True and px6 is True and s4_clear:
-        base["status"] = "买入"
-        base["gate"] = "买入"
+    path_ready = bool(
+        buy_cross and buy_hist and near_low is True and zero_ok is True and px6 is True and s4_clear
+    )
+    base["path_ready"] = path_ready
+    if path_ready:
         base["summary_bucket"] = "符合"
-        base["hit_rules"].append("总闸到达买入（路径匹配，不是成交指令）")
+        base["hit_rules"].append("RULES §6 路径到达。扫描最高停在等待，买入须人工确认，不是成交指令")
     else:
         base["summary_bucket"] = "继续跟踪"
 
@@ -623,24 +626,45 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         if ts_code(str(trade.get("code", ""))) == code and trade.get("direction") in ("开仓", "加仓"):
             open_trade = trade
     if open_trade:
-        dif_down = last.get("dif") is not None and prev and prev.get("dif") is not None and last["dif"] < prev["dif"]
-        hhv = max(_recent(h_line, HHV_LOOKBACK) or [last["high"]])
-        new_high = last["high"] >= hhv
-        kd_dead = _cross_down(k_line, d_line)
-        kd_high = k0 is not None and d0 is not None and min(k0, d0) >= KDJ_HIGH
-        j_prev_max = max(_recent(j_line, 20, skip_last=1) or [None]) if _recent(j_line, 20, skip_last=1) else None
-        kdj_not_new_high = j_line[-1] is not None and j_prev_max is not None and j_line[-1] < j_prev_max
-        kdj_exit = bool((kd_dead and kd_high) or kdj_not_new_high)
-        notes = [
-            f"手工开仓记录存在（仓位 {open_trade.get('position_pct')}%）",
-            f"DIF下行={dif_down} 近20日新高={new_high} KDJ出势={kdj_exit}",
-        ]
-        if dif_down and new_high and kdj_exit:
+        from .exits import evaluate_exit
+
+        series = {
+            "bars": bars,
+            "hist": hist,
+            "dif": dif,
+            "dea": dea,
+            "k": k_line,
+            "d": d_line,
+            "j": j_line,
+            "h": h_line,
+            "c": c_line,
+            "last": last,
+            "prev": prev,
+        }
+        entry_idx = len(bars) - 1
+        trade_date = str(open_trade.get("date") or open_trade.get("buy_date") or "")
+        if trade_date:
+            for idx, row in enumerate(bars):
+                if str(row.get("date")) >= trade_date:
+                    entry_idx = idx
+                    break
+        hit, section, detail = evaluate_exit(series, entry_idx)
+        note = f"手工开仓记录存在（仓位 {open_trade.get('position_pct')}%）"
+        if hit:
             base["status"] = "清仓"
             base["gate"] = "清仓"
-            base["hit_rules"].append("RULES §7 减仓/清仓条件已见：" + "；".join(notes))
+            base["hit_rules"].append(f"RULES §{section} 离场已见：{note}；{detail}")
         else:
-            base["hit_rules"].append("RULES §7 对照未齐：" + "；".join(notes))
+            base["status"] = "买入"
+            base["gate"] = "买入"
+            base["hit_rules"].append("RULES §7 对照未齐，持仓仍按买入闸记录：" + note)
+    elif not person_present:
+        base["risk"].append("人不在场：只输出观察，不升等待/买入")
+        base["status"] = "观察"
+        base["gate"] = "观察"
+        if path_ready:
+            base["summary_bucket"] = "观察"
+        return base
 
     return base
 
