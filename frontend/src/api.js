@@ -47,6 +47,7 @@ export const api = {
   pool: () => request("/api/pool"),
   syncStatus: () => request("/api/sync"),
   startSync: (force = false) => request(`/api/sync?force=${force ? "true" : "false"}`, { method: "POST" }),
+  startHistory: () => request("/api/sync/history", { method: "POST" }),
   sources: () => request("/api/sources"),
   schedule: () => request("/api/schedule"),
   ideas: () => request("/api/ideas"),

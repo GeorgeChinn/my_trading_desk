@@ -25,6 +25,7 @@ from .config import (
 )
 from .engine.bars import attach_indicators, list_csv_files, load_bars, ts_code
 from .engine.cycles import cycles_page
+from .engine.history import backfill_all_ashare
 from .engine.live import pull_one, sync_live
 from .engine.rules_bind import parse_flags, refresh_bind
 from .engine.rulesets import get_ruleset, list_rulesets, public_ruleset
@@ -576,6 +577,22 @@ def sync_start(force: bool = Query(False)):
     _sync_thread = threading.Thread(target=run, daemon=True)
     _sync_thread.start()
     return {"ok": True, "started": True, "message": "已开始：按 RULES §3 筛全部入池股并拉取确认收盘"}
+
+
+@app.post("/api/sync/history")
+def sync_history():
+    global _sync_thread
+    current = load_sync_status()
+    if current.get("state") == "running" and _sync_thread and _sync_thread.is_alive():
+        return {"ok": True, "started": False, "message": "同步已在进行", "status": current}
+
+    def run():
+        with _sync_lock:
+            backfill_all_ashare()
+
+    _sync_thread = threading.Thread(target=run, daemon=True, name="ashare-history")
+    _sync_thread.start()
+    return {"ok": True, "started": True, "message": "已开始补全全 A 近 3 年确认日线。不改规则扫描池。可在本页看进度。"}
 
 
 @app.get("/api/ideas")

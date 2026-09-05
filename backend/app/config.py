@@ -31,6 +31,8 @@ KDJ_LOW = 20.0
 KDJ_HIGH = 80.0
 DIF_LOOKBACK = 20
 HHV_LOOKBACK = 20
+HISTORY_YEARS = 3
+HISTORY_BARS = 800  # ~3 年交易日，不含编造
 
 ALLOWED_STATUS = ("排除", "观察", "等待", "买入", "减仓", "清仓")
 GATES = ("排除", "观察", "等待", "买入", "减仓", "清仓")

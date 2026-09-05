@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import sys
 
 from .config import LAST_SCAN_PATH
 from .engine.live import sync_live
@@ -62,5 +63,16 @@ def main() -> None:
         print("cycles", item["id"], "open", summary.get("open"), "closed", summary.get("closed"))
 
 
+def run_history() -> dict:
+    from .engine.history import backfill_all_ashare
+
+    result = backfill_all_ashare()
+    print(json.dumps({k: result.get(k) for k in ("state", "message", "history_ok", "history_skip", "history_fail", "bars_total", "need_start")}, ensure_ascii=False, indent=2))
+    return result
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] in ("history", "backfill"):
+        run_history()
+    else:
+        main()

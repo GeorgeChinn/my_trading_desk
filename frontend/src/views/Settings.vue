@@ -46,6 +46,7 @@
         <button class="btn" @click="probe">探测后备源</button>
         <button class="btn primary" :disabled="syncing" @click="sync(false)">现在更新确认收盘</button>
         <button class="btn" :disabled="syncing" @click="sync(true)">强制重拉日线</button>
+        <button class="btn" :disabled="syncing" @click="history">补全全A近3年日线</button>
       </div>
       <table class="table" v-if="sources.length">
         <thead><tr><th>源</th><th>用途</th><th>状态</th><th>耗时</th><th>最近确认日</th></tr></thead>
@@ -61,6 +62,7 @@
       </table>
       <p class="sub" style="margin-top:10px">{{ syncText }}</p>
       <div v-if="syncing || barsTotal" class="sub">日线 {{ barsDone }} / {{ barsTotal }}</div>
+      <p class="sub">全A近3年是确认收盘补历史，大约 5000+ 只、每只约 800 根，要较长时间。不改规则扫描池子，失败会跳过不编 K 线。</p>
     </div>
 
     <div class="card" style="margin-top:14px">
@@ -144,6 +146,11 @@ async function saveSchedule() {
 }
 async function sync(force) {
   const r = await api.startSync(force);
+  syncText.value = r.message;
+  startPoll();
+}
+async function history() {
+  const r = await api.startHistory();
   syncText.value = r.message;
   startPoll();
 }

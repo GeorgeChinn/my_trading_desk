@@ -134,6 +134,23 @@ def last_confirmed(bars: list[dict]) -> Optional[dict]:
     return bars[-1] if bars else None
 
 
+def merge_bars(existing: list[dict], incoming: list[dict]) -> list[dict]:
+    """Keep already-confirmed dates; only fill missing dates from incoming."""
+    by_date: dict[str, dict] = {}
+    for row in existing:
+        date = str(row.get("date") or "")[:10]
+        if date:
+            by_date[date] = dict(row)
+    for row in incoming:
+        date = str(row.get("date") or "")[:10]
+        if not date or date in by_date:
+            continue
+        by_date[date] = dict(row)
+    out = list(by_date.values())
+    out.sort(key=lambda item: item.get("date") or "")
+    return out
+
+
 def save_bars_csv(code: str, rows: list[dict], name: str | None = None) -> Path:
     ensure_dirs()
     path = csv_path_for(code)

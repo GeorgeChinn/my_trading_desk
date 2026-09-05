@@ -1,47 +1,30 @@
 {
   "state": "done",
-  "message": "池子 380 只，日线写入 0，跳过 379，失败 1",
-  "step": "done",
-  "funnel": {
-    "listed": 5555,
-    "quote_rows": 5555,
-    "non_st": 5352,
-    "price_ok": 4864,
-    "mcap_ok": 565,
-    "amount_ok": 948,
-    "pool": 380,
-    "preferred": 168,
-    "trade_date": "2026-09-04",
-    "source": "sina+eastmoney",
-    "rules": {
-      "流通市值": "≥ 300 亿",
-      "日成交额": "≥ 5 亿",
-      "股价": "≥ 5 元",
-      "ST": "非 ST、非 *ST",
-      "优先样本": "沪股通 / 沪深300 / 上证50；其他过池股也保留"
-    }
-  },
-  "bars": {
-    "ok": 0,
-    "skip": 379,
-    "fail": 1,
-    "total": 380,
-    "last_bar": ""
-  },
-  "bars_done": 380,
-  "bars_total": 380,
-  "source": "sina+eastmoney",
-  "trade_date": "2026-09-04",
-  "started_at": "2026-09-04 16:30:00",
-  "finished_at": "2026-09-04 16:31:24",
+  "step": "history",
+  "message": "全A近3年完成：写入 5205，已够跳过 0，失败 350 / 5555。规则扫描池未改。",
+  "started_at": "2026-09-05 02:28:27",
+  "finished_at": "2026-09-05 03:41:15",
+  "bars_done": 5555,
+  "bars_total": 5555,
+  "history_ok": 5205,
+  "history_skip": 0,
+  "history_fail": 350,
+  "need_start": "2023-08-17",
+  "history_years": 3,
+  "last_bar": "2026-09-04",
   "log": [
-    "Tushare 池子不可用（抱歉，您没有接口(trade_cal)访问权限，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。），改用新浪/腾讯/东财",
-    "新浪 hs_a 快照 5555 只",
-    "优先样本核对：沪深300 300 / 上证50 50 / 沪股通 0",
-    "RULES §3 入池 380 只（优先样本 168）",
-    "已写入股池 380 只，开始补日线",
-    "日线链：腾讯 → 新浪 → 东财"
+    "全A近3年 4700/5555 写入4547 已够跳过0 失败153",
+    "全A近3年 4800/5555 写入4638 已够跳过0 失败162",
+    "全A近3年 4900/5555 写入4727 已够跳过0 失败173",
+    "全A近3年 5000/5555 写入4814 已够跳过0 失败186",
+    "全A近3年 5100/5555 写入4903 已够跳过0 失败197",
+    "920061 失败：日线源全部失败 tencent:空 | sina:空 | eastmoney:('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+    "全A近3年 5200/5555 写入4993 已够跳过0 失败207",
+    "全A近3年 5300/5555 写入5071 已够跳过0 失败229",
+    "920266 失败：日线源全部失败 tencent:空 | sina:空 | eastmoney:('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+    "全A近3年 5400/5555 写入5136 已够跳过0 失败264",
+    "920033 失败：日线源全部失败 tencent:空 | sina:空 | eastmoney:('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+    "全A近3年 5500/5555 写入5179 已够跳过0 失败321"
   ],
-  "pool_size": 380,
-  "preferred": 168
+  "pool_size": 5555
 }
