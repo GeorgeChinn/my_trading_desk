@@ -62,7 +62,7 @@ def _ret(a, b) -> float | None:
 
 
 def find_structure(bars: list[dict]) -> dict | None:
-    """近 20 日：先强（≥8% 且放量）后接 3～8 日缩量回调。先强段结束日须靠近该段高点。"""
+    """近 20 日：先强收盘涨幅≥12%、段长 5～12 日，后接 4～8 日缩量（日均量≤先强×0.7）。"""
     n = len(bars)
     if n < 25:
         return None
@@ -70,20 +70,22 @@ def find_structure(bars: list[dict]) -> dict | None:
     vols = [_vol(b) for b in bars[win0:]]
     avg20 = sum(vols) / len(vols) if vols else 0.0
     best = None
-    for e in range(n - 4, win0, -1):
+    for e in range(n - 5, win0 + 3, -1):
         pb_len = n - 1 - e
-        if pb_len < 3 or pb_len > 8:
+        if pb_len < 4 or pb_len > 8:
             continue
-        # 从高点往回取最近一段先强（至少 3 根），不要把 20 日窗口里更早的阴跌算进均量
-        for s in range(e - 2, win0 - 1, -1):
+        s_hi = e - 4
+        s_lo = max(win0, e - 11)
+        for s in range(s_hi, s_lo - 1, -1):
             start_c = bars[s].get("close")
             if not start_c:
                 continue
             seg = bars[s : e + 1]
+            run_close_high = max(x["close"] for x in seg)
             run_high = max(x["high"] for x in seg)
-            if run_high < start_c * 1.08:
+            if run_close_high < start_c * 1.12:
                 continue
-            if bars[e]["high"] < run_high * 0.97:
+            if bars[e]["close"] < run_close_high * 0.97:
                 continue
             if avg20 and not any(_vol(x) >= avg20 for x in seg):
                 continue
@@ -92,18 +94,23 @@ def find_structure(bars: list[dict]) -> dict | None:
             vol_dn = sum(_vol(x) for x in pb) / len(pb)
             rally_low = min(x["low"] for x in seg)
             pb_low = min(x["low"] for x in pb)
+            pre0 = max(0, s - 3)
+            pre_low = min(x["low"] for x in bars[pre0:s]) if s > pre0 else bars[s]["low"]
             cand = {
                 "strong_start": s,
                 "strong_end": e,
                 "pb_len": pb_len,
                 "run_high": run_high,
+                "run_close_high": run_close_high,
                 "start_c": start_c,
                 "vol_up": vol_up,
                 "vol_dn": vol_dn,
-                "shrink": vol_dn < vol_up,
+                "shrink": vol_dn <= vol_up * 0.7 + 1e-12,
                 "rally_low": rally_low,
                 "pb_low": pb_low,
-                "gain_pct": (run_high - start_c) / start_c * 100.0,
+                "pre_low": pre_low,
+                "a2_price": pb_low,
+                "gain_pct": (run_close_high - start_c) / start_c * 100.0,
             }
             best = cand
             break
@@ -112,51 +119,49 @@ def find_structure(bars: list[dict]) -> dict | None:
     return best
 
 
+def _within_pct(px, key, pct=0.02) -> bool:
+    if not px or not key:
+        return False
+    return abs(px / key - 1.0) <= pct
+
+
 def _key_zone(bars: list[dict], st: dict) -> dict:
     last = bars[-1]
     close = last["close"]
     low = last["low"]
     closes = [b["close"] for b in bars]
-    ma10 = sma(closes, 10)
     ma20 = sma(closes, 20)
-    m10, m20 = ma10[-1], ma20[-1]
-    m10p = ma10[-2] if len(ma10) > 1 else None
+    m20 = ma20[-1]
     m20p = ma20[-2] if len(ma20) > 1 else None
     strong = bars[st["strong_start"] : st["strong_end"] + 1]
-    pb_low = st["pb_low"]
+    a2 = st.get("a2_price") or st.get("pre_low") or st.get("pb_low")
     ma20_down = m20p is not None and m20 is not None and m20 < m20p
 
-    def was_above(ma_line):
+    def was_above_ma20():
         for i, row in enumerate(strong):
             idx = st["strong_start"] + i
-            mv = ma_line[idx] if idx < len(ma_line) else None
+            mv = ma20[idx] if idx < len(ma20) else None
             if mv and row["close"] >= mv:
                 return True
         return False
 
-    a1_n = None
     a1_px = None
-    a1_gap = None
-    if m10 and m10p is not None and m10 >= m10p and was_above(ma10):
-        a1_n, a1_px, a1_gap = 10, m10, abs(close / m10 - 1)
-    if m20 and m20p is not None and m20 >= m20p and was_above(ma20):
-        gap20 = abs(close / m20 - 1)
-        if a1_px is None or gap20 < (a1_gap or 99):
-            a1_n, a1_px, a1_gap = 20, m20, gap20
-
-    at_a1 = a1_px is not None and a1_gap is not None and a1_gap <= 0.02
-    at_a2 = bool(pb_low) and (abs(close / pb_low - 1) <= 0.02 or abs(low / pb_low - 1) <= 0.02)
-    near_a2 = bool(pb_low) and close >= pb_low * 0.98 and close <= pb_low * 1.08
+    if m20 and m20p is not None and m20 >= m20p and was_above_ma20():
+        a1_px = m20
+    at_a1 = a1_px is not None and (_within_pct(close, a1_px) or _within_pct(low, a1_px))
+    at_a2 = bool(a2) and (_within_pct(close, a2) or _within_pct(low, a2))
 
     kind = None
     price = None
     ma_n = None
-    if at_a2 or (near_a2 and not at_a1):
-        kind, price, ma_n = "A2", pb_low, None
+    if at_a2:
+        kind, price, ma_n = "A2", a2, None
     elif at_a1:
-        kind, price, ma_n = "A1", a1_px, a1_n
-    elif near_a2:
-        kind, price, ma_n = "A2", pb_low, None
+        kind, price, ma_n = "A1", a1_px, 20
+    elif a2:
+        kind, price, ma_n = "A2", a2, None
+    elif a1_px:
+        kind, price, ma_n = "A1", a1_px, 20
 
     return {
         "kind": kind,
@@ -167,10 +172,10 @@ def _key_zone(bars: list[dict], st: dict) -> dict:
         "ma20_down": ma20_down,
         "at_key": bool(at_a1 or at_a2),
         "a1_price": a1_px,
-        "a1_n": a1_n,
-        "a2_price": pb_low,
-        "run_high": st.get("run_high"),
-        "near_a2": near_a2,
+        "a1_n": 20 if a1_px else None,
+        "a2_price": a2,
+        "run_high": st.get("run_close_high") or st.get("run_high"),
+        "near_a2": False,
     }
 
 
@@ -261,15 +266,15 @@ def _stock_vs_board(bars: list[dict], ind: dict | None) -> bool:
 
 
 def _choose_kind(zone: dict) -> tuple[str | None, float | None, int | None]:
-    """只认一种关键位：能写 A2 平台下沿则用 A2（样本止损前低），否则 A1。"""
-    if zone.get("near_a2") and zone.get("a2_price"):
+    """只认一种：现价落在 A2 ±2% 用 A2，落在 20 日线 ±2% 用 A1，否则仍写 A2 平台下沿。"""
+    if zone.get("kind") == "A2" and zone.get("a2_price"):
         return "A2", zone["a2_price"], None
     if zone.get("kind") == "A1" and zone.get("a1_price"):
-        return "A1", zone["a1_price"], zone.get("a1_n")
+        return "A1", zone["a1_price"], 20
     if zone.get("a2_price"):
         return "A2", zone["a2_price"], None
     if zone.get("a1_price"):
-        return "A1", zone["a1_price"], zone.get("a1_n")
+        return "A1", zone["a1_price"], 20
     return None, None, None
 
 
@@ -401,10 +406,10 @@ def classify_s1(
 
     st = find_structure(bars)
     if not st:
-        base["missing_rules"].append("第3条 结构预筛：未见近20日先强后 3～8 日缩量回调")
+        base["missing_rules"].append("第3条 结构预筛：未见近20日先强（收盘≥12%、5～12日）后 4～8 日缩量回调")
         return base
     if not st["shrink"]:
-        base["veto"] = ["回踩不缩量"]
+        base["veto"] = ["回踩不缩量（回调日均量未≤先强×0.7）"]
         return base
     if st["pb_low"] < st["rally_low"] * 0.98:
         base["veto"] = [f"最新低 {st['pb_low']:.2f} < 前低 {st['rally_low']:.2f} × 0.98"]
@@ -420,11 +425,10 @@ def classify_s1(
         return base
 
     at_key = bool(zone.get("at_key"))
-    # 买入日可以离开 ±2% 关键位；观察日必须还在附近
     last = bars[-1]
     decay = []
     if st["shrink"]:
-        decay.append("回调段日均量 < 先强段")
+        decay.append("回调段日均量 ≤ 先强段 × 0.7")
     if _small_or_hammer(last):
         decay.append("触关键位收小阳/十字/长下影")
     prev_low = bars[-2]["low"] if len(bars) > 1 else None
@@ -436,28 +440,29 @@ def classify_s1(
     yang = last["close"] > last["open"]
     pb_vols = [_vol(x) for x in bars[st["strong_end"] + 1 : -1]]
     vol_dn_ex = (sum(pb_vols) / len(pb_vols)) if pb_vols else st["vol_dn"]
-    vol_up = _vol(last) > vol_dn_ex
+    vol_ok = _vol(last) > vol_dn_ex
     stand_a1 = kind == "A1" and last["close"] >= key_px
     stand_a2 = kind == "A2" and last["close"] >= key_px
     vs_board = False
     chg = _ret(bars[-2]["close"], last["close"]) if len(bars) > 1 else None
     if chg is not None and chg > 0 and ind.get("ret_3d") is not None:
         vs_board = chg > (ind["ret_3d"] / 3.0)
-    demand = []
+    b_items = []
     if yang:
-        demand.append("收阳")
-    if vol_up:
-        demand.append("当日量 > 回调段日均量")
+        b_items.append("收阳")
     if stand_a1:
-        demand.append(f"收盘站回{ma_n}日线内侧")
+        b_items.append("收盘站回20日线内侧")
     if stand_a2:
-        demand.append("收盘站回调整低点之上")
+        b_items.append("收盘站回平台下沿之上")
     if vs_board:
-        demand.append("当日涨幅 > 0 且高于所属板块")
-    demand_ready = len(demand) >= 2
+        b_items.append("当日涨幅 > 0 且高于所属板块")
+    demand = (["当日量 > 回调段日均量"] if vol_ok else []) + b_items
+    demand_ready = bool(vol_ok and b_items)
+    if _any_limit(bars, code, 3):
+        demand_ready = False
 
     if not at_key and not demand_ready:
-        base["missing_rules"].append("第3条 现价未落入关键位 ±2%（A1 均线 / A2 调整低点）")
+        base["missing_rules"].append("第3条 现价未落入所写关键位 ±2%（A1=20日线 / A2=平台下沿）")
         return base
 
     base["data_ok"] = True
@@ -480,8 +485,16 @@ def classify_s1(
         return base
     base["hit_rules"].append("第5条 卖压衰减：" + "；".join(decay))
 
+    if _any_limit(bars, code, 3):
+        base["missing_rules"].append("第6条 近3日有涨停，不得买入")
+        return base
     if not demand_ready:
-        base["missing_rules"].append("第6条 需求转强未满 2 项（" + "、".join(demand or ["无"]) + "）")
+        why = "、".join(demand or ["无"])
+        if not vol_ok:
+            why = "缺A：当日量未大于回调段日均量"
+        elif not b_items:
+            why = "有A无B：量已放大，但未见收阳/站回关键位/强于板块"
+        base["missing_rules"].append("第6条 需求转强未齐（" + why + "）")
         return base
     base["hit_rules"].append("第6条 需求转强：" + "；".join(demand))
     base["path_ready"] = True
@@ -544,26 +557,45 @@ def evaluate_exit_s1(bars: list[dict], open_trade: dict | None, zone: dict | Non
 
     code = str(last.get("code") or (open_trade or {}).get("code") or "")
     pct = _limit_pct(code)
-    had_event = False
-    for i in range(entry_idx, len(bars) - 1):
-        if i > 0:
-            prev = bars[i - 1]["close"]
-            if prev and (bars[i]["close"] / prev - 1) >= pct - 0.005:
-                had_event = True
-        if i - 3 >= entry_idx:
-            r3 = _ret(bars[i - 3]["close"], bars[i]["close"])
-            if r3 is not None and r3 >= 25:
-                had_event = True
-    prior_high = max(x["high"] for x in bars[entry_idx : len(bars) - 1])
-    if had_event and last["high"] <= prior_high + 1e-12 and last["close"] < prior_high:
-        return True, "7.2", "持仓后涨停或近3日大涨后，收盘不再创新高"
+    elapsed = len(bars) - 1 - entry_idx
+    hold = bars[entry_idx:]
+    had_limit = False
+    for i in range(entry_idx, len(bars)):
+        if i == 0:
+            continue
+        prev = bars[i - 1]["close"]
+        if prev and (bars[i]["close"] / prev - 1) >= pct - 0.005:
+            had_limit = True
+            break
+    today_limit = False
     if len(bars) >= 2:
-        a, b = bars[-2], bars[-1]
-        if a["close"] < a["open"] and b["close"] < b["open"]:
-            if _vol(a) >= _vol(entry) and _vol(b) >= _vol(entry):
-                return True, "7.2", "连续2日收阴且两日量都 ≥ 买入日量"
-    if avg5 and _vol(last) >= avg5 and last["high"] < prior_high and last["close"] < prior_high:
-        return True, "7.2", "本波高点过后收盘不再创新高，且量 ≥ 近5日均量"
+        prev = bars[-2]["close"]
+        if prev and (last["close"] / prev - 1) >= pct - 0.005:
+            today_limit = True
+
+    if had_limit and elapsed >= 3 and not today_limit:
+        prior_closes = [x["close"] for x in bars[entry_idx : len(bars) - 1]]
+        new_close_high = bool(prior_closes) and last["close"] > max(prior_closes)
+        hold_vols = [_vol(x) for x in hold]
+        avg_hold = sum(hold_vols) / len(hold_vols) if hold_vols else 0
+        order = sorted(range(len(hold_vols)), key=lambda j: hold_vols[j], reverse=True)
+        last_rank = order.index(len(hold) - 1)
+        is_top2 = last_rank <= 1
+        vol_boom = bool(avg_hold and _vol(last) >= avg_hold * 2)
+        if new_close_high and (is_top2 or vol_boom):
+            return True, "7.2", "高潮离场：收盘新高、未涨停、量能居前"
+    if not had_limit:
+        prior_closes = [x["close"] for x in bars[entry_idx : len(bars) - 1]]
+        prior_hi = max(prior_closes) if prior_closes else last["close"]
+        if len(bars) >= 5:
+            r3y = _ret(bars[-5]["close"], bars[-2]["close"])
+            if r3y is not None and r3y >= 25 and last["close"] <= prior_hi:
+                return True, "7.3", "近3日累计涨幅≥25%，下一交易日收盘不再创新高"
+        if len(bars) >= 2:
+            a, b = bars[-2], bars[-1]
+            if a["close"] < a["open"] and b["close"] < b["open"]:
+                if _vol(a) >= _vol(entry) and _vol(b) >= _vol(entry):
+                    return True, "7.3", "连续2日收阴且两日量都 ≥ 买入日量"
     return False, "", ""
 
 

@@ -201,7 +201,9 @@ def _cycle_stats(
         if exit_section == "7.1":
             result = f"{result} · 第7条 失败离场"
         elif exit_section == "7.2":
-            result = f"{result} · 第7条 波段离场"
+            result = f"{result} · 第7条 高潮离场"
+        elif exit_section == "7.3":
+            result = f"{result} · 第7条 备用离场"
         status = "已结束"
     else:
         result = "浮动"

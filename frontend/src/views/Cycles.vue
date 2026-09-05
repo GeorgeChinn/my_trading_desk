@@ -70,7 +70,7 @@
       <button class="btn" @click="page = 1; load()">筛选</button>
     </div>
 
-    <div v-if="!loading && !segments.length" class="empty">{{ emptyText }}</div>
+    <div v-if="!segments.length" class="empty">{{ emptyText }}</div>
     <div v-else class="card table-wrap">
       <table class="table">
         <thead>
@@ -130,13 +130,17 @@ const route = useRoute();
 const router = useRouter();
 const data = ref({ segments: [], summary: {}, rulesets: [], pages: 1 });
 const extraRulesets = ref([]);
-const tab = ref("all");
+const cache = {};
 const q = ref("");
 const sort = ref("default");
 const order = ref("desc");
 const page = ref(1);
 const loading = ref(true);
 const rulesetId = computed(() => String(route.query.ruleset || "rules"));
+const tab = computed(() => {
+  const t = String(route.query.tab || "all");
+  return t === "open" || t === "done" ? t : "all";
+});
 const rulesets = computed(() => (data.value.rulesets && data.value.rulesets.length ? data.value.rulesets : extraRulesets.value));
 const currentRuleset = computed(() => data.value.ruleset || rulesets.value.find((r) => r.id === rulesetId.value) || null);
 const summary = computed(() => data.value.summary || {});
@@ -173,15 +177,30 @@ function pnlClass(v) {
   if (v == null || Number.isNaN(n) || n === 0) return "zero";
   return n > 0 ? "pos" : "neg";
 }
+function applyCache(id) {
+  const hit = cache[id];
+  if (hit) {
+    data.value = hit;
+    return;
+  }
+  data.value = {
+    segments: [],
+    summary: {},
+    rulesets: extraRulesets.value.length ? extraRulesets.value : data.value.rulesets,
+    pages: 1,
+    warming: false,
+    note: "",
+  };
+}
 function switchRuleset(id) {
   page.value = 1;
   showLoading(id === "rules2" ? "正在切换到 RULES2 轨迹…" : "正在切换规则轨迹…");
-  router.replace({ path: "/cycles", query: { ruleset: id } });
+  applyCache(id);
+  router.replace({ path: "/cycles", query: { ruleset: id, tab: "all" } });
 }
 function setTab(t) {
-  tab.value = t;
   page.value = 1;
-  load();
+  router.replace({ path: "/cycles", query: { ruleset: rulesetId.value, tab: t } });
 }
 function stockTitle(row) {
   const code = (row && row.code) || "";
@@ -202,7 +221,7 @@ async function load(silent = false) {
     setLoadingText(rulesetId.value === "rules2" ? "正在读取 RULES2 轨迹…" : "正在读取规则轨迹…");
   }
   try {
-    data.value = await api.cycles(
+    const payload = await api.cycles(
       rulesetId.value,
       {
         tab: tab.value,
@@ -214,24 +233,30 @@ async function load(silent = false) {
       },
       silent
     );
+    data.value = payload;
+    cache[rulesetId.value] = payload;
+    if (payload.rulesets && payload.rulesets.length) extraRulesets.value = payload.rulesets;
     clearPoll();
-    if (data.value && data.value.warming) {
+    if (payload && payload.warming) {
       pollTimer = window.setTimeout(() => load(true), 2000);
     }
   } finally {
     loading.value = false;
   }
 }
-watch(rulesetId, () => {
-  page.value = 1;
-  clearPoll();
-  load(false);
-});
+watch(
+  [rulesetId, tab],
+  () => {
+    page.value = 1;
+    clearPoll();
+    load(false);
+  },
+  { immediate: true }
+);
 onMounted(() => {
   api.rulesets().then((rs) => {
     extraRulesets.value = rs.items || [];
   }).catch(() => {});
-  load(false);
 });
 onUnmounted(clearPoll);
 </script>

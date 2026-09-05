@@ -142,6 +142,7 @@ const route = useRoute();
 const router = useRouter();
 const data = ref({ rows: [], summary: {}, by_gate: {}, names: {}, pool: {}, rulesets: [], boards: [] });
 const extraRulesets = ref([]);
+const cache = {};
 const filter = ref("观察");
 const q = ref("");
 const loading = ref(true);
@@ -228,16 +229,36 @@ function signed(v) {
 function chartLink(code) {
   return { path: "/chart/" + code, query: { ruleset: rulesetId.value } };
 }
+function applyCache(id) {
+  const hit = cache[id];
+  if (hit) {
+    data.value = hit;
+    return;
+  }
+  data.value = {
+    rows: [],
+    summary: {},
+    by_gate: {},
+    names: {},
+    pool: data.value.pool,
+    rulesets: extraRulesets.value.length ? extraRulesets.value : data.value.rulesets,
+    boards: [],
+  };
+}
 function switchRuleset(id) {
   filter.value = "观察";
   showLoading(id === "rules2" ? "正在切换到 RULES2…" : "正在切换规则…");
+  applyCache(id);
   router.replace({ path: "/scan", query: { ruleset: id } });
 }
 async function load() {
   loading.value = true;
   setLoadingText(rulesetId.value === "rules2" ? "正在按 RULES2 先筛板块再扫个股…" : "正在按当前规则扫描…");
   try {
-    data.value = await api.scan(rulesetId.value);
+    const payload = await api.scan(rulesetId.value);
+    data.value = payload;
+    cache[rulesetId.value] = payload;
+    if (payload.rulesets && payload.rulesets.length) extraRulesets.value = payload.rulesets;
   } finally {
     loading.value = false;
   }
