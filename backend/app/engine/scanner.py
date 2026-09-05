@@ -543,7 +543,29 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     else:
         cond_low = True
 
-    if not (cond_macd_watch and cond_kdj_watch and cond_low and cond_kdj_band):
+    if flags.get("wait_need_sector_vs_market", True):
+        from .sector import sector_of
+
+        sec = sector_of(code)
+        if not sec or sec.get("weak") is None:
+            base["missing_rules"].append("RULES §2 板块近3日相对大盘证据不足，本条不挡等待")
+            cond_sector = True
+        elif sec.get("weak") is True:
+            cond_sector = False
+            base["missing_rules"].append(
+                f"RULES §2 板块弱于大盘（{sec.get('board') or sec.get('industry') or '板块'} "
+                f"{sec.get('board_ret_3d_pct')}% / 沪深300 {sec.get('market_ret_3d_pct')}%），不得进入等待/买入"
+            )
+        else:
+            cond_sector = True
+            base["hit_rules"].append(
+                f"RULES §2 板块近3日相对大盘不弱（{sec.get('board') or sec.get('industry')} "
+                f"{sec.get('board_ret_3d_pct')}% / 沪深300 {sec.get('market_ret_3d_pct')}%）"
+            )
+    else:
+        cond_sector = True
+
+    if not (cond_macd_watch and cond_kdj_watch and cond_low and cond_kdj_band and cond_sector):
         return base
 
     # §5 complete → 等待
@@ -651,8 +673,12 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         hit, section, detail = evaluate_exit(series, entry_idx)
         note = f"手工开仓记录存在（仓位 {open_trade.get('position_pct')}%）"
         if hit:
-            base["status"] = "清仓"
-            base["gate"] = "清仓"
+            if section == "7.2":
+                base["status"] = "减仓"
+                base["gate"] = "减仓"
+            else:
+                base["status"] = "清仓"
+                base["gate"] = "清仓"
             base["hit_rules"].append(f"RULES §{section} 离场已见：{note}；{detail}")
         else:
             base["status"] = "买入"

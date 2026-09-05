@@ -12,9 +12,7 @@ from ..store import read_json, write_json
 BIND_PATH = DATA_DIR / "rules_bind.json"
 
 # Phrases the scanner does not execute yet.
-UNIMPLEMENTED = (
-    ("板块近3日相对大盘", ("相对大盘", "近 3 个交易日", "近3个交易日")),
-)
+UNIMPLEMENTED = ()
 
 
 def _text() -> str:
@@ -34,6 +32,7 @@ def _section(text: str, num: str) -> str:
 
 def parse_flags(text: str | None = None) -> dict:
     raw = text if text is not None else _text()
+    s2 = _section(raw, "2")
     s3 = _section(raw, "3")
     s4 = _section(raw, "4")
     s5 = _section(raw, "5")
@@ -51,6 +50,7 @@ def parse_flags(text: str | None = None) -> dict:
         "veto_ma30_down": "MA30" in s4,
         "wait_need_kdj_band": ("J < 80" in s5 or "J<80" in s5)
         and ("K ≤ 50" in s5 or "K <= 50" in s5 or "K≤50" in s5),
+        "wait_need_sector_vs_market": "相对大盘" in s2 or "近 3 个交易日" in s2 or "近3个交易日" in s2,
     }
 
 

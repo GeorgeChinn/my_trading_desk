@@ -6,12 +6,13 @@
     "float_mcap_yi": 9034.89,
     "amount_yi": 173.78,
     "close": 814.0,
+    "pe": 83.061,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -21,12 +22,13 @@
     "float_mcap_yi": 1140.09,
     "amount_yi": 137.08,
     "close": 77.72,
+    "pe": 47.419,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -36,13 +38,14 @@
     "float_mcap_yi": 2819.85,
     "amount_yi": 123.93,
     "close": 37.47,
+    "pe": 30.218,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -52,13 +55,14 @@
     "float_mcap_yi": 2494.27,
     "amount_yi": 113.12,
     "close": 371.88,
+    "pe": 149.952,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -68,13 +72,14 @@
     "float_mcap_yi": 3316.15,
     "amount_yi": 94.2,
     "close": 137.5,
+    "pe": 98.921,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -84,13 +89,14 @@
     "float_mcap_yi": 6741.31,
     "amount_yi": 90.48,
     "close": 1072.0,
+    "pe": 217.444,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -100,12 +106,13 @@
     "float_mcap_yi": 1595.78,
     "amount_yi": 89.39,
     "close": 40.18,
+    "pe": 48.922,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -115,12 +122,13 @@
     "float_mcap_yi": 1008.75,
     "amount_yi": 86.18,
     "close": 35.27,
+    "pe": 59.851,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -130,12 +138,13 @@
     "float_mcap_yi": 12638.7,
     "amount_yi": 83.37,
     "close": 63.69,
+    "pe": 35.781,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -145,12 +154,13 @@
     "float_mcap_yi": 14953.29,
     "amount_yi": 80.2,
     "close": 351.0,
+    "pe": 21.747,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -160,12 +170,13 @@
     "float_mcap_yi": 1205.35,
     "amount_yi": 80.01,
     "close": 67.36,
+    "pe": 77.425,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -175,12 +186,13 @@
     "float_mcap_yi": 3977.52,
     "amount_yi": 61.3,
     "close": 54.3,
+    "pe": 23.712,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -190,13 +202,14 @@
     "float_mcap_yi": 2148.72,
     "amount_yi": 60.63,
     "close": 187.7,
+    "pe": 95.279,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -206,13 +219,14 @@
     "float_mcap_yi": 16626.09,
     "amount_yi": 60.23,
     "close": 1330.0,
+    "pe": 20.256,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -222,13 +236,14 @@
     "float_mcap_yi": 6870.7,
     "amount_yi": 59.39,
     "close": 33.35,
+    "pe": 17.103,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -238,12 +253,13 @@
     "float_mcap_yi": 1984.1,
     "amount_yi": 54.2,
     "close": 5.61,
+    "pe": 35.063,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -253,12 +269,13 @@
     "float_mcap_yi": 2564.64,
     "amount_yi": 48.54,
     "close": 19.15,
+    "pe": 25.033,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -268,12 +285,13 @@
     "float_mcap_yi": 1403.85,
     "amount_yi": 47.55,
     "close": 88.43,
+    "pe": 13.501,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -283,13 +301,14 @@
     "float_mcap_yi": 6208.42,
     "amount_yi": 45.74,
     "close": 58.24,
+    "pe": 7.583,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -299,13 +318,14 @@
     "float_mcap_yi": 3160.32,
     "amount_yi": 44.34,
     "close": 335.42,
+    "pe": 98.653,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -315,12 +335,13 @@
     "float_mcap_yi": 4627.28,
     "amount_yi": 43.9,
     "close": 638.17,
+    "pe": 83.48,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -330,12 +351,13 @@
     "float_mcap_yi": 1369.87,
     "amount_yi": 40.66,
     "close": 37.9,
+    "pe": 40.319,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -345,13 +367,14 @@
     "float_mcap_yi": 3804.65,
     "amount_yi": 39.84,
     "close": 153.83,
+    "pe": 22.96,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -361,13 +384,14 @@
     "float_mcap_yi": 3408.22,
     "amount_yi": 39.21,
     "close": 27.99,
+    "pe": 14.281,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -377,13 +401,14 @@
     "float_mcap_yi": 2422.27,
     "amount_yi": 38.48,
     "close": 121.14,
+    "pe": 192.286,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -393,12 +418,13 @@
     "float_mcap_yi": 2026.87,
     "amount_yi": 38.32,
     "close": 108.4,
+    "pe": 79.124,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -408,13 +434,14 @@
     "float_mcap_yi": 8600.21,
     "amount_yi": 35.17,
     "close": 41.69,
+    "pe": 7.314,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -424,12 +451,13 @@
     "float_mcap_yi": 973.27,
     "amount_yi": 35.13,
     "close": 222.0,
+    "pe": 37.248,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -439,12 +467,13 @@
     "float_mcap_yi": 1442.44,
     "amount_yi": 33.51,
     "close": 43.97,
+    "pe": 15.267,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -454,13 +483,14 @@
     "float_mcap_yi": 5663.71,
     "amount_yi": 33.25,
     "close": 243.67,
+    "pe": 221.518,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -470,12 +500,13 @@
     "float_mcap_yi": 2793.91,
     "amount_yi": 32.41,
     "close": 71.98,
+    "pe": 31.203,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -485,13 +516,14 @@
     "float_mcap_yi": 2431.12,
     "amount_yi": 28.3,
     "close": 77.66,
+    "pe": 19.464,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -501,13 +533,14 @@
     "float_mcap_yi": 1209.8,
     "amount_yi": 28.13,
     "close": 82.69,
+    "pe": 55.497,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -517,12 +550,13 @@
     "float_mcap_yi": 1745.47,
     "amount_yi": 27.01,
     "close": 35.14,
+    "pe": 44.481,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -532,12 +566,13 @@
     "float_mcap_yi": 537.8,
     "amount_yi": 26.74,
     "close": 127.16,
+    "pe": 162.963,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -547,12 +582,13 @@
     "float_mcap_yi": 1330.79,
     "amount_yi": 26.69,
     "close": 26.85,
+    "pe": 21.142,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -562,12 +598,13 @@
     "float_mcap_yi": 389.03,
     "amount_yi": 25.55,
     "close": 135.08,
+    "pe": 145.247,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -577,13 +614,14 @@
     "float_mcap_yi": 3226.76,
     "amount_yi": 25.51,
     "close": 18.48,
+    "pe": 19.453,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -593,12 +631,13 @@
     "float_mcap_yi": 1331.93,
     "amount_yi": 25.43,
     "close": 33.07,
+    "pe": 28.265,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -608,12 +647,13 @@
     "float_mcap_yi": 504.88,
     "amount_yi": 23.24,
     "close": 30.34,
+    "pe": 126.417,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -623,12 +663,13 @@
     "float_mcap_yi": 951.71,
     "amount_yi": 22.96,
     "close": 45.86,
+    "pe": 22.155,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -638,13 +679,14 @@
     "float_mcap_yi": 2935.62,
     "amount_yi": 22.61,
     "close": 46.02,
+    "pe": 38.672,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -654,12 +696,13 @@
     "float_mcap_yi": 2206.54,
     "amount_yi": 22.02,
     "close": 331.8,
+    "pe": 67.576,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -669,12 +712,13 @@
     "float_mcap_yi": 584.91,
     "amount_yi": 21.05,
     "close": 41.19,
+    "pe": 43.62,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -684,12 +728,13 @@
     "float_mcap_yi": 669.3,
     "amount_yi": 20.45,
     "close": 45.35,
+    "pe": 161.964,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -699,13 +744,14 @@
     "float_mcap_yi": 2016.58,
     "amount_yi": 20.36,
     "close": 16.06,
+    "pe": 8.07,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -715,13 +761,14 @@
     "float_mcap_yi": 1690.55,
     "amount_yi": 19.93,
     "close": 26.86,
+    "pe": 14.678,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -731,13 +778,14 @@
     "float_mcap_yi": 21919.47,
     "amount_yi": 19.88,
     "close": 8.13,
+    "pe": 8.13,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -747,12 +795,13 @@
     "float_mcap_yi": 913.29,
     "amount_yi": 19.65,
     "close": 15.36,
+    "pe": 19.333,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -762,13 +811,14 @@
     "float_mcap_yi": 1066.05,
     "amount_yi": 19.58,
     "close": 54.6,
+    "pe": 31.499,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -778,13 +828,14 @@
     "float_mcap_yi": 6953.87,
     "amount_yi": 19.42,
     "close": 28.42,
+    "pe": 20.155,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -794,12 +845,13 @@
     "float_mcap_yi": 1550.31,
     "amount_yi": 18.62,
     "close": 19.2,
+    "pe": 25.946,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -809,12 +861,13 @@
     "float_mcap_yi": 1240.91,
     "amount_yi": 18.37,
     "close": 25.6,
+    "pe": 25.098,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -824,13 +877,14 @@
     "float_mcap_yi": 2341.69,
     "amount_yi": 18.16,
     "close": 34.21,
+    "pe": 6.153,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -840,13 +894,14 @@
     "float_mcap_yi": 3855.87,
     "amount_yi": 18.05,
     "close": 18.22,
+    "pe": 5.266,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -856,12 +911,13 @@
     "float_mcap_yi": 1308.84,
     "amount_yi": 17.92,
     "close": 35.46,
+    "pe": 34.427,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -871,12 +927,13 @@
     "float_mcap_yi": 3047.7,
     "amount_yi": 17.89,
     "close": 87.4,
+    "pe": 24.413,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -886,12 +943,13 @@
     "float_mcap_yi": 1067.12,
     "amount_yi": 17.73,
     "close": 40.04,
+    "pe": 166.833,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -901,13 +959,14 @@
     "float_mcap_yi": 22219.4,
     "amount_yi": 17.65,
     "close": 6.96,
+    "pe": 8.923,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -917,12 +976,13 @@
     "float_mcap_yi": 2057.04,
     "amount_yi": 17.07,
     "close": 169.91,
+    "pe": 25.304,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -932,13 +992,14 @@
     "float_mcap_yi": 1127.51,
     "amount_yi": 16.82,
     "close": 242.99,
+    "pe": 61.207,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -948,13 +1009,14 @@
     "float_mcap_yi": 1495.19,
     "amount_yi": 16.78,
     "close": 122.56,
+    "pe": 12.209,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -964,12 +1026,13 @@
     "float_mcap_yi": 628.45,
     "amount_yi": 16.4,
     "close": 5.25,
+    "pe": 58.333,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -979,13 +1042,14 @@
     "float_mcap_yi": 13847.29,
     "amount_yi": 15.97,
     "close": 6.57,
+    "pe": 8.878,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -995,12 +1059,13 @@
     "float_mcap_yi": 6029.27,
     "amount_yi": 15.7,
     "close": 87.57,
+    "pe": 15.098,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1010,12 +1075,13 @@
     "float_mcap_yi": 594.66,
     "amount_yi": 15.56,
     "close": 49.09,
+    "pe": 61.363,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1025,12 +1091,13 @@
     "float_mcap_yi": 718.61,
     "amount_yi": 15.24,
     "close": 38.07,
+    "pe": 11.398,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1040,13 +1107,14 @@
     "float_mcap_yi": 968.66,
     "amount_yi": 15.02,
     "close": 80.25,
+    "pe": 23.813,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1056,12 +1124,13 @@
     "float_mcap_yi": 1789.34,
     "amount_yi": 14.91,
     "close": 24.4,
+    "pe": 15.641,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1071,13 +1140,14 @@
     "float_mcap_yi": 1276.76,
     "amount_yi": 14.82,
     "close": 9.67,
+    "pe": 13.068,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1087,12 +1157,13 @@
     "float_mcap_yi": 1310.7,
     "amount_yi": 14.74,
     "close": 22.2,
+    "pe": 13.214,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1102,12 +1173,13 @@
     "float_mcap_yi": 1298.19,
     "amount_yi": 14.69,
     "close": 62.25,
+    "pe": 5.353,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1117,12 +1189,13 @@
     "float_mcap_yi": 1175.67,
     "amount_yi": 14.66,
     "close": 79.92,
+    "pe": 10.859,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1132,12 +1205,13 @@
     "float_mcap_yi": 732.44,
     "amount_yi": 14.41,
     "close": 8.14,
+    "pe": 14.281,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1147,12 +1221,13 @@
     "float_mcap_yi": 1924.69,
     "amount_yi": 14.4,
     "close": 83.29,
+    "pe": 51.733,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1162,12 +1237,13 @@
     "float_mcap_yi": 736.41,
     "amount_yi": 14.3,
     "close": 23.41,
+    "pe": 20.535,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1177,12 +1253,13 @@
     "float_mcap_yi": 588.28,
     "amount_yi": 13.99,
     "close": 17.49,
+    "pe": 27.461,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1192,12 +1269,13 @@
     "float_mcap_yi": 771.13,
     "amount_yi": 13.83,
     "close": 49.52,
+    "pe": 13.457,
     "is_st": false,
     "index_member": [
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1207,12 +1285,13 @@
     "float_mcap_yi": 796.28,
     "amount_yi": 13.8,
     "close": 45.82,
+    "pe": 28.46,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1222,27 +1301,13 @@
     "float_mcap_yi": 927.93,
     "amount_yi": 13.68,
     "close": 7.34,
+    "pe": 21.588,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "000876",
-    "ts_code": "000876.SZ",
-    "name": "新 希 望",
-    "float_mcap_yi": 346.5,
-    "amount_yi": 13.6,
-    "close": 7.7,
-    "is_st": false,
-    "index_member": [
-      "沪深300"
-    ],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1252,12 +1317,13 @@
     "float_mcap_yi": 370.12,
     "amount_yi": 13.6,
     "close": 191.92,
+    "pe": 74.1,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1267,13 +1333,14 @@
     "float_mcap_yi": 1397.95,
     "amount_yi": 13.59,
     "close": 38.67,
+    "pe": 62.101,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1283,12 +1350,13 @@
     "float_mcap_yi": 1410.19,
     "amount_yi": 13.3,
     "close": 26.65,
+    "pe": 16.639,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1298,13 +1366,14 @@
     "float_mcap_yi": 3931.01,
     "amount_yi": 13.11,
     "close": 5.42,
+    "pe": 7.425,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1314,12 +1383,13 @@
     "float_mcap_yi": 3154.37,
     "amount_yi": 13.1,
     "close": 34.87,
+    "pe": 22.555,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1329,13 +1399,14 @@
     "float_mcap_yi": 953.97,
     "amount_yi": 13.02,
     "close": 18.88,
+    "pe": 16.262,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1345,12 +1416,13 @@
     "float_mcap_yi": 2148.93,
     "amount_yi": 12.96,
     "close": 38.98,
+    "pe": 7.496,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1360,12 +1432,13 @@
     "float_mcap_yi": 1184.01,
     "amount_yi": 12.96,
     "close": 5.6,
+    "pe": 7.179,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1375,12 +1448,13 @@
     "float_mcap_yi": 510.5,
     "amount_yi": 12.94,
     "close": 33.83,
+    "pe": 47.648,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1390,12 +1464,13 @@
     "float_mcap_yi": 628.56,
     "amount_yi": 12.86,
     "close": 8.98,
+    "pe": 224.5,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1405,13 +1480,14 @@
     "float_mcap_yi": 1934.58,
     "amount_yi": 12.83,
     "close": 7.42,
+    "pe": 6.87,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1421,12 +1497,13 @@
     "float_mcap_yi": 658.01,
     "amount_yi": 12.59,
     "close": 23.7,
+    "pe": 57.122,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1436,13 +1513,14 @@
     "float_mcap_yi": 8156.58,
     "amount_yi": 12.42,
     "close": 39.17,
+    "pe": 7.187,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1452,13 +1530,14 @@
     "float_mcap_yi": 2403.36,
     "amount_yi": 12.18,
     "close": 17.87,
+    "pe": 10.27,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1468,12 +1547,13 @@
     "float_mcap_yi": 1376.04,
     "amount_yi": 11.95,
     "close": 18.54,
+    "pe": 13.733,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1483,42 +1563,13 @@
     "float_mcap_yi": 567.43,
     "amount_yi": 11.94,
     "close": 25.07,
+    "pe": 21.8,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "600588",
-    "ts_code": "600588.SH",
-    "name": "用友网络",
-    "float_mcap_yi": 348.19,
-    "amount_yi": 11.93,
-    "close": 10.19,
-    "is_st": false,
-    "index_member": [
-      "沪深300"
-    ],
-    "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688126",
-    "ts_code": "688126.SH",
-    "name": "沪硅产业",
-    "float_mcap_yi": 645.54,
-    "amount_yi": 11.69,
-    "close": 22.59,
-    "is_st": false,
-    "index_member": [
-      "沪深300"
-    ],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1528,12 +1579,13 @@
     "float_mcap_yi": 1429.7,
     "amount_yi": 11.29,
     "close": 59.31,
+    "pe": 31.717,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1543,13 +1595,14 @@
     "float_mcap_yi": 1429.2,
     "amount_yi": 10.98,
     "close": 19.56,
+    "pe": 11.306,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1559,12 +1612,13 @@
     "float_mcap_yi": 516.84,
     "amount_yi": 10.85,
     "close": 163.02,
+    "pe": 51.589,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1574,12 +1628,13 @@
     "float_mcap_yi": 397.07,
     "amount_yi": 10.8,
     "close": 48.27,
+    "pe": 321.8,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1589,12 +1644,13 @@
     "float_mcap_yi": 865.04,
     "amount_yi": 10.79,
     "close": 39.5,
+    "pe": 109.722,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1604,12 +1660,13 @@
     "float_mcap_yi": 643.46,
     "amount_yi": 10.79,
     "close": 106.92,
+    "pe": 120.664,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1619,12 +1676,13 @@
     "float_mcap_yi": 1078.47,
     "amount_yi": 10.37,
     "close": 51.04,
+    "pe": 25.267,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1634,12 +1692,13 @@
     "float_mcap_yi": 1285.27,
     "amount_yi": 10.35,
     "close": 21.56,
+    "pe": 25.7,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1649,12 +1708,13 @@
     "float_mcap_yi": 998.96,
     "amount_yi": 10.3,
     "close": 33.41,
+    "pe": 13.0,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1664,13 +1724,14 @@
     "float_mcap_yi": 18086.7,
     "amount_yi": 10.27,
     "close": 11.17,
+    "pe": 12.988,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1680,12 +1741,13 @@
     "float_mcap_yi": 417.17,
     "amount_yi": 9.93,
     "close": 22.03,
+    "pe": 33.892,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1695,12 +1757,13 @@
     "float_mcap_yi": 618.22,
     "amount_yi": 9.9,
     "close": 6.97,
+    "pe": 87.125,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1710,12 +1773,13 @@
     "float_mcap_yi": 305.02,
     "amount_yi": 9.75,
     "close": 18.67,
+    "pe": 14.144,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1725,12 +1789,13 @@
     "float_mcap_yi": 1359.27,
     "amount_yi": 9.74,
     "close": 22.0,
+    "pe": 10.377,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1740,12 +1805,13 @@
     "float_mcap_yi": 2253.54,
     "amount_yi": 9.74,
     "close": 12.28,
+    "pe": 6.977,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1755,12 +1821,13 @@
     "float_mcap_yi": 2307.34,
     "amount_yi": 9.7,
     "close": 11.89,
+    "pe": 5.744,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1770,12 +1837,13 @@
     "float_mcap_yi": 1714.6,
     "amount_yi": 9.69,
     "close": 9.08,
+    "pe": 20.044,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1785,12 +1853,13 @@
     "float_mcap_yi": 751.1,
     "amount_yi": 9.66,
     "close": 56.55,
+    "pe": 113.577,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1800,13 +1869,14 @@
     "float_mcap_yi": 7851.38,
     "amount_yi": 9.46,
     "close": 47.61,
+    "pe": 17.898,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1816,13 +1886,14 @@
     "float_mcap_yi": 1694.88,
     "amount_yi": 9.35,
     "close": 20.0,
+    "pe": 20.338,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1832,12 +1903,13 @@
     "float_mcap_yi": 927.13,
     "amount_yi": 9.2,
     "close": 27.54,
+    "pe": 17.43,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1847,13 +1919,14 @@
     "float_mcap_yi": 5192.44,
     "amount_yi": 9.18,
     "close": 5.48,
+    "pe": 20.916,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1863,12 +1936,13 @@
     "float_mcap_yi": 525.03,
     "amount_yi": 9.13,
     "close": 88.0,
+    "pe": 20.23,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1878,12 +1952,13 @@
     "float_mcap_yi": 2543.97,
     "amount_yi": 8.75,
     "close": 26.24,
+    "pe": 15.168,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1893,12 +1968,13 @@
     "float_mcap_yi": 555.94,
     "amount_yi": 8.68,
     "close": 25.87,
+    "pe": 12.319,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1908,29 +1984,14 @@
     "float_mcap_yi": 1365.54,
     "amount_yi": 8.63,
     "close": 48.26,
+    "pe": 38.302,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "601012",
-    "ts_code": "601012.SH",
-    "name": "隆基绿能",
-    "float_mcap_yi": 891.94,
-    "amount_yi": 8.36,
-    "close": 11.77,
-    "is_st": false,
-    "index_member": [
-      "沪深300",
-      "上证50"
-    ],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1940,12 +2001,13 @@
     "float_mcap_yi": 2276.79,
     "amount_yi": 8.25,
     "close": 34.5,
+    "pe": 8.042,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1955,13 +2017,14 @@
     "float_mcap_yi": 1818.66,
     "amount_yi": 8.22,
     "close": 22.71,
+    "pe": 21.837,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1971,12 +2034,13 @@
     "float_mcap_yi": 1053.38,
     "amount_yi": 8.19,
     "close": 10.98,
+    "pe": 8.446,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -1986,12 +2050,13 @@
     "float_mcap_yi": 894.87,
     "amount_yi": 7.96,
     "close": 108.58,
+    "pe": 47.623,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2001,12 +2066,13 @@
     "float_mcap_yi": 492.31,
     "amount_yi": 7.81,
     "close": 31.57,
+    "pe": 31.257,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2016,12 +2082,13 @@
     "float_mcap_yi": 1250.45,
     "amount_yi": 7.8,
     "close": 17.25,
+    "pe": 6.485,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2031,12 +2098,13 @@
     "float_mcap_yi": 2836.27,
     "amount_yi": 7.78,
     "close": 7.99,
+    "pe": 7.61,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2046,12 +2114,13 @@
     "float_mcap_yi": 523.41,
     "amount_yi": 7.37,
     "close": 62.08,
+    "pe": 36.366,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2061,12 +2130,13 @@
     "float_mcap_yi": 1100.37,
     "amount_yi": 7.26,
     "close": 86.42,
+    "pe": 24.621,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2076,12 +2146,13 @@
     "float_mcap_yi": 3140.74,
     "amount_yi": 7.12,
     "close": 9.43,
+    "pe": 6.204,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2091,12 +2162,13 @@
     "float_mcap_yi": 413.38,
     "amount_yi": 6.98,
     "close": 101.17,
+    "pe": 15.077,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2106,12 +2178,13 @@
     "float_mcap_yi": 572.74,
     "amount_yi": 6.97,
     "close": 20.83,
+    "pe": 13.327,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2121,12 +2194,13 @@
     "float_mcap_yi": 991.08,
     "amount_yi": 6.95,
     "close": 33.9,
+    "pe": 18.07,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2136,12 +2210,13 @@
     "float_mcap_yi": 972.47,
     "amount_yi": 6.92,
     "close": 6.32,
+    "pe": 3.901,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2151,12 +2226,13 @@
     "float_mcap_yi": 1186.4,
     "amount_yi": 6.81,
     "close": 75.62,
+    "pe": 30.74,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2166,12 +2242,13 @@
     "float_mcap_yi": 813.99,
     "amount_yi": 6.77,
     "close": 120.41,
+    "pe": 14.181,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2181,12 +2258,13 @@
     "float_mcap_yi": 738.4,
     "amount_yi": 6.69,
     "close": 44.62,
+    "pe": 17.295,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2196,12 +2274,13 @@
     "float_mcap_yi": 692.42,
     "amount_yi": 6.65,
     "close": 9.27,
+    "pe": 14.262,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2211,12 +2290,13 @@
     "float_mcap_yi": 905.48,
     "amount_yi": 6.42,
     "close": 100.3,
+    "pe": 15.795,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2226,12 +2306,13 @@
     "float_mcap_yi": 1481.16,
     "amount_yi": 6.32,
     "close": 11.98,
+    "pe": 6.807,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2241,12 +2322,13 @@
     "float_mcap_yi": 491.44,
     "amount_yi": 6.19,
     "close": 89.7,
+    "pe": 815.455,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2256,12 +2338,13 @@
     "float_mcap_yi": 966.14,
     "amount_yi": 6.11,
     "close": 14.62,
+    "pe": 731.0,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2271,12 +2354,13 @@
     "float_mcap_yi": 514.7,
     "amount_yi": 6.07,
     "close": 5.96,
+    "pe": 18.855,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2286,12 +2370,13 @@
     "float_mcap_yi": 957.77,
     "amount_yi": 6.01,
     "close": 5.37,
+    "pe": 13.358,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2301,12 +2386,13 @@
     "float_mcap_yi": 1520.49,
     "amount_yi": 5.8,
     "close": 6.25,
+    "pe": 13.587,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2316,12 +2402,13 @@
     "float_mcap_yi": 815.7,
     "amount_yi": 5.79,
     "close": 26.86,
+    "pe": 12.154,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2331,12 +2418,13 @@
     "float_mcap_yi": 1642.11,
     "amount_yi": 5.79,
     "close": 25.28,
+    "pe": 23.193,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2346,42 +2434,13 @@
     "float_mcap_yi": 667.67,
     "amount_yi": 5.72,
     "close": 8.39,
+    "pe": 23.999,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "002129",
-    "ts_code": "002129.SZ",
-    "name": "TCL中环",
-    "float_mcap_yi": 369.22,
-    "amount_yi": 5.6,
-    "close": 9.14,
-    "is_st": false,
-    "index_member": [
-      "沪深300"
-    ],
-    "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "300782",
-    "ts_code": "300782.SZ",
-    "name": "卓胜微",
-    "float_mcap_yi": 327.78,
-    "amount_yi": 5.59,
-    "close": 71.48,
-    "is_st": false,
-    "index_member": [
-      "沪深300"
-    ],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2391,12 +2450,13 @@
     "float_mcap_yi": 717.4,
     "amount_yi": 5.52,
     "close": 34.22,
+    "pe": 33.424,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2406,12 +2466,13 @@
     "float_mcap_yi": 1338.84,
     "amount_yi": 5.52,
     "close": 19.02,
+    "pe": 18.832,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2421,12 +2482,13 @@
     "float_mcap_yi": 1389.27,
     "amount_yi": 5.46,
     "close": 15.18,
+    "pe": 11.244,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2436,13 +2498,14 @@
     "float_mcap_yi": 4952.78,
     "amount_yi": 5.44,
     "close": 6.38,
+    "pe": 17.722,
     "is_st": false,
     "index_member": [
       "沪深300",
       "上证50"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2452,12 +2515,13 @@
     "float_mcap_yi": 1912.58,
     "amount_yi": 5.41,
     "close": 34.4,
+    "pe": 27.967,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2467,12 +2531,13 @@
     "float_mcap_yi": 1346.28,
     "amount_yi": 5.34,
     "close": 14.38,
+    "pe": 159.778,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2482,12 +2547,13 @@
     "float_mcap_yi": 711.17,
     "amount_yi": 5.29,
     "close": 17.88,
+    "pe": 11.61,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2497,12 +2563,13 @@
     "float_mcap_yi": 1013.85,
     "amount_yi": 5.11,
     "close": 24.0,
+    "pe": 229.885,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2512,12 +2579,13 @@
     "float_mcap_yi": 3623.83,
     "amount_yi": 5.1,
     "close": 8.89,
+    "pe": 7.408,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2527,12 +2595,13 @@
     "float_mcap_yi": 385.26,
     "amount_yi": 5.06,
     "close": 30.9,
+    "pe": 14.797,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2542,27 +2611,13 @@
     "float_mcap_yi": 1148.31,
     "amount_yi": 5.03,
     "close": 57.33,
+    "pe": 16.059,
     "is_st": false,
     "index_member": [
       "沪深300"
     ],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "601111",
-    "ts_code": "601111.SH",
-    "name": "中国国航",
-    "float_mcap_yi": 681.99,
-    "amount_yi": 5.03,
-    "close": 5.86,
-    "is_st": false,
-    "index_member": [
-      "沪深300"
-    ],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2572,10 +2627,11 @@
     "float_mcap_yi": 4841.38,
     "amount_yi": 117.22,
     "close": 386.0,
+    "pe": 40.166,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2585,10 +2641,11 @@
     "float_mcap_yi": 2467.67,
     "amount_yi": 111.25,
     "close": 54.8,
+    "pe": 1826.667,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2598,10 +2655,11 @@
     "float_mcap_yi": 1526.66,
     "amount_yi": 101.64,
     "close": 62.22,
+    "pe": 56.564,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2611,10 +2669,11 @@
     "float_mcap_yi": 2706.82,
     "amount_yi": 98.33,
     "close": 248.7,
+    "pe": 95.809,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2624,10 +2683,11 @@
     "float_mcap_yi": 485.87,
     "amount_yi": 86.54,
     "close": 13.97,
+    "pe": 221.746,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2637,10 +2697,11 @@
     "float_mcap_yi": 2476.94,
     "amount_yi": 84.84,
     "close": 178.67,
+    "pe": 226.165,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2650,10 +2711,11 @@
     "float_mcap_yi": 946.07,
     "amount_yi": 74.14,
     "close": 96.34,
+    "pe": 74.108,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2663,10 +2725,11 @@
     "float_mcap_yi": 470.5,
     "amount_yi": 72.72,
     "close": 21.2,
+    "pe": 794.007,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2676,10 +2739,11 @@
     "float_mcap_yi": 911.32,
     "amount_yi": 68.47,
     "close": 223.5,
+    "pe": 1015.909,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2689,10 +2753,11 @@
     "float_mcap_yi": 317.7,
     "amount_yi": 56.82,
     "close": 58.26,
+    "pe": 105.658,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2702,10 +2767,11 @@
     "float_mcap_yi": 2143.98,
     "amount_yi": 56.26,
     "close": 111.5,
+    "pe": 56.101,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2715,10 +2781,11 @@
     "float_mcap_yi": 545.89,
     "amount_yi": 55.51,
     "close": 13.09,
+    "pe": 119.0,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2728,10 +2795,11 @@
     "float_mcap_yi": 724.25,
     "amount_yi": 53.39,
     "close": 63.91,
+    "pe": 118.352,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2741,10 +2809,11 @@
     "float_mcap_yi": 1226.29,
     "amount_yi": 53.37,
     "close": 252.9,
+    "pe": 74.822,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2754,10 +2823,11 @@
     "float_mcap_yi": 1244.4,
     "amount_yi": 52.65,
     "close": 254.23,
+    "pe": 119.92,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2767,23 +2837,11 @@
     "float_mcap_yi": 739.35,
     "amount_yi": 52.03,
     "close": 164.85,
+    "pe": 139.703,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "300418",
-    "ts_code": "300418.SZ",
-    "name": "昆仑万维",
-    "float_mcap_yi": 533.56,
-    "amount_yi": 49.44,
-    "close": 45.43,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2793,10 +2851,11 @@
     "float_mcap_yi": 519.13,
     "amount_yi": 49.33,
     "close": 188.37,
+    "pe": 200.394,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2806,10 +2865,11 @@
     "float_mcap_yi": 1899.1,
     "amount_yi": 48.01,
     "close": 219.5,
+    "pe": 43.812,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2819,10 +2879,11 @@
     "float_mcap_yi": 862.98,
     "amount_yi": 47.8,
     "close": 56.87,
+    "pe": 71.088,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2832,10 +2893,11 @@
     "float_mcap_yi": 1081.91,
     "amount_yi": 47.47,
     "close": 31.7,
+    "pe": 36.989,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2845,10 +2907,11 @@
     "float_mcap_yi": 308.92,
     "amount_yi": 47.27,
     "close": 194.0,
+    "pe": 431.111,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2858,10 +2921,11 @@
     "float_mcap_yi": 568.7,
     "amount_yi": 46.63,
     "close": 87.09,
+    "pe": 2903.0,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2871,10 +2935,11 @@
     "float_mcap_yi": 1069.14,
     "amount_yi": 46.47,
     "close": 15.73,
+    "pe": 20.167,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2884,10 +2949,11 @@
     "float_mcap_yi": 515.17,
     "amount_yi": 46.4,
     "close": 60.39,
+    "pe": 97.403,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2897,10 +2963,11 @@
     "float_mcap_yi": 838.77,
     "amount_yi": 45.45,
     "close": 87.67,
+    "pe": 76.235,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2910,10 +2977,11 @@
     "float_mcap_yi": 507.14,
     "amount_yi": 43.7,
     "close": 33.41,
+    "pe": 417.625,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2923,23 +2991,11 @@
     "float_mcap_yi": 555.5,
     "amount_yi": 42.86,
     "close": 48.41,
+    "pe": 193.64,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688167",
-    "ts_code": "688167.SH",
-    "name": "炬光科技",
-    "float_mcap_yi": 389.77,
-    "amount_yi": 42.08,
-    "close": 299.5,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2949,10 +3005,11 @@
     "float_mcap_yi": 595.78,
     "amount_yi": 41.69,
     "close": 121.17,
+    "pe": 452.634,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2962,10 +3019,11 @@
     "float_mcap_yi": 543.28,
     "amount_yi": 41.16,
     "close": 37.16,
+    "pe": 232.541,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2975,10 +3033,11 @@
     "float_mcap_yi": 646.52,
     "amount_yi": 40.74,
     "close": 391.3,
+    "pe": 127.045,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -2988,10 +3047,11 @@
     "float_mcap_yi": 1801.6,
     "amount_yi": 39.26,
     "close": 1466.0,
+    "pe": 654.464,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3001,23 +3061,11 @@
     "float_mcap_yi": 1539.21,
     "amount_yi": 38.61,
     "close": 378.8,
+    "pe": 354.019,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "601212",
-    "ts_code": "601212.SH",
-    "name": "白银有色",
-    "float_mcap_yi": 540.55,
-    "amount_yi": 38.21,
-    "close": 7.3,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3027,10 +3075,11 @@
     "float_mcap_yi": 1318.17,
     "amount_yi": 37.87,
     "close": 167.7,
+    "pe": 138.595,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3040,23 +3089,11 @@
     "float_mcap_yi": 490.7,
     "amount_yi": 36.94,
     "close": 45.75,
+    "pe": 40.856,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "600703",
-    "ts_code": "600703.SH",
-    "name": "三安光电",
-    "float_mcap_yi": 660.05,
-    "amount_yi": 36.62,
-    "close": 13.23,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3066,10 +3103,11 @@
     "float_mcap_yi": 1005.8,
     "amount_yi": 36.24,
     "close": 213.29,
+    "pe": 114.059,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3079,10 +3117,11 @@
     "float_mcap_yi": 960.77,
     "amount_yi": 35.51,
     "close": 95.6,
+    "pe": 65.034,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3092,10 +3131,11 @@
     "float_mcap_yi": 546.13,
     "amount_yi": 34.81,
     "close": 367.26,
+    "pe": 262.329,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3105,10 +3145,11 @@
     "float_mcap_yi": 468.57,
     "amount_yi": 34.56,
     "close": 64.61,
+    "pe": 156.441,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3118,10 +3159,11 @@
     "float_mcap_yi": 349.78,
     "amount_yi": 34.36,
     "close": 193.15,
+    "pe": 351.182,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3131,10 +3173,11 @@
     "float_mcap_yi": 354.54,
     "amount_yi": 34.11,
     "close": 32.8,
+    "pe": 182.222,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3144,10 +3187,11 @@
     "float_mcap_yi": 415.65,
     "amount_yi": 34.03,
     "close": 441.58,
+    "pe": 628.673,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3157,23 +3201,11 @@
     "float_mcap_yi": 1091.75,
     "amount_yi": 33.45,
     "close": 120.69,
+    "pe": 524.739,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "300757",
-    "ts_code": "300757.SZ",
-    "name": "罗博特科",
-    "float_mcap_yi": 933.12,
-    "amount_yi": 33.44,
-    "close": 573.99,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3183,10 +3215,11 @@
     "float_mcap_yi": 837.77,
     "amount_yi": 33.35,
     "close": 57.64,
+    "pe": 99.379,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3196,10 +3229,11 @@
     "float_mcap_yi": 978.03,
     "amount_yi": 33.15,
     "close": 347.0,
+    "pe": 101.76,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3209,10 +3243,11 @@
     "float_mcap_yi": 525.88,
     "amount_yi": 31.56,
     "close": 27.67,
+    "pe": 29.436,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3222,10 +3257,11 @@
     "float_mcap_yi": 1055.45,
     "amount_yi": 31.54,
     "close": 299.8,
+    "pe": 1665.556,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3235,23 +3271,11 @@
     "float_mcap_yi": 538.97,
     "amount_yi": 31.42,
     "close": 88.09,
+    "pe": 231.816,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "300672",
-    "ts_code": "300672.SZ",
-    "name": "国科微",
-    "float_mcap_yi": 357.53,
-    "amount_yi": 28.33,
-    "close": 169.98,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3261,23 +3285,11 @@
     "float_mcap_yi": 370.35,
     "amount_yi": 27.83,
     "close": 15.65,
+    "pe": 47.424,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688702",
-    "ts_code": "688702.SH",
-    "name": "盛科通信",
-    "float_mcap_yi": 659.32,
-    "amount_yi": 27.72,
-    "close": 324.8,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3287,23 +3299,11 @@
     "float_mcap_yi": 690.07,
     "amount_yi": 27.41,
     "close": 279.0,
+    "pe": 393.512,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688521",
-    "ts_code": "688521.SH",
-    "name": "芯原股份",
-    "float_mcap_yi": 966.47,
-    "amount_yi": 27.41,
-    "close": 183.77,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3313,10 +3313,11 @@
     "float_mcap_yi": 836.23,
     "amount_yi": 26.84,
     "close": 100.87,
+    "pe": 1260.875,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3326,10 +3327,11 @@
     "float_mcap_yi": 382.81,
     "amount_yi": 26.75,
     "close": 45.22,
+    "pe": 144.473,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3339,10 +3341,11 @@
     "float_mcap_yi": 480.67,
     "amount_yi": 26.69,
     "close": 37.8,
+    "pe": 105.0,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3352,10 +3355,11 @@
     "float_mcap_yi": 370.48,
     "amount_yi": 26.3,
     "close": 26.38,
+    "pe": 364.869,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3365,10 +3369,11 @@
     "float_mcap_yi": 570.12,
     "amount_yi": 26.24,
     "close": 193.78,
+    "pe": 167.052,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3378,10 +3383,11 @@
     "float_mcap_yi": 1767.45,
     "amount_yi": 26.2,
     "close": 621.93,
+    "pe": 187.328,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3391,10 +3397,11 @@
     "float_mcap_yi": 466.0,
     "amount_yi": 25.97,
     "close": 46.13,
+    "pe": 151.694,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3404,10 +3411,11 @@
     "float_mcap_yi": 345.95,
     "amount_yi": 25.62,
     "close": 180.0,
+    "pe": 136.364,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3417,10 +3425,11 @@
     "float_mcap_yi": 390.84,
     "amount_yi": 25.04,
     "close": 108.35,
+    "pe": 96.741,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3430,10 +3439,11 @@
     "float_mcap_yi": 760.24,
     "amount_yi": 24.99,
     "close": 45.69,
+    "pe": 27.036,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3443,10 +3453,11 @@
     "float_mcap_yi": 517.86,
     "amount_yi": 24.83,
     "close": 15.57,
+    "pe": 70.773,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3456,23 +3467,11 @@
     "float_mcap_yi": 866.74,
     "amount_yi": 24.47,
     "close": 125.42,
+    "pe": 47.508,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "600330",
-    "ts_code": "600330.SH",
-    "name": "天通股份",
-    "float_mcap_yi": 323.9,
-    "amount_yi": 24.43,
-    "close": 26.26,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3482,23 +3481,11 @@
     "float_mcap_yi": 640.1,
     "amount_yi": 24.03,
     "close": 141.62,
+    "pe": 171.973,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "300903",
-    "ts_code": "300903.SZ",
-    "name": "科翔股份",
-    "float_mcap_yi": 302.19,
-    "amount_yi": 23.95,
-    "close": 86.0,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3508,10 +3495,11 @@
     "float_mcap_yi": 799.64,
     "amount_yi": 23.85,
     "close": 189.0,
+    "pe": 76.21,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3521,10 +3509,11 @@
     "float_mcap_yi": 360.16,
     "amount_yi": 22.96,
     "close": 17.22,
+    "pe": 82.0,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3534,10 +3523,11 @@
     "float_mcap_yi": 339.05,
     "amount_yi": 22.47,
     "close": 85.05,
+    "pe": 476.471,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3547,10 +3537,11 @@
     "float_mcap_yi": 475.65,
     "amount_yi": 22.3,
     "close": 2465.0,
+    "pe": 1090.708,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3560,10 +3551,11 @@
     "float_mcap_yi": 462.09,
     "amount_yi": 21.51,
     "close": 56.32,
+    "pe": 70.409,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3573,10 +3565,11 @@
     "float_mcap_yi": 418.44,
     "amount_yi": 21.31,
     "close": 26.78,
+    "pe": 28.189,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3586,10 +3579,11 @@
     "float_mcap_yi": 1221.66,
     "amount_yi": 21.2,
     "close": 109.7,
+    "pe": 125.314,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3599,10 +3593,11 @@
     "float_mcap_yi": 479.53,
     "amount_yi": 21.03,
     "close": 272.03,
+    "pe": 2190.258,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3612,10 +3607,11 @@
     "float_mcap_yi": 329.14,
     "amount_yi": 20.31,
     "close": 227.04,
+    "pe": 349.292,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3625,10 +3621,11 @@
     "float_mcap_yi": 395.24,
     "amount_yi": 20.12,
     "close": 163.68,
+    "pe": 135.273,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3638,10 +3635,11 @@
     "float_mcap_yi": 547.0,
     "amount_yi": 19.99,
     "close": 34.52,
+    "pe": 47.601,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3651,10 +3649,11 @@
     "float_mcap_yi": 512.96,
     "amount_yi": 19.95,
     "close": 279.8,
+    "pe": 404.102,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3664,10 +3663,11 @@
     "float_mcap_yi": 840.08,
     "amount_yi": 19.66,
     "close": 180.45,
+    "pe": 72.18,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3677,10 +3677,11 @@
     "float_mcap_yi": 899.06,
     "amount_yi": 19.57,
     "close": 147.2,
+    "pe": 36.436,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3690,10 +3691,11 @@
     "float_mcap_yi": 487.57,
     "amount_yi": 19.19,
     "close": 220.18,
+    "pe": 116.497,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3703,10 +3705,11 @@
     "float_mcap_yi": 778.61,
     "amount_yi": 18.62,
     "close": 20.34,
+    "pe": 24.619,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3716,10 +3719,11 @@
     "float_mcap_yi": 796.1,
     "amount_yi": 18.52,
     "close": 47.44,
+    "pe": 43.796,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3729,10 +3733,11 @@
     "float_mcap_yi": 403.31,
     "amount_yi": 18.35,
     "close": 126.62,
+    "pe": 60.244,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3742,10 +3747,11 @@
     "float_mcap_yi": 758.16,
     "amount_yi": 18.2,
     "close": 48.79,
+    "pe": 33.542,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3755,23 +3761,11 @@
     "float_mcap_yi": 463.49,
     "amount_yi": 18.0,
     "close": 56.18,
+    "pe": 75.501,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688110",
-    "ts_code": "688110.SH",
-    "name": "东芯股份",
-    "float_mcap_yi": 499.62,
-    "amount_yi": 17.71,
-    "close": 112.94,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3781,10 +3775,11 @@
     "float_mcap_yi": 991.96,
     "amount_yi": 17.69,
     "close": 118.43,
+    "pe": 65.794,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3794,10 +3789,11 @@
     "float_mcap_yi": 488.49,
     "amount_yi": 17.57,
     "close": 370.8,
+    "pe": 167.783,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3807,10 +3803,11 @@
     "float_mcap_yi": 924.37,
     "amount_yi": 17.53,
     "close": 38.79,
+    "pe": 25.353,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3820,23 +3817,11 @@
     "float_mcap_yi": 681.77,
     "amount_yi": 17.51,
     "close": 17.93,
+    "pe": 224.125,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "600418",
-    "ts_code": "600418.SH",
-    "name": "江淮汽车",
-    "float_mcap_yi": 464.81,
-    "amount_yi": 17.33,
-    "close": 20.62,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3846,10 +3831,11 @@
     "float_mcap_yi": 682.38,
     "amount_yi": 17.2,
     "close": 38.44,
+    "pe": 40.05,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3859,10 +3845,11 @@
     "float_mcap_yi": 1208.4,
     "amount_yi": 17.12,
     "close": 243.49,
+    "pe": 79.055,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3872,10 +3859,11 @@
     "float_mcap_yi": 354.25,
     "amount_yi": 16.95,
     "close": 36.2,
+    "pe": 63.509,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3885,10 +3873,11 @@
     "float_mcap_yi": 934.6,
     "amount_yi": 16.73,
     "close": 26.95,
+    "pe": 15.4,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3898,10 +3887,11 @@
     "float_mcap_yi": 311.76,
     "amount_yi": 16.57,
     "close": 204.26,
+    "pe": 88.043,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3911,10 +3901,11 @@
     "float_mcap_yi": 333.87,
     "amount_yi": 16.24,
     "close": 15.61,
+    "pe": 35.102,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3924,10 +3915,11 @@
     "float_mcap_yi": 327.18,
     "amount_yi": 16.1,
     "close": 17.41,
+    "pe": 19.562,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3937,10 +3929,11 @@
     "float_mcap_yi": 606.77,
     "amount_yi": 15.8,
     "close": 75.98,
+    "pe": 18.9,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3950,10 +3943,11 @@
     "float_mcap_yi": 414.5,
     "amount_yi": 15.71,
     "close": 8.25,
+    "pe": 18.333,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3963,10 +3957,11 @@
     "float_mcap_yi": 426.08,
     "amount_yi": 15.55,
     "close": 187.66,
+    "pe": 647.103,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3976,10 +3971,11 @@
     "float_mcap_yi": 457.75,
     "amount_yi": 15.54,
     "close": 89.31,
+    "pe": 104.91,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -3989,10 +3985,11 @@
     "float_mcap_yi": 628.26,
     "amount_yi": 15.33,
     "close": 267.14,
+    "pe": 249.664,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4002,10 +3999,11 @@
     "float_mcap_yi": 492.81,
     "amount_yi": 15.16,
     "close": 66.2,
+    "pe": 85.974,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4015,10 +4013,11 @@
     "float_mcap_yi": 712.04,
     "amount_yi": 14.93,
     "close": 6.39,
+    "pe": 33.632,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4028,10 +4027,11 @@
     "float_mcap_yi": 318.66,
     "amount_yi": 14.67,
     "close": 88.87,
+    "pe": 72.252,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4041,10 +4041,11 @@
     "float_mcap_yi": 512.08,
     "amount_yi": 14.62,
     "close": 9.26,
+    "pe": 14.698,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4054,23 +4055,11 @@
     "float_mcap_yi": 909.36,
     "amount_yi": 13.96,
     "close": 12.63,
+    "pe": 38.273,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "601118",
-    "ts_code": "601118.SH",
-    "name": "海南橡胶",
-    "float_mcap_yi": 300.84,
-    "amount_yi": 13.93,
-    "close": 7.03,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4080,10 +4069,11 @@
     "float_mcap_yi": 641.4,
     "amount_yi": 13.93,
     "close": 317.89,
+    "pe": 883.028,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4093,10 +4083,11 @@
     "float_mcap_yi": 712.25,
     "amount_yi": 13.55,
     "close": 354.71,
+    "pe": 89.573,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4106,10 +4097,11 @@
     "float_mcap_yi": 645.86,
     "amount_yi": 13.51,
     "close": 12.6,
+    "pe": 50.868,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4119,10 +4111,11 @@
     "float_mcap_yi": 314.95,
     "amount_yi": 13.49,
     "close": 68.5,
+    "pe": 47.569,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4132,10 +4125,11 @@
     "float_mcap_yi": 412.24,
     "amount_yi": 13.37,
     "close": 57.94,
+    "pe": 120.708,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4145,10 +4139,11 @@
     "float_mcap_yi": 485.26,
     "amount_yi": 13.33,
     "close": 212.5,
+    "pe": 45.601,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4158,10 +4153,11 @@
     "float_mcap_yi": 350.17,
     "amount_yi": 13.27,
     "close": 251.43,
+    "pe": 145.335,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4171,10 +4167,11 @@
     "float_mcap_yi": 356.04,
     "amount_yi": 13.17,
     "close": 11.52,
+    "pe": 18.079,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4184,10 +4181,11 @@
     "float_mcap_yi": 564.26,
     "amount_yi": 12.96,
     "close": 122.4,
+    "pe": 156.923,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4197,10 +4195,11 @@
     "float_mcap_yi": 468.6,
     "amount_yi": 12.61,
     "close": 100.89,
+    "pe": 210.188,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4210,10 +4209,11 @@
     "float_mcap_yi": 334.9,
     "amount_yi": 12.48,
     "close": 50.59,
+    "pe": 109.978,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4223,10 +4223,11 @@
     "float_mcap_yi": 596.51,
     "amount_yi": 12.31,
     "close": 56.21,
+    "pe": 345.695,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4236,10 +4237,11 @@
     "float_mcap_yi": 348.56,
     "amount_yi": 12.12,
     "close": 133.24,
+    "pe": 158.619,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4249,10 +4251,11 @@
     "float_mcap_yi": 314.62,
     "amount_yi": 12.08,
     "close": 67.6,
+    "pe": 12.927,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4262,10 +4265,11 @@
     "float_mcap_yi": 319.2,
     "amount_yi": 11.96,
     "close": 43.82,
+    "pe": 85.922,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4275,10 +4279,11 @@
     "float_mcap_yi": 617.41,
     "amount_yi": 11.9,
     "close": 26.0,
+    "pe": 30.233,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4288,10 +4293,11 @@
     "float_mcap_yi": 706.28,
     "amount_yi": 11.82,
     "close": 89.72,
+    "pe": 160.214,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4301,10 +4307,11 @@
     "float_mcap_yi": 1029.68,
     "amount_yi": 11.73,
     "close": 62.93,
+    "pe": 20.977,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4314,10 +4321,11 @@
     "float_mcap_yi": 387.03,
     "amount_yi": 11.7,
     "close": 113.78,
+    "pe": 91.024,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4327,10 +4335,11 @@
     "float_mcap_yi": 301.49,
     "amount_yi": 11.62,
     "close": 64.4,
+    "pe": 108.71,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4340,10 +4349,11 @@
     "float_mcap_yi": 681.35,
     "amount_yi": 11.49,
     "close": 57.62,
+    "pe": 1920.667,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4353,10 +4363,11 @@
     "float_mcap_yi": 1289.97,
     "amount_yi": 11.38,
     "close": 270.2,
+    "pe": 87.161,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4366,10 +4377,11 @@
     "float_mcap_yi": 495.97,
     "amount_yi": 11.3,
     "close": 9.84,
+    "pe": 48.188,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4379,10 +4391,11 @@
     "float_mcap_yi": 337.87,
     "amount_yi": 11.29,
     "close": 40.95,
+    "pe": 40.95,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4392,10 +4405,11 @@
     "float_mcap_yi": 343.4,
     "amount_yi": 11.27,
     "close": 361.29,
+    "pe": 123.307,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4405,23 +4419,11 @@
     "float_mcap_yi": 662.34,
     "amount_yi": 11.01,
     "close": 26.25,
+    "pe": 24.521,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "000066",
-    "ts_code": "000066.SZ",
-    "name": "中国长城",
-    "float_mcap_yi": 459.0,
-    "amount_yi": 10.99,
-    "close": 14.23,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4431,10 +4433,11 @@
     "float_mcap_yi": 311.8,
     "amount_yi": 10.85,
     "close": 271.0,
+    "pe": 263.107,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4444,23 +4447,11 @@
     "float_mcap_yi": 549.9,
     "amount_yi": 10.78,
     "close": 33.42,
+    "pe": 28.908,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688409",
-    "ts_code": "688409.SH",
-    "name": "富创精密",
-    "float_mcap_yi": 548.42,
-    "amount_yi": 10.74,
-    "close": 179.1,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4470,10 +4461,11 @@
     "float_mcap_yi": 916.38,
     "amount_yi": 10.39,
     "close": 30.53,
+    "pe": 339.222,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4483,10 +4475,11 @@
     "float_mcap_yi": 320.47,
     "amount_yi": 10.13,
     "close": 11.64,
+    "pe": 20.421,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4496,10 +4489,11 @@
     "float_mcap_yi": 344.06,
     "amount_yi": 9.9,
     "close": 48.39,
+    "pe": 76.289,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4509,10 +4503,11 @@
     "float_mcap_yi": 467.27,
     "amount_yi": 9.82,
     "close": 86.19,
+    "pe": 36.991,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4522,36 +4517,11 @@
     "float_mcap_yi": 561.48,
     "amount_yi": 9.74,
     "close": 30.8,
+    "pe": 10.89,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "605358",
-    "ts_code": "605358.SH",
-    "name": "立昂微",
-    "float_mcap_yi": 310.04,
-    "amount_yi": 9.74,
-    "close": 40.15,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688141",
-    "ts_code": "688141.SH",
-    "name": "杰华特",
-    "float_mcap_yi": 513.37,
-    "amount_yi": 9.63,
-    "close": 114.0,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4561,10 +4531,11 @@
     "float_mcap_yi": 428.9,
     "amount_yi": 9.55,
     "close": 6.71,
+    "pe": 32.384,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4574,10 +4545,11 @@
     "float_mcap_yi": 691.7,
     "amount_yi": 9.54,
     "close": 5.58,
+    "pe": 17.686,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4587,10 +4559,11 @@
     "float_mcap_yi": 614.94,
     "amount_yi": 9.33,
     "close": 27.36,
+    "pe": 15.116,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4600,10 +4573,11 @@
     "float_mcap_yi": 380.89,
     "amount_yi": 9.23,
     "close": 21.73,
+    "pe": 45.394,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4613,10 +4587,11 @@
     "float_mcap_yi": 449.24,
     "amount_yi": 9.15,
     "close": 192.6,
+    "pe": 65.068,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4626,10 +4601,11 @@
     "float_mcap_yi": 719.44,
     "amount_yi": 9.11,
     "close": 13.12,
+    "pe": 17.039,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4639,10 +4615,11 @@
     "float_mcap_yi": 474.44,
     "amount_yi": 8.93,
     "close": 14.38,
+    "pe": 208.406,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4652,10 +4629,11 @@
     "float_mcap_yi": 340.95,
     "amount_yi": 8.82,
     "close": 44.49,
+    "pe": 34.223,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4665,10 +4643,11 @@
     "float_mcap_yi": 331.34,
     "amount_yi": 8.68,
     "close": 41.67,
+    "pe": 36.235,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4678,10 +4657,11 @@
     "float_mcap_yi": 371.92,
     "amount_yi": 8.48,
     "close": 376.21,
+    "pe": 354.915,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4691,10 +4671,11 @@
     "float_mcap_yi": 340.02,
     "amount_yi": 8.47,
     "close": 24.89,
+    "pe": 28.942,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4704,10 +4685,11 @@
     "float_mcap_yi": 362.81,
     "amount_yi": 8.45,
     "close": 30.19,
+    "pe": 22.363,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4717,10 +4699,11 @@
     "float_mcap_yi": 379.59,
     "amount_yi": 8.45,
     "close": 28.77,
+    "pe": 130.773,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4730,10 +4713,11 @@
     "float_mcap_yi": 748.07,
     "amount_yi": 8.42,
     "close": 32.98,
+    "pe": 56.862,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4743,10 +4727,11 @@
     "float_mcap_yi": 539.23,
     "amount_yi": 8.38,
     "close": 13.13,
+    "pe": 12.505,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4756,10 +4741,11 @@
     "float_mcap_yi": 311.81,
     "amount_yi": 8.29,
     "close": 36.86,
+    "pe": 30.975,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4769,10 +4755,11 @@
     "float_mcap_yi": 336.69,
     "amount_yi": 8.22,
     "close": 12.12,
+    "pe": 31.895,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4782,10 +4769,11 @@
     "float_mcap_yi": 426.65,
     "amount_yi": 8.19,
     "close": 55.82,
+    "pe": 33.226,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4795,23 +4783,11 @@
     "float_mcap_yi": 319.94,
     "amount_yi": 8.14,
     "close": 23.57,
+    "pe": 53.568,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688172",
-    "ts_code": "688172.SH",
-    "name": "燕东微",
-    "float_mcap_yi": 528.53,
-    "amount_yi": 8.06,
-    "close": 44.09,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4821,10 +4797,11 @@
     "float_mcap_yi": 446.11,
     "amount_yi": 8.04,
     "close": 28.64,
+    "pe": 39.596,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4834,10 +4811,11 @@
     "float_mcap_yi": 552.8,
     "amount_yi": 8.03,
     "close": 35.72,
+    "pe": 29.767,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4847,10 +4825,11 @@
     "float_mcap_yi": 1023.74,
     "amount_yi": 7.98,
     "close": 37.92,
+    "pe": 27.086,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4860,10 +4839,11 @@
     "float_mcap_yi": 326.53,
     "amount_yi": 7.9,
     "close": 37.62,
+    "pe": 171.0,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4873,10 +4853,11 @@
     "float_mcap_yi": 611.68,
     "amount_yi": 7.89,
     "close": 28.39,
+    "pe": 88.719,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4886,10 +4867,11 @@
     "float_mcap_yi": 342.01,
     "amount_yi": 7.6,
     "close": 62.55,
+    "pe": 42.842,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4899,23 +4881,11 @@
     "float_mcap_yi": 424.76,
     "amount_yi": 7.55,
     "close": 15.54,
+    "pe": 39.846,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688234",
-    "ts_code": "688234.SH",
-    "name": "天岳先进",
-    "float_mcap_yi": 418.67,
-    "amount_yi": 7.53,
-    "close": 97.43,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4925,10 +4895,11 @@
     "float_mcap_yi": 357.73,
     "amount_yi": 7.48,
     "close": 6.37,
+    "pe": 390.798,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4938,10 +4909,11 @@
     "float_mcap_yi": 426.19,
     "amount_yi": 7.48,
     "close": 12.54,
+    "pe": 78.034,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4951,10 +4923,11 @@
     "float_mcap_yi": 347.63,
     "amount_yi": 7.39,
     "close": 17.35,
+    "pe": 30.127,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4964,10 +4937,11 @@
     "float_mcap_yi": 370.98,
     "amount_yi": 7.39,
     "close": 63.3,
+    "pe": 49.28,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -4977,23 +4951,11 @@
     "float_mcap_yi": 407.32,
     "amount_yi": 7.38,
     "close": 12.52,
+    "pe": 22.27,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688469",
-    "ts_code": "688469.SH",
-    "name": "芯联集成",
-    "float_mcap_yi": 487.19,
-    "amount_yi": 7.3,
-    "close": 8.3,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5003,10 +4965,11 @@
     "float_mcap_yi": 384.46,
     "amount_yi": 7.24,
     "close": 90.82,
+    "pe": 43.663,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5016,10 +4979,11 @@
     "float_mcap_yi": 420.35,
     "amount_yi": 7.17,
     "close": 135.91,
+    "pe": 28.484,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5029,10 +4993,11 @@
     "float_mcap_yi": 384.96,
     "amount_yi": 7.12,
     "close": 22.02,
+    "pe": 91.75,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5042,10 +5007,11 @@
     "float_mcap_yi": 1081.81,
     "amount_yi": 6.94,
     "close": 254.4,
+    "pe": 130.462,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5055,10 +5021,11 @@
     "float_mcap_yi": 397.32,
     "amount_yi": 6.85,
     "close": 292.9,
+    "pe": 225.308,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5068,10 +5035,11 @@
     "float_mcap_yi": 392.67,
     "amount_yi": 6.82,
     "close": 48.41,
+    "pe": 26.441,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5081,10 +5049,11 @@
     "float_mcap_yi": 361.59,
     "amount_yi": 6.76,
     "close": 10.91,
+    "pe": 35.194,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5094,23 +5063,11 @@
     "float_mcap_yi": 704.06,
     "amount_yi": 6.67,
     "close": 35.07,
+    "pe": 97.417,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688220",
-    "ts_code": "688220.SH",
-    "name": "翱捷科技",
-    "float_mcap_yi": 382.95,
-    "amount_yi": 6.65,
-    "close": 91.55,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5120,10 +5077,11 @@
     "float_mcap_yi": 461.82,
     "amount_yi": 6.62,
     "close": 29.82,
+    "pe": 48.097,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5133,10 +5091,11 @@
     "float_mcap_yi": 676.94,
     "amount_yi": 6.45,
     "close": 20.98,
+    "pe": 21.408,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5146,10 +5105,11 @@
     "float_mcap_yi": 342.61,
     "amount_yi": 6.44,
     "close": 132.0,
+    "pe": 24.953,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5159,10 +5119,11 @@
     "float_mcap_yi": 590.78,
     "amount_yi": 6.43,
     "close": 24.73,
+    "pe": 29.094,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5172,10 +5133,11 @@
     "float_mcap_yi": 442.17,
     "amount_yi": 6.41,
     "close": 124.24,
+    "pe": 96.31,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5185,10 +5147,11 @@
     "float_mcap_yi": 303.88,
     "amount_yi": 6.3,
     "close": 8.47,
+    "pe": 81.442,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5198,23 +5161,11 @@
     "float_mcap_yi": 406.33,
     "amount_yi": 6.14,
     "close": 8.75,
+    "pe": 15.351,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "300765",
-    "ts_code": "300765.SZ",
-    "name": "石药创新",
-    "float_mcap_yi": 616.34,
-    "amount_yi": 6.05,
-    "close": 43.88,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5224,10 +5175,11 @@
     "float_mcap_yi": 562.17,
     "amount_yi": 5.99,
     "close": 139.37,
+    "pe": 1393.7,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5237,10 +5189,11 @@
     "float_mcap_yi": 351.3,
     "amount_yi": 5.96,
     "close": 57.16,
+    "pe": 60.809,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5250,10 +5203,11 @@
     "float_mcap_yi": 371.54,
     "amount_yi": 5.83,
     "close": 69.19,
+    "pe": 300.826,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5263,10 +5217,11 @@
     "float_mcap_yi": 555.61,
     "amount_yi": 5.74,
     "close": 11.22,
+    "pe": 30.324,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5276,23 +5231,11 @@
     "float_mcap_yi": 544.35,
     "amount_yi": 5.46,
     "close": 41.92,
+    "pe": 39.178,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
-    "source": "sina"
-  },
-  {
-    "code": "688052",
-    "ts_code": "688052.SH",
-    "name": "纳芯微",
-    "float_mcap_yi": 344.18,
-    "amount_yi": 5.27,
-    "close": 240.0,
-    "is_st": false,
-    "index_member": [],
-    "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5302,10 +5245,11 @@
     "float_mcap_yi": 836.42,
     "amount_yi": 5.22,
     "close": 6.63,
+    "pe": 85.0,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   },
   {
@@ -5315,10 +5259,11 @@
     "float_mcap_yi": 509.53,
     "amount_yi": 5.18,
     "close": 40.43,
+    "pe": 40.442,
     "is_st": false,
     "index_member": [],
     "tags": [],
-    "trade_date": "2026-09-04",
+    "trade_date": "2026-09-05",
     "source": "sina"
   }
 ]

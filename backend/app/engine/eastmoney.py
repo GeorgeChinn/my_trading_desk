@@ -229,6 +229,99 @@ def fetch_kline_tencent(code: str, limit: int = 180) -> list[dict]:
     return rows
 
 
+def fetch_index_kline(symbol: str, limit: int = 8) -> list[dict]:
+    """Index kline. symbol like sh000300 / sh000001, not a stock ts_code."""
+    sess = _session()
+    sess.headers["Referer"] = "https://gu.qq.com/"
+    payload = _get_json(sess, TENCENT_KLINE, {"param": f"{symbol},day,,,{limit}"}, timeout=20)
+    data = ((payload or {}).get("data") or {}).get(symbol) or {}
+    day = data.get("day") or data.get("qfqday") or data.get("hfqday") or []
+    rows = []
+    for item in day:
+        if not item or len(item) < 5:
+            continue
+        rows.append(
+            {
+                "date": str(item[0])[:10],
+                "open": float(item[1]),
+                "close": float(item[2]),
+                "high": float(item[3]),
+                "low": float(item[4]),
+            }
+        )
+    return rows
+
+
+def fetch_industry_boards() -> list[dict]:
+    """East Money 行业板块. f127 is 近3日涨跌幅 %."""
+    sess = _session()
+    sess.headers["Referer"] = "https://quote.eastmoney.com/"
+    hosts = (
+        "https://push2.eastmoney.com/api/qt/clist/get",
+        "https://82.push2.eastmoney.com/api/qt/clist/get",
+    )
+    out: list[dict] = []
+    for host in hosts:
+        try:
+            page = 1
+            while page <= 20:
+                payload = _get_json(
+                    sess,
+                    host,
+                    {
+                        "pn": page,
+                        "pz": 40,
+                        "po": 1,
+                        "np": 1,
+                        "fltt": 2,
+                        "invt": 2,
+                        "fid": "f3",
+                        "fs": "m:90+t:2",
+                        "fields": "f12,f14,f3,f127",
+                    },
+                    timeout=15,
+                )
+                chunk = ((payload or {}).get("data") or {}).get("diff") or []
+                if not chunk:
+                    break
+                for rec in chunk:
+                    name = str(rec.get("f14") or "")
+                    if not name:
+                        continue
+                    ret = rec.get("f127")
+                    try:
+                        ret_f = float(ret) if ret not in (None, "-", "") else None
+                    except (TypeError, ValueError):
+                        ret_f = None
+                    out.append({"code": str(rec.get("f12") or ""), "name": name, "ret_3d_pct": ret_f})
+                if len(chunk) < 40:
+                    break
+                page += 1
+                time.sleep(0.05)
+            if out:
+                return out
+        except Exception:
+            out = []
+            continue
+    return out
+
+
+def fetch_stock_industry(code: str) -> str | None:
+    sess = _session()
+    sess.headers["Referer"] = "https://quote.eastmoney.com/"
+    payload = _get_json(
+        sess,
+        "https://push2.eastmoney.com/api/qt/stock/get",
+        {"secid": secid(code), "invt": 2, "fltt": 2, "fields": "f57,f58,f127"},
+        timeout=12,
+    )
+    data = (payload or {}).get("data") or {}
+    name = data.get("f127")
+    if isinstance(name, str) and name and name not in ("-", "None"):
+        return name
+    return None
+
+
 KLINE_CHAIN = (
     ("tencent", fetch_kline_tencent),
     ("sina", fetch_kline_sina),
@@ -348,6 +441,7 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
         "amount_ok": 0,
         "pool": 0,
         "preferred": 0,
+        "pe_ok": 0,
         "trade_date": datetime.now().strftime("%Y-%m-%d"),
         "source": "sina+eastmoney",
         "rules": {
@@ -380,6 +474,8 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
             funnel["mcap_ok"] += 1
         if amount_yi is not None and amount_yi >= POOL_AMOUNT_YI:
             funnel["amount_ok"] += 1
+        if pe is not None and pe > 0:
+            funnel["pe_ok"] += 1
         if not passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st, pe=pe):
             continue
         members = []

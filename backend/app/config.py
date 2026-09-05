@@ -18,6 +18,7 @@ SETTINGS_PATH = DATA_DIR / "settings.json"
 JUDGEMENTS_PATH = DATA_DIR / "judgements.json"
 LAST_SCAN_PATH = DATA_DIR / "last_scan.json"
 CYCLES_PATH = DATA_DIR / "cycles.json"
+SECTOR_PATH = DATA_DIR / "sector_snap.json"
 
 # RULES.md numbers — read-only copies for the engine. Do not invent new ones.
 MACD_FAST = 7

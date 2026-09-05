@@ -32,7 +32,7 @@ from .engine.rulesets import get_ruleset, list_rulesets, public_ruleset
 from .engine.scanner import classify_stock, funnel_reminders, scan_universe, summarize
 from .engine.scheduler import schedule_snapshot, start_scheduler, stop_scheduler
 from .engine.watch import queue_counts, refresh_watch
-from .journal_io import list_journals, read_journal, today_str, write_journal
+
 from .store import (
     load_ideas,
     load_pool_snapshot,
@@ -127,20 +127,6 @@ class SettingsIn(BaseModel):
     market_regime: str | None = None
     tushare_token: str | None = None
     schedule_enabled: bool | None = None
-
-
-class JournalIn(BaseModel):
-    market: str = ""
-    mood: str = ""
-    theme: str = ""
-    candidates: str = ""
-    action: str = ""
-    path_fit: str = ""
-    hit: str = ""
-    broke: str = ""
-    change: str = ""
-    q1: str = ""
-    q2: str = ""
 
 
 class PullIn(BaseModel):
@@ -291,6 +277,9 @@ def scan(ruleset: str = Query("rules")):
     reminders = funnel_reminders(load_settings()) + list(bind.get("unimplemented") or [])
     if not rs.get("engine_ok"):
         reminders = [rs["engine_note"]] + reminders
+    path_n = sum(1 for r in rows if r.get("path_ready"))
+    if path_n > 1:
+        reminders.append(f"RULES §6/§8：路径到达 {path_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满观察池。")
     return {
         "rows": rows,
         **summarize(rows),
@@ -463,26 +452,6 @@ def trade_add(payload: TradeIn):
 def trade_del(trade_id: str):
     save_trades([item for item in load_trades() if item.get("id") != trade_id])
     return {"ok": True}
-
-
-@app.get("/api/journal")
-def journal_list():
-    return {"items": list_journals(), "template": "journal/TEMPLATE.md"}
-
-
-@app.get("/api/journal/{day}")
-def journal_get(day: str):
-    return read_journal(day)
-
-
-@app.put("/api/journal/{day}")
-def journal_put(day: str, payload: JournalIn):
-    return write_journal(day, payload.model_dump())
-
-
-@app.get("/api/journal-today")
-def journal_today():
-    return read_journal(today_str())
 
 
 @app.get("/api/rules")

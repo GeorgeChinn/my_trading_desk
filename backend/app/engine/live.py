@@ -509,7 +509,19 @@ def _sync_live(force_bars: bool = False) -> dict:
     status_holder["bars_total"] = len(pool)
     save_universe(pool)
     save_pool_snapshot(funnel)
-    log(f"已写入股池 {len(pool)} 只，开始补日线")
+    log(f"已写入股池 {len(pool)} 只（含动态市盈），开始补板块与日线")
+    try:
+        from .sector import refresh_sector_snap
+
+        snap = refresh_sector_snap(pool, log=log)
+        stocks = snap.get("stocks") or {}
+        for item in pool:
+            info = stocks.get(item.get("code")) or {}
+            if info.get("industry"):
+                item["industry"] = info["industry"]
+        save_universe(pool)
+    except Exception as exc:
+        log(f"板块快照失败：{exc}。证据不足，扫描不编造板块强弱")
 
     def progress(done: int, total: int) -> None:
         status_holder["bars_done"] = done
@@ -580,6 +592,39 @@ def _sync_live(force_bars: bool = False) -> dict:
     }
     save_sync_status(done)
     return done
+
+
+def refresh_pool_meta() -> dict:
+    """Rebuild §3 pool + PE + 板块快照. Does not rewrite daily bars."""
+    from .eastmoney import build_pool
+    from .sector import refresh_sector_snap
+
+    messages: list[str] = []
+
+    def log(msg: str) -> None:
+        messages.append(msg)
+
+    pool, funnel = build_pool(log=log)
+    save_universe(pool)
+    save_pool_snapshot(funnel)
+    try:
+        snap = refresh_sector_snap(pool, log=log)
+        stocks = snap.get("stocks") or {}
+        for item in pool:
+            info = stocks.get(item.get("code")) or {}
+            if info.get("industry"):
+                item["industry"] = info["industry"]
+        save_universe(pool)
+    except Exception as exc:
+        log(f"板块快照失败：{exc}")
+        snap = {}
+    save_settings(
+        {
+            "last_trade_date": funnel.get("trade_date") or "",
+            "data_source": funnel.get("source") or "",
+        }
+    )
+    return {"pool": len(pool), "funnel": funnel, "sector": snap.get("market"), "log": messages}
 
 
 def pull_one(code: str) -> dict:
