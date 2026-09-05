@@ -345,7 +345,7 @@ def scan(ruleset: str = Query("rules")):
         boards = list(getattr(s1_scan, "funnel", None) or [])
         market = getattr(s1_scan, "market", None)
         passed_n = sum(1 for b in boards if b.get("pass"))
-        reminders.append(f"第3.2条 板块池：过关 {passed_n} / {len(boards)} 个申万一级。弱于沪深300或最弱一档整板块出池。")
+        reminders.append(f"第3.2条 主线：过关 {passed_n} / {len(boards)} 个申万一级。不弱即可；转弱则整组出池。")
     return {
         "rows": rows,
         **tallied,

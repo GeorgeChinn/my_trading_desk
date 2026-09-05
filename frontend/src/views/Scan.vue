@@ -30,10 +30,10 @@
 
     <div class="card" style="margin-bottom:14px" v-if="isPullback">
       <div class="ov-title">
-        第3.2条 板块池
+        第3.2条 主线
         <span>过关 {{ passedBoards.length }} / {{ boards.length }} · 沪深300 近3日 {{ pct(marketRet) }}</span>
       </div>
-      <p class="sub" style="margin:0 0 10px">先筛板块：近3日涨幅 ≥ 沪深300，且不是最弱一档。过关后再在板块里挑个股。</p>
+      <p class="sub" style="margin:0 0 10px">先筛主线：近3日相对大盘不弱即可，不要求领涨。过关后再在主线里挑个股。映射价格当日下跌不单独否决。</p>
       <div class="board-cloud" v-if="passedBoards.length">
         <span class="board-chip pass" v-for="b in passedBoards" :key="'p'+b.name">
           {{ b.name }}

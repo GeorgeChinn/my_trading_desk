@@ -89,7 +89,19 @@ def find_structure(bars: list[dict]) -> dict | None:
                 continue
             if avg20 and not any(_vol(x) >= avg20 for x in seg):
                 continue
+            yang = [x for x in seg if x["close"] > x["open"]]
+            yin = [x for x in seg if x["close"] < x["open"]]
+            if yin:
+                y_avg = (sum(_vol(x) for x in yang) / len(yang)) if yang else 0.0
+                n_avg = sum(_vol(x) for x in yin) / len(yin)
+                y_sum = sum(_vol(x) for x in yang)
+                n_sum = sum(_vol(x) for x in yin)
+                # 收阳日均量 ≥ 收阴日均量。一根洗盘阴把日均量抬高时，仍要求阳量合计不低于阴量合计。
+                if y_avg < n_avg and y_sum < n_sum:
+                    continue
             pb = bars[e + 1 :]
+            if max(x["close"] for x in pb) > run_close_high:
+                continue
             vol_up = sum(_vol(x) for x in seg) / len(seg)
             vol_dn = sum(_vol(x) for x in pb) / len(pb)
             rally_low = min(x["low"] for x in seg)
@@ -232,12 +244,26 @@ def _industry_stats(cands: list[dict]) -> dict[str, dict]:
             for j in range(20):
                 vals = [row[j] for row in daily_rows if j < len(row) and row[j] is not None]
                 daily.append(sum(vals) / len(vals) if vals else None)
+        hot_code = None
+        hot_r5 = None
+        for it in items:
+            b = it["bars"]
+            if len(b) < 6:
+                continue
+            r5 = _ret(b[-6]["close"], b[-1]["close"])
+            if r5 is None:
+                continue
+            if hot_r5 is None or r5 > hot_r5:
+                hot_r5 = r5
+                hot_code = ts_code(str(it.get("code") or ""))
         out[ind] = {
             "n": len(items),
             "ret_3d": sum(r3) / len(r3) if r3 else None,
             "ret_20d": sum(r20) / len(r20) if r20 else None,
             "bounce": sum(bounce) / len(bounce) if bounce else None,
             "daily": daily,
+            "hot_code": hot_code,
+            "hot_r5": None if hot_r5 is None else round(hot_r5, 2),
         }
     return out
 
@@ -362,27 +388,30 @@ def classify_s1(
             base["facts"]["vs_market"] = round(ind["ret_3d"] - market_3d, 2)
     if not structure_only:
         if ind.get("ret_3d") is None:
-            base["missing_rules"].append(f"第3条 板块池：{industry} 近3日涨幅证据不足，出池")
+            base["missing_rules"].append(f"第3条 主线：{industry} 近3日涨幅证据不足，出池")
             return base
         if market_3d is not None and ind.get("ret_3d") is not None:
             if ind["ret_3d"] < market_3d:
                 base["missing_rules"].append(
-                    f"第3条 板块池：{industry} 近3日 {ind['ret_3d']:.2f}% < 沪深300 {market_3d:.2f}%，整板块出池"
+                    f"第3条 主线：{industry} 近3日 {ind['ret_3d']:.2f}% < 沪深300 {market_3d:.2f}%，整组出池"
                 )
                 return base
             base["hit_rules"].append(
-                f"第3条 板块池：{industry} 近3日 {ind['ret_3d']:.2f}% ≥ 沪深300 {market_3d:.2f}%"
+                f"第3条 主线：{industry} 近3日 {ind['ret_3d']:.2f}% ≥ 沪深300 {market_3d:.2f}%（不弱即可，不要求领涨）"
             )
         elif market_3d is None:
-            base["reminders"].append("第3条 板块池：沪深300近3日未知，相对大盘未核，不挡筛选")
+            base["reminders"].append("第3条 主线：沪深300近3日未知，相对大盘未核，不挡筛选")
         rets = [v["ret_3d"] for v in industry_stats.values() if v.get("ret_3d") is not None and v.get("n", 0) >= 2]
         if len(rets) >= 2 and ind.get("ret_3d") is not None and ind["ret_3d"] <= min(rets) + 1e-12:
-            base["missing_rules"].append(f"第3条 板块池：{industry} 近3日为最弱一档，整板块出池")
+            base["missing_rules"].append(f"第3条 主线：{industry} 近3日为最弱一档，整组出池")
             return base
         if not _stock_vs_board(bars, ind):
-            base["missing_rules"].append(f"第3条 个股相对 {industry} 偏弱，出池")
+            base["missing_rules"].append(f"第3条 个股近20日相对 {industry} 偏弱，出池")
             return base
-        base["hit_rules"].append(f"第3条 个股相对 {industry} 不弱")
+        base["hit_rules"].append(f"第3条 个股近20日相对 {industry} 不弱")
+        if ind.get("hot_code") == code and (ind.get("n") or 0) >= 2:
+            base["veto"] = [f"第3条 主线内最热（近5日 {ind.get('hot_r5')}%），排除"]
+            return base
 
     if _any_limit(bars, code, 3):
         base["veto"] = ["近3个交易日出现涨停"]
@@ -691,7 +720,7 @@ def list_s1_pool() -> list[dict]:
 
 
 def board_funnel(industry_stats: dict, market_3d: float | None) -> list[dict]:
-    """第3.2条：先筛板块，再给个股用。"""
+    """第3.2条：先筛主线，再给个股用。不弱即可，不要求领涨。"""
     ranked = [v["ret_3d"] for v in industry_stats.values() if v.get("ret_3d") is not None and v.get("n", 0) >= 2]
     weakest = min(ranked) if ranked else None
     out = []
@@ -710,9 +739,9 @@ def board_funnel(industry_stats: dict, market_3d: float | None) -> list[dict]:
             passed = False
             reason = "近3日为全市场最弱一档"
         elif market_3d is None:
-            reason = "沪深300近3日未知，未挡板块"
+            reason = "沪深300近3日未知，主线未挡"
         else:
-            reason = f"近3日 {r3:.2f}% ≥ 沪深300 {market_3d:.2f}%"
+            reason = f"近3日 {r3:.2f}% ≥ 沪深300 {market_3d:.2f}%（不弱即可）"
         out.append(
             {
                 "name": name,
