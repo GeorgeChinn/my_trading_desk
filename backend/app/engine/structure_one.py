@@ -475,6 +475,9 @@ def classify_s1(
     if not kind or not key_px:
         base["missing_rules"].append("第3条 关键位未写明")
         return base
+    if zone.get("ma20") and close < zone["ma20"]:
+        base["veto"] = ["收盘在20日线下方，不是回踩启动"]
+        return base
 
     at_key = bool(zone.get("at_key"))
     last = bars[-1]
@@ -492,9 +495,9 @@ def classify_s1(
     yang = last["close"] > last["open"]
     pb_vols = [_vol(x) for x in bars[st["strong_end"] + 1 : -1]]
     vol_dn_ex = (sum(pb_vols) / len(pb_vols)) if pb_vols else st["vol_dn"]
-    vol_ok = _vol(last) > vol_dn_ex
-    stand_a1 = kind == "A1" and last["close"] >= key_px
-    stand_a2 = kind == "A2" and last["close"] >= key_px
+    vol_ok = yang and _vol(last) > vol_dn_ex
+    stand_a1 = kind == "A1" and last["close"] >= key_px and _within_pct(last["close"], key_px)
+    stand_a2 = kind == "A2" and last["close"] >= key_px and _within_pct(last["close"], key_px)
     vs_board = False
     chg = _ret(bars[-2]["close"], last["close"]) if len(bars) > 1 else None
     if chg is not None and chg > 0 and ind.get("ret_3d") is not None:
@@ -513,8 +516,10 @@ def classify_s1(
     if _any_limit(bars, code, 3):
         demand_ready = False
 
-    if not at_key and not demand_ready:
-        base["missing_rules"].append("第3条 现价未落入所写关键位 ±2%（A1=20日线 / A2=平台下沿）")
+    if not at_key:
+        base["missing_rules"].append("现价未落入关键位 ±2%，不得买入")
+        base["status"] = "观察"
+        base["gate"] = "观察"
         return base
 
     base["data_ok"] = True
