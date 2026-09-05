@@ -698,7 +698,7 @@ def classify_one_s1(code: str, settings: dict, trades: list | None = None) -> di
     meta.update({"code": code, "name": name, "bars": bars, "industry": industry})
     snap = load_sector_snap()
     market_3d = (snap.get("market") or {}).get("ret_3d_pct")
-    stats = _industry_stats([meta])
+    stats = _industry_stats(list_s1_pool())
     return classify_s1(meta, settings, trades, stats, market_3d)
 
 
