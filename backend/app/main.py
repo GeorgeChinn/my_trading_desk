@@ -139,7 +139,12 @@ def _universe_map() -> dict:
 
 def _name_of(code: str) -> str:
     meta = _universe_map().get(ts_code(code))
-    return (meta or {}).get("name") or ts_code(code)
+    if meta and (meta.get("name") or "").strip() and meta.get("name") != ts_code(code):
+        return str(meta["name"]).strip()
+    bars = load_bars(code, last_n=1)
+    if bars and (bars[-1].get("name") or "").strip():
+        return str(bars[-1]["name"]).strip()
+    return ts_code(code)
 
 
 def _refreshed_watches() -> list[dict]:
@@ -292,14 +297,25 @@ def scan(ruleset: str = Query("rules")):
     pullback = rs.get("engine") == "pullback_restart"
     pool_count = len(rows) if pullback else len(load_universe())
     pool_note = (
-        "RULES2 底池：非ST、股价≥5、成交额≥1亿、有板块归属。下列按当前规则列出，不截断。"
+        "RULES2：先第3.2条筛板块（近3日≥沪深300且非最弱），再在过关板块里挑个股。"
         if pullback
         else "PROFILE 同时跟踪 100 只。下列按当前规则全量列出，不截断。"
     )
+    boards = []
+    market = None
+    if pullback:
+        from .engine.structure_one import scan_structure_one as s1_scan
+
+        boards = list(getattr(s1_scan, "funnel", None) or [])
+        market = getattr(s1_scan, "market", None)
+        passed_n = sum(1 for b in boards if b.get("pass"))
+        reminders.append(f"第3.2条 板块池：过关 {passed_n} / {len(boards)} 个申万一级。弱于沪深300或最弱一档整板块出池。")
     return {
         "rows": rows,
         **tallied,
         "grouped": grouped,
+        "boards": boards,
+        "market": market,
         "position_block": "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令。",
         "reminders": reminders,
         "rules_bind": bind,

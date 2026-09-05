@@ -78,7 +78,7 @@
           <div class="ov-title">买入池 <span>{{ buyNames.length }}</span></div>
           <div class="name-cloud" v-if="buyNames.length">
             <router-link class="name-chip 买入" v-for="s in buyNames" :key="'hb'+s.code" :to="scanChart(s.code)">
-              {{ s.name }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
+              {{ chipTitle(s) }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
             </router-link>
           </div>
           <div class="empty mini" v-else>空</div>
@@ -87,7 +87,7 @@
           <div class="ov-title">观察池 <span>{{ watchNames.length }}</span></div>
           <div class="name-cloud" v-if="watchNames.length">
             <router-link class="name-chip 观察" v-for="s in watchNames" :key="'hw'+s.code" :to="scanChart(s.code)">
-              {{ s.name }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
+              {{ chipTitle(s) }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
             </router-link>
           </div>
           <div class="empty mini" v-else>空</div>
@@ -127,6 +127,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { api, STATUSES } from "../api";
+import { setLoadingText } from "../loading.js";
 
 const cards = ref([]);
 const triggeredCount = ref(0);
@@ -166,8 +167,15 @@ function chartLink(card) {
 function scanChart(code) {
   return { path: "/chart/" + code, query: { ruleset: rulesetId.value } };
 }
+function chipTitle(s) {
+  const code = (s && s.code) || "";
+  const name = String((s && s.name) || "").trim();
+  if (!name || name === code) return code;
+  return `${name} ${code}`;
+}
 async function switchRuleset(id) {
   rulesetId.value = id;
+  setLoadingText(id === "rules2" ? "正在按 RULES2 扫描…" : "正在加载扫描…");
   if (id === "rules") {
     const data = await api.home();
     scan.value = data.scan_summary || {};

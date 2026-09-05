@@ -329,6 +329,10 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     bars = attach_indicators(raw_bars)
     last = bars[-1]
     prev = bars[-2] if len(bars) > 1 else None
+    bar_name = (last.get("name") or "").strip()
+    if bar_name and (not name or name == code):
+        name = bar_name
+        base["name"] = name
     if last.get("dif") is None or last.get("hist") is None or last.get("k") is None:
         base["missing_rules"].append("数据不足或参数对不上 → 排除")
         base["facts"] = _snapshot(last)
@@ -732,6 +736,7 @@ def summarize(rows: list[dict]) -> dict:
                 "code": row.get("code"),
                 "name": row.get("name"),
                 "pe": pe,
+                "industry": row.get("industry") or facts.get("industry"),
             }
         )
     return {"summary": by_gate, "by_gate": by_gate, "names": names, "total": len(rows)}

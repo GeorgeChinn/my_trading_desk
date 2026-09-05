@@ -89,6 +89,9 @@ def load_bars(code: str, last_n: int | None = None) -> list[dict]:
                     amount = None
             if amount is None:
                 amount = c * volume
+            stock_name = ""
+            if "name" in fields and row.get(fields["name"]) not in (None, ""):
+                stock_name = str(row[fields["name"]]).strip()
             bars.append(
                 {
                     "code": ts_code(code),
@@ -99,9 +102,19 @@ def load_bars(code: str, last_n: int | None = None) -> list[dict]:
                     "close": c,
                     "volume": volume,
                     "amount": amount,
+                    "name": stock_name,
                 }
             )
     bars.sort(key=lambda item: item["date"])
+    last_name = ""
+    for row in reversed(bars):
+        if row.get("name"):
+            last_name = row["name"]
+            break
+    if last_name:
+        for row in bars:
+            if not row.get("name"):
+                row["name"] = last_name
     if last_n and last_n > 0 and len(bars) > last_n:
         return bars[-last_n:]
     return bars

@@ -67,8 +67,7 @@
       <button class="btn" @click="page = 1; load()">筛选</button>
     </div>
 
-    <div v-if="loading" class="empty">{{ firstLoad ? "首次回放会写入缓存，之后确认收盘不变即秒开。" : "读取轨迹…" }}</div>
-    <div v-else-if="!segments.length" class="empty">{{ emptyText }}</div>
+    <div v-if="!loading && !segments.length" class="empty">{{ emptyText }}</div>
     <div v-else class="card table-wrap">
       <table class="table">
         <thead>
@@ -88,7 +87,7 @@
         </thead>
         <tbody>
           <tr v-for="ep in segments" :key="ep.id">
-            <td>{{ ep.code }} {{ ep.name }}</td>
+            <td>{{ stockTitle(ep) }}</td>
             <td>第 {{ ep.seq }} 段</td>
             <td>{{ ep.buy_date || "—" }}</td>
             <td>{{ money(ep.buy_price) }}</td>
@@ -122,6 +121,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api } from "../api";
+import { setLoadingText } from "../loading.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -133,7 +133,6 @@ const sort = ref("default");
 const order = ref("desc");
 const page = ref(1);
 const loading = ref(true);
-const firstLoad = ref(true);
 const rulesetId = computed(() => String(route.query.ruleset || "rules"));
 const rulesets = computed(() => (data.value.rulesets && data.value.rulesets.length ? data.value.rulesets : extraRulesets.value));
 const currentRuleset = computed(() => data.value.ruleset || rulesets.value.find((r) => r.id === rulesetId.value) || null);
@@ -179,8 +178,15 @@ function setTab(t) {
   page.value = 1;
   load();
 }
+function stockTitle(row) {
+  const code = (row && row.code) || "";
+  const name = String((row && row.name) || "").trim();
+  if (!name || name === code) return code;
+  return `${name}  ${code}`;
+}
 async function load() {
   loading.value = true;
+  setLoadingText(rulesetId.value === "rules2" ? "正在回放 RULES2 轨迹…" : "正在读取规则轨迹…");
   try {
     data.value = await api.cycles(rulesetId.value, {
       tab: tab.value,
@@ -192,7 +198,6 @@ async function load() {
     });
   } finally {
     loading.value = false;
-    firstLoad.value = false;
   }
 }
 watch(rulesetId, () => {

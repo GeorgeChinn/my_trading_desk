@@ -47,6 +47,12 @@
       <div class="page">
         <router-view />
       </div>
+      <div class="page-mask" v-if="pageLoading">
+        <div class="page-mask-box">
+          <div class="spin"></div>
+          <p>{{ pageLoadingText }}</p>
+        </div>
+      </div>
     </div>
     <IdeaModal v-if="showIdea" @close="showIdea = false" />
   </div>
@@ -56,6 +62,7 @@
 import { onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { api } from "../api";
+import { pageLoading, pageLoadingText } from "../loading.js";
 import IdeaModal from "./IdeaModal.vue";
 
 const route = useRoute();

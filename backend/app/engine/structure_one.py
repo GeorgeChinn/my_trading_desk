@@ -313,7 +313,9 @@ def classify_s1(
         return base
     last = bars[-1]
     close = last["close"]
-    name = last.get("name") or name
+    name = (last.get("name") or name or "").strip() or code
+    if name == code and (meta.get("name") or "").strip() and meta.get("name") != code:
+        name = str(meta["name"]).strip()
     base["name"] = name
     base["facts"] = {"date": last["date"], "close": close, "pe": dyn_pe_value(meta)}
     if is_st_name(name):
@@ -328,6 +330,7 @@ def classify_s1(
         return base
     industry = meta.get("industry")
     if industry:
+        base["industry"] = industry
         base["facts"]["industry"] = industry
     if not industry:
         base["missing_rules"].append("第3条 底池：无板块归属")
@@ -346,20 +349,35 @@ def classify_s1(
         return base
 
     ind = industry_stats.get(industry) or {}
+    if ind.get("ret_3d") is not None:
+        base["facts"]["board_ret_3d"] = round(ind["ret_3d"], 2)
+    if market_3d is not None:
+        base["facts"]["market_ret_3d"] = round(market_3d, 2)
+        if ind.get("ret_3d") is not None:
+            base["facts"]["vs_market"] = round(ind["ret_3d"] - market_3d, 2)
     if not structure_only:
+        if ind.get("ret_3d") is None:
+            base["missing_rules"].append(f"第3条 板块池：{industry} 近3日涨幅证据不足，出池")
+            return base
         if market_3d is not None and ind.get("ret_3d") is not None:
             if ind["ret_3d"] < market_3d:
                 base["missing_rules"].append(
-                    f"第3条 板块池：{industry} 近3日 {ind['ret_3d']:.2f}% < 沪深300 {market_3d:.2f}%"
+                    f"第3条 板块池：{industry} 近3日 {ind['ret_3d']:.2f}% < 沪深300 {market_3d:.2f}%，整板块出池"
                 )
                 return base
+            base["hit_rules"].append(
+                f"第3条 板块池：{industry} 近3日 {ind['ret_3d']:.2f}% ≥ 沪深300 {market_3d:.2f}%"
+            )
+        elif market_3d is None:
+            base["reminders"].append("第3条 板块池：沪深300近3日未知，相对大盘未核，不挡筛选")
         rets = [v["ret_3d"] for v in industry_stats.values() if v.get("ret_3d") is not None and v.get("n", 0) >= 2]
-        if rets and ind.get("ret_3d") is not None and ind["ret_3d"] <= min(rets) + 1e-12:
-            base["missing_rules"].append(f"第3条 板块池：{industry} 近3日为最弱一档")
+        if len(rets) >= 2 and ind.get("ret_3d") is not None and ind["ret_3d"] <= min(rets) + 1e-12:
+            base["missing_rules"].append(f"第3条 板块池：{industry} 近3日为最弱一档，整板块出池")
             return base
         if not _stock_vs_board(bars, ind):
-            base["missing_rules"].append("第3条 个股相对所属板块偏弱，出池")
+            base["missing_rules"].append(f"第3条 个股相对 {industry} 偏弱，出池")
             return base
+        base["hit_rules"].append(f"第3条 个股相对 {industry} 不弱")
 
     if _any_limit(bars, code, 3):
         base["veto"] = ["近3个交易日出现涨停"]
@@ -637,12 +655,56 @@ def list_s1_pool() -> list[dict]:
     return cands
 
 
+def board_funnel(industry_stats: dict, market_3d: float | None) -> list[dict]:
+    """第3.2条：先筛板块，再给个股用。"""
+    ranked = [v["ret_3d"] for v in industry_stats.values() if v.get("ret_3d") is not None and v.get("n", 0) >= 2]
+    weakest = min(ranked) if ranked else None
+    out = []
+    for name, st in industry_stats.items():
+        r3 = st.get("ret_3d")
+        vs = None if r3 is None or market_3d is None else r3 - market_3d
+        passed = True
+        reason = "近3日相对大盘不弱"
+        if r3 is None:
+            passed = False
+            reason = "近3日涨幅证据不足"
+        elif market_3d is not None and r3 < market_3d:
+            passed = False
+            reason = f"近3日 {r3:.2f}% < 沪深300 {market_3d:.2f}%"
+        elif weakest is not None and len(ranked) >= 2 and r3 <= weakest + 1e-12:
+            passed = False
+            reason = "近3日为全市场最弱一档"
+        elif market_3d is None:
+            reason = "沪深300近3日未知，未挡板块"
+        else:
+            reason = f"近3日 {r3:.2f}% ≥ 沪深300 {market_3d:.2f}%"
+        out.append(
+            {
+                "name": name,
+                "n": st.get("n") or 0,
+                "ret_3d": None if r3 is None else round(r3, 2),
+                "market_ret_3d": None if market_3d is None else round(market_3d, 2),
+                "vs_market": None if vs is None else round(vs, 2),
+                "pass": passed,
+                "reason": reason,
+            }
+        )
+    out.sort(key=lambda x: (0 if x["pass"] else 1, -(x["ret_3d"] if x["ret_3d"] is not None else -999)))
+    return out
+
+
 def scan_structure_one(settings: dict, trades: list | None = None) -> list[dict]:
     cands = list_s1_pool()
     snap = load_sector_snap()
     market_3d = (snap.get("market") or {}).get("ret_3d_pct")
     stats = _industry_stats(cands)
+    funnel = board_funnel(stats, market_3d)
+    scan_structure_one.funnel = funnel
+    scan_structure_one.market = {
+        "name": (snap.get("market") or {}).get("name") or "沪深300",
+        "ret_3d_pct": market_3d,
+    }
     rows = [classify_s1(item, settings, trades, stats, market_3d) for item in cands]
     order = {name: i for i, name in enumerate(GATES)}
-    rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))
+    rows.sort(key=lambda item: (order.get(item["status"], 9), item.get("industry") or "", item["code"]))
     return rows
