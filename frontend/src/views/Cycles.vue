@@ -12,7 +12,7 @@
         :class="{ primary: rulesetId === rs.id }"
         @click="switchRuleset(rs.id)"
       >
-        {{ rs.title }}
+        {{ rs.file }}
       </button>
     </div>
     <p class="sub" v-if="currentRuleset">{{ currentRuleset.file }} · {{ currentRuleset.title }}</p>
@@ -126,6 +126,7 @@ import { api } from "../api";
 const route = useRoute();
 const router = useRouter();
 const data = ref({ segments: [], summary: {}, rulesets: [], pages: 1 });
+const extraRulesets = ref([]);
 const tab = ref("all");
 const q = ref("");
 const sort = ref("default");
@@ -134,7 +135,7 @@ const page = ref(1);
 const loading = ref(true);
 const firstLoad = ref(true);
 const rulesetId = computed(() => String(route.query.ruleset || "rules"));
-const rulesets = computed(() => data.value.rulesets || []);
+const rulesets = computed(() => (data.value.rulesets && data.value.rulesets.length ? data.value.rulesets : extraRulesets.value));
 const currentRuleset = computed(() => data.value.ruleset || rulesets.value.find((r) => r.id === rulesetId.value) || null);
 const summary = computed(() => data.value.summary || {});
 const segments = computed(() => data.value.segments || []);
@@ -198,5 +199,9 @@ watch(rulesetId, () => {
   page.value = 1;
   load();
 });
-onMounted(load);
+onMounted(async () => {
+  const rs = await api.rulesets().catch(() => ({ items: [] }));
+  extraRulesets.value = rs.items || [];
+  await load();
+});
 </script>

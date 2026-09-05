@@ -63,7 +63,7 @@
           :class="{ primary: rulesetId === rs.id }"
           @click="switchRuleset(rs.id)"
         >
-          {{ rs.title }}
+          {{ rs.file }}
         </button>
       </div>
       <p class="sub">{{ currentRuleset ? currentRuleset.file + " · " : "" }}买入 = 路径到达，不是成交指令。</p>

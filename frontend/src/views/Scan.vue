@@ -12,7 +12,7 @@
         :class="{ primary: rulesetId === rs.id }"
         @click="switchRuleset(rs.id)"
       >
-        {{ rs.title }}
+        {{ rs.file }}
       </button>
     </div>
     <p class="sub" v-if="currentRuleset && data.pool">
@@ -112,12 +112,13 @@ import StatusBadge from "../components/StatusBadge.vue";
 const route = useRoute();
 const router = useRouter();
 const data = ref({ rows: [], summary: {}, by_gate: {}, names: {}, pool: {}, rulesets: [] });
+const extraRulesets = ref([]);
 const filter = ref("在池");
 const q = ref("");
 const loading = ref(true);
 const gates = GATES;
 const rulesetId = computed(() => String(route.query.ruleset || "rules"));
-const rulesets = computed(() => data.value.rulesets || []);
+const rulesets = computed(() => (data.value.rulesets && data.value.rulesets.length ? data.value.rulesets : extraRulesets.value));
 const currentRuleset = computed(() => data.value.ruleset || rulesets.value.find((r) => r.id === rulesetId.value) || null);
 const buyNames = computed(() => (data.value.names && data.value.names.买入) || []);
 const watchNames = computed(() => (data.value.names && data.value.names.观察) || []);
@@ -161,5 +162,9 @@ async function load() {
   }
 }
 watch(rulesetId, load);
-onMounted(load);
+onMounted(async () => {
+  const rs = await api.rulesets().catch(() => ({ items: [] }));
+  extraRulesets.value = rs.items || [];
+  await load();
+});
 </script>

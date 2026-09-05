@@ -78,6 +78,7 @@ const nav = [
   { to: "/", label: "首页", icon: icon('<path d="M4 11.5 12 4l8 7.5V20H4z"/><path d="M9 20v-6h6v6"/>') },
   { to: "/scan", label: "规则扫描", icon: icon('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>') },
   { to: "/cycles", label: "规则轨迹", icon: icon('<path d="M4 16l4-6 4 3 8-9"/><path d="M4 20h16"/>') },
+  { to: "/rules", label: "我的规则", icon: icon('<path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h6M9 16h4"/>') },
   { to: "/trades", label: "我的交易", icon: icon('<path d="M4 19V5"/><path d="M4 16l5-6 4 4 7-9"/>') },
   { to: "/settings", label: "数据与设置", icon: icon('<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.2-1.6l2-1.5-2-3.5-2.4 1a7 7 0 0 0-2.8-1.6L13 3h-2l.6 2.8a7 7 0 0 0-2.8 1.6l-2.4-1-2 3.5 2 1.5A7 7 0 0 0 5 12c0 .5.1 1.1.2 1.6l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 2.8 1.6L11 21h2l.6-2.8a7 7 0 0 0 2.8-1.6l2.4 1 2-3.5-2-1.5c.1-.5.2-1.1.2-1.6z"/>') },
 ];
