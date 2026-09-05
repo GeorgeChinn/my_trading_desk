@@ -10,6 +10,7 @@ from .scanner import FACT_NOTE, detect_limit_streak, dyn_pe_value
 from .sector import load_sector_snap
 
 YI = 100_000_000.0
+MIN_FLOAT_YI = 80.0
 INDUSTRY_MAP_PATH = DATA_DIR / "industry_map.json"
 
 
@@ -22,6 +23,22 @@ def _amt(row: dict) -> float:
     if raw > 0:
         return raw
     return float(row.get("close") or 0) * _vol(row)
+
+
+def _float_mcap_yi(meta: dict, last: dict | None = None) -> float | None:
+    for key in ("float_mcap", "circ_mv", "流通市值", "mcap"):
+        raw = meta.get(key)
+        if raw is None:
+            continue
+        try:
+            val = float(raw)
+        except (TypeError, ValueError):
+            continue
+        if val > 10000:
+            return val / YI
+        if val > 0:
+            return val
+    return None
 
 
 def _limit_pct(code: str) -> float:
@@ -121,7 +138,7 @@ def find_structure(bars: list[dict]) -> dict | None:
                 "rally_low": rally_low,
                 "pb_low": pb_low,
                 "pre_low": pre_low,
-                "a2_price": pb_low,
+                "a2_price": pre_low,
                 "gain_pct": (run_close_high - start_c) / start_c * 100.0,
             }
             best = cand
@@ -370,6 +387,12 @@ def classify_s1(
     if pe is not None and pe <= 0:
         base["veto"] = [f"动态市盈 {pe:.2f} ≤ 0"]
         return base
+    if pe is None:
+        base["reminders"].append("动态市盈缺失：不升买入，最多观察")
+    mcap = _float_mcap_yi(meta, last)
+    if mcap is not None and mcap < MIN_FLOAT_YI:
+        base["veto"] = [f"小盘：流通市值 {mcap:.1f} 亿 < {MIN_FLOAT_YI:.0f} 亿"]
+        return base
     if detect_limit_streak(bars, code) >= 2:
         base["veto"] = ["连板"]
         return base
@@ -527,6 +550,12 @@ def classify_s1(
         return base
     base["hit_rules"].append("第6条 需求转强：" + "；".join(demand))
     base["path_ready"] = True
+    if pe is None:
+        base["status"] = "观察"
+        base["gate"] = "观察"
+        base["summary_bucket"] = "观察"
+        base["missing_rules"].append("第6条 动态市盈缺失，不升买入")
+        return base
     base["status"] = "买入"
     base["gate"] = "买入"
     base["summary_bucket"] = "买入"
