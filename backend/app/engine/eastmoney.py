@@ -307,26 +307,29 @@ def fetch_industry_boards() -> list[dict]:
 
 
 def fetch_sina_industry_map() -> dict[str, str]:
-    """code -> 新浪行业名. One request per industry node."""
+    """code -> 申万一级（优先）/ 申万二级 / 新浪行业. RULES2 底池认申万归属。"""
     sess = _session()
     try:
         payload = _get_json(sess, "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodes", {}, timeout=20)
     except Exception:
         return {}
-    nodes: list[tuple[str, str]] = []
+    sw1: list[tuple[str, str]] = []
+    sina: list[tuple[str, str]] = []
 
     def walk(node, path):
         if not isinstance(node, list):
             return
-        if (
-            len(node) >= 3
-            and isinstance(node[0], str)
-            and isinstance(node[2], str)
-            and str(node[2]).startswith("new_")
-        ):
-            if path and path[-1] == "新浪行业":
-                nodes.append((node[0], node[2]))
-            return
+        if len(node) >= 3 and isinstance(node[0], str) and isinstance(node[2], str):
+            nid = str(node[2])
+            parent = path[-1] if path else ""
+            if nid.startswith("sw1_") and parent == "申万一级":
+                sw1.append((node[0], nid))
+                return
+            if nid.startswith("sw2_") and parent == "申万二级":
+                return
+            if nid.startswith("new_") and parent == "新浪行业":
+                sina.append((node[0], nid))
+                return
         for item in node:
             if isinstance(item, list):
                 nxt = path + [node[0]] if isinstance(node[0], str) else path
@@ -334,16 +337,21 @@ def fetch_sina_industry_map() -> dict[str, str]:
 
     walk(payload, [])
     mapping: dict[str, str] = {}
-    for name, node_id in nodes:
-        try:
-            rows = fetch_node(sess, node_id, page_size=80)
-        except Exception:
-            continue
-        for rec in rows:
-            code = ts_code(str(rec.get("code") or rec.get("symbol") or ""))
-            if code:
-                mapping[code] = name
-        time.sleep(0.04)
+
+    def fill(nodes: list[tuple[str, str]], overwrite: bool = False) -> None:
+        for name, node_id in nodes:
+            try:
+                rows = fetch_node(sess, node_id, page_size=80)
+            except Exception:
+                continue
+            for rec in rows:
+                code = ts_code(str(rec.get("code") or rec.get("symbol") or ""))
+                if code and (overwrite or code not in mapping):
+                    mapping[code] = name
+            time.sleep(0.04)
+
+    fill(sw1, overwrite=True)
+    fill(sina, overwrite=False)
     return mapping
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from ..config import SECTOR_PATH
+from ..config import DATA_DIR, SECTOR_PATH
 from ..store import read_json, write_json
 from .bars import load_bars, ts_code
 from .eastmoney import fetch_index_kline, fetch_industry_boards, fetch_sina_industry_map
@@ -72,6 +72,7 @@ def refresh_sector_snap(pool: list[dict], log=None) -> dict:
 
     industry_map = fetch_sina_industry_map()
     talk(f"新浪行业归属 {len(industry_map)} 只")
+    write_json(DATA_DIR / "industry_map.json", {"codes": industry_map, "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
     for item in pool:
         code = ts_code(str(item.get("code") or ""))
         if not code:

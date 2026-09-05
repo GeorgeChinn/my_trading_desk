@@ -1,8 +1,9 @@
 <template>
   <div>
     <h1>{{ code }} {{ name }} · 日线与事实</h1>
-    <p class="sub">{{ factNote }} · 悬停看日期和收盘价，点击 K 线在下方看指标。买入不是成交指令。</p>
-    <div class="warn-banner" v-if="scan.position_block">{{ scan.position_block }} · 总闸 {{ scan.status }}</div>
+    <p class="sub">{{ factNote }} · {{ rulesetTitle }} · 悬停看日期和收盘价，点击 K 线在下方看指标。买入不是成交指令。</p>
+    <div class="warn-banner" v-if="scan.position_block || scan.status">{{ scan.position_block || "总闸" }} · {{ scan.status }}</div>
+    <p class="sub" v-if="scan.key_kind">{{ scan.key_kind }} 关键位 {{ n2(scan.key_price) }} · 止损 {{ n2(scan.stop_price) }}</p>
     <div class="card" style="margin-bottom:14px">
       <KlineChart :bars="bars" :trigger-date="triggerDate" @pick="picked = $event" />
     </div>
@@ -52,6 +53,8 @@ const scan = ref({});
 const factNote = ref("这是事实记录");
 const picked = ref(null);
 const triggerDate = computed(() => route.query.trigger || "");
+const rulesetId = computed(() => String(route.query.ruleset || "rules"));
+const rulesetTitle = ref("");
 
 function n1(v) {
   return v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(1);
@@ -65,16 +68,17 @@ function n3(v) {
 
 async function load() {
   code.value = route.params.code;
-  const data = await api.chart(code.value);
+  const data = await api.chart(code.value, rulesetId.value);
   name.value = data.name;
   bars.value = data.bars || [];
   scan.value = data.scan || {};
   factNote.value = data.fact_note;
+  rulesetTitle.value = (data.ruleset && data.ruleset.title) || rulesetId.value;
   picked.value = bars.value[bars.value.length - 1] || null;
   if (route.query.watch) {
     await api.viewWatch(route.query.watch).catch(() => {});
   }
 }
 onMounted(load);
-watch(() => route.params.code, load);
+watch(() => [route.params.code, route.query.ruleset], load);
 </script>

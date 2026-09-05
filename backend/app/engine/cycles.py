@@ -117,7 +117,39 @@ def is_exit_signal(s: dict, entry_idx: int | None = None) -> bool:
     return hit
 
 
-def walk_cycles(bars: list[dict], flags: dict | None = None) -> tuple[list[dict], dict | None]:
+def walk_cycles_s1(bars: list[dict]) -> tuple[list[dict], dict | None]:
+    from .structure_one import _choose_kind, _key_zone, evaluate_exit_s1, find_structure, is_buy_s1
+
+    if len(bars) < 30:
+        return [], None
+    n = len(bars)
+    cycles = []
+    open_i = None
+    open_zone = None
+    for i in range(25, n):
+        sl = bars[: i + 1]
+        if open_i is None:
+            if is_buy_s1(sl):
+                open_i = i
+                st = find_structure(sl)
+                zone = _key_zone(sl, st) if st else {}
+                kind, px, _n = _choose_kind(zone) if zone else (None, None, None)
+                open_zone = {**(zone or {}), "kind": kind, "stop": px, "price": px}
+            continue
+        hit, section, detail = evaluate_exit_s1(sl, {"date": bars[open_i]["date"]}, open_zone)
+        if i > open_i and hit:
+            cycles.append(_cycle_stats(bars, open_i, i, exit_section=section, exit_detail=detail))
+            open_i = None
+            open_zone = None
+    live = None
+    if open_i is not None:
+        live = _cycle_stats(bars, open_i, n - 1, closed=False)
+    return cycles, live
+
+
+def walk_cycles(bars: list[dict], flags: dict | None = None, engine: str = "low_golden") -> tuple[list[dict], dict | None]:
+    if engine == "pullback_restart":
+        return walk_cycles_s1(bars)
     flags = flags or parse_flags()
     if len(bars) < 50:
         return [], None
@@ -224,9 +256,9 @@ def _segment_row(code: str, name: str, stats: dict, seq: int) -> dict:
     }
 
 
-def walk_stock_segments(code: str, name: str, flags: dict) -> list[dict]:
+def walk_stock_segments(code: str, name: str, flags: dict, engine: str = "low_golden") -> list[dict]:
     bars = attach_indicators(load_bars(code))
-    closed, live = walk_cycles(bars, flags)
+    closed, live = walk_cycles(bars, flags, engine=engine)
     out = []
     for i, item in enumerate(closed, start=1):
         out.append(_segment_row(code, name, item, i))
@@ -347,7 +379,7 @@ def cycles_page(
     ruleset_id = (ruleset or {}).get("id") or "rules"
     rules_hash = _rules_hash((ruleset or {}).get("text") or "")
     note = "一段轨迹 = 路径到达买入的确认收盘 → 卖出条件日。买入价/卖出价用当日收盘。这是事实记录，不是成交指令。"
-    if engine != ENGINE_LOW_GOLDEN:
+    if engine not in ("low_golden", "pullback_restart"):
         payload = {
             "fact_note": "这是事实记录",
             "note": (ruleset or {}).get("engine_note") or note,
@@ -363,6 +395,11 @@ def cycles_page(
         save_cycles(payload, ruleset_id)
         return payload
     segments: list[dict] = []
+    scan_uni = universe
+    if engine == "pullback_restart":
+        from .structure_one import list_s1_cycle_universe
+
+        scan_uni = list_s1_cycle_universe()
     pe_map = {ts_code(str(m.get("code") or "")): m.get("pe") for m in universe}
     path = _cache_path(ruleset_id)
     store = read_json(path, {}) if path.exists() else {}
@@ -373,7 +410,7 @@ def cycles_page(
     dirty = not hash_ok
     if not hash_ok:
         codes = {}
-    for meta in universe:
+    for meta in scan_uni:
         code = ts_code(str(meta.get("code") or ""))
         name = meta.get("name") or code
         if not code:
@@ -383,7 +420,7 @@ def cycles_page(
         if hash_ok and hit.get("last_date") == last and isinstance(hit.get("segments"), list):
             segs = [{**dict(seg), "name": name} for seg in hit["segments"]]
         else:
-            segs = walk_stock_segments(code, name, flags)
+            segs = walk_stock_segments(code, name, flags, engine=engine)
             codes[code] = {"last_date": last, "segments": segs}
             dirty = True
         for seg in segs:

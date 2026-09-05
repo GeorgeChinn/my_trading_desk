@@ -1,4 +1,4 @@
-"""RULES §7 离场。7.1 失败离场优先于 7.2 波段减仓/清仓。
+"""RULES.md 第7条离场。7.1 失败离场优先于 7.2 波段卖出。
 
 本波 = 买入日之后（含买入当日已在红柱里）这一截由绿转红的红柱。
 前一波 = 本波开始之前最近一座已结束的红柱。不要拿更早另一轮来比。
@@ -56,7 +56,7 @@ def this_and_prev_wave(hist: list, entry_idx: int) -> tuple[dict | None, dict | 
 
 
 def fail_broken_lows(bars: list[dict], entry_idx: int) -> tuple[bool, str]:
-    """§7.1：收盘跌破买入日最低价，或跌破金叉阳线最低价。"""
+    """第7.1条：收盘跌破买入日收盘价，或连续 2 日收盘低于买入日最低价。"""
     if entry_idx < 0 or entry_idx >= len(bars):
         return False, ""
     last = bars[-1]
@@ -64,33 +64,51 @@ def fail_broken_lows(bars: list[dict], entry_idx: int) -> tuple[bool, str]:
     if close is None:
         return False, ""
     entry = bars[entry_idx]
+    entry_close = entry.get("close")
     entry_low = entry.get("low")
-    if entry_low is not None and close < entry_low:
-        return True, f"收盘 {close:.2f} 跌破买入日最低价 {entry_low:.2f}"
-    # 当前实现里买入日即金叉确认日，同一根 K 再比一次，避免以后买入日错位。
-    yang_low = entry.get("low")
-    if yang_low is not None and close < yang_low:
-        return True, f"收盘 {close:.2f} 跌破金叉阳线最低价 {yang_low:.2f}"
+    if entry_close is not None and close < entry_close:
+        return True, f"收盘 {close:.2f} 跌破买入日收盘 {entry_close:.2f}"
+    if entry_low is not None and len(bars) - 1 >= entry_idx + 2:
+        c0 = bars[-2].get("close")
+        if c0 is not None and c0 < entry_low and close < entry_low:
+            return True, f"连续 2 日收盘低于买入日最低价 {entry_low:.2f}"
     return False, ""
 
 
 def fail_hist_5d(hist: list, entry_idx: int) -> tuple[bool, str]:
-    """§7.1：金叉后 5 个交易日内红柱没有放大，或再次绿柱拉长。"""
+    """第7.1条：金叉后 5 日内从未转红，或转红后本波红柱峰值未超过转红前最后一根绿柱绝对值。
+
+    两个子句都在金叉后满 5 个交易日再判。未满 5 日不因首根小红柱提前失败。
+    """
     last = len(hist) - 1
     if last <= entry_idx:
         return False, ""
-    h0, h1 = hist[last - 1] if last - 1 >= 0 else None, hist[last]
-    if h0 is not None and h1 is not None and h0 < 0 and h1 < 0 and abs(h1) > abs(h0):
-        return True, f"金叉后再次绿柱拉长（{h0:.4f} → {h1:.4f}）"
     elapsed = last - entry_idx
     if elapsed < 5:
         return False, ""
-    window = hist[entry_idx : entry_idx + 6]
-    reds = [h for h in window if h is not None and h > 0]
+    after = hist[entry_idx : last + 1]
+    reds = [h for h in after if h is not None and h > 0]
     if not reds:
-        return True, "金叉后 5 个交易日内未见红柱放大（一直未转红）"
-    if max(reds) <= reds[0] + 1e-12:
-        return True, f"金叉后 5 个交易日内红柱没有放大（首根红柱 {reds[0]:.4f} / 最大 {max(reds):.4f}）"
+        return True, "金叉后 5 个交易日内从未转红"
+    first_red_i = None
+    for i, h in enumerate(after):
+        if h is not None and h > 0:
+            first_red_i = entry_idx + i
+            break
+    if first_red_i is None:
+        return True, "金叉后 5 个交易日内从未转红"
+    last_green = None
+    for j in range(first_red_i - 1, -1, -1):
+        h = hist[j]
+        if h is not None and h < 0:
+            last_green = abs(h)
+            break
+    if last_green is None:
+        return False, ""
+    this, _ = this_and_prev_wave(hist, first_red_i)
+    peak = this["peak"] if this else max(reds)
+    if peak <= last_green + 1e-12:
+        return True, f"转红后本波红柱峰值 {peak:.4f} 未超过转红前绿柱 {last_green:.4f}"
     return False, ""
 
 

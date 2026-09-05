@@ -105,7 +105,7 @@
             <td>
               <span class="badge" :class="ep.closed ? '卖出' : '买入'">{{ ep.closed ? "卖出" : "进行中" }}</span>
             </td>
-            <td><router-link class="btn" :to="'/chart/' + ep.code">日线</router-link></td>
+            <td><router-link class="btn" :to="{ path: '/chart/' + ep.code, query: { ruleset: rulesetId } }">日线</router-link></td>
           </tr>
         </tbody>
       </table>

@@ -53,10 +53,20 @@ def main() -> None:
     result = sync_live(force_bars=False)
     print(json.dumps({k: result.get(k) for k in ("state", "message", "source", "trade_date", "pool_size", "bars")}, ensure_ascii=False, indent=2))
     scan = run_rules_scan()
-    print("scan", json.dumps(scan.get("by_gate"), ensure_ascii=False), "买入", scan.get("buy_count"))
+    print("scan", "rules", json.dumps(scan.get("by_gate"), ensure_ascii=False), "买入", scan.get("buy_count"))
     for item in list_rulesets():
         if not item.get("engine_ok"):
             continue
+        if item["id"] != "rules":
+            rows = scan_universe(
+                load_universe(),
+                load_settings(),
+                load_trades(),
+                flags=parse_flags(item["text"]),
+                engine=item["engine"],
+            )
+            tallied = summarize(rows)
+            print("scan", item["id"], json.dumps(tallied.get("by_gate"), ensure_ascii=False))
         flags = parse_flags(item["text"])
         page = cycles_page(load_universe(), flags=flags, ruleset=item, warm=True)
         summary = page.get("summary") or {}

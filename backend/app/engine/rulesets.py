@@ -6,7 +6,9 @@ import re
 from ..config import ROOT
 
 ENGINE_LOW_GOLDEN = "low_golden"
+ENGINE_PULLBACK = "pullback_restart"
 ENGINE_UNIMPLEMENTED = "unimplemented"
+ENGINE_OK = (ENGINE_LOW_GOLDEN, ENGINE_PULLBACK)
 
 _TITLE_MARK = re.compile(r"本规则只做\s*\*\*(.+?)\*\*")
 
@@ -23,7 +25,15 @@ def _title(text: str, fallback: str) -> str:
 
 
 def _engine(text: str) -> str:
-    if "低位金叉" in (text or ""):
+    title = _title(text, "")
+    if "回调后的重新启动" in title:
+        return ENGINE_PULLBACK
+    if "低位金叉" in title:
+        return ENGINE_LOW_GOLDEN
+    raw = text or ""
+    if "回调后的重新启动" in raw:
+        return ENGINE_PULLBACK
+    if "低位金叉" in raw:
         return ENGINE_LOW_GOLDEN
     return ENGINE_UNIMPLEMENTED
 
@@ -31,7 +41,9 @@ def _engine(text: str) -> str:
 def _engine_note(engine: str) -> str:
     if engine == ENGINE_LOW_GOLDEN:
         return "扫描器已执行本结构（低位金叉波段）。买入不是成交指令。"
-    return "本规则结构尚未写成扫描器（关键区域 / 板块强度未量化）。证据不足，不编造信号。"
+    if engine == ENGINE_PULLBACK:
+        return "扫描器已执行本结构（回调后的重新启动）。买入不是成交指令。"
+    return "本规则结构尚未写成扫描器。证据不足，不编造信号。"
 
 
 def list_rulesets() -> list[dict]:
@@ -52,7 +64,7 @@ def list_rulesets() -> list[dict]:
                 "file": path.name,
                 "title": _title(text, ident),
                 "engine": engine,
-                "engine_ok": engine == ENGINE_LOW_GOLDEN,
+                "engine_ok": engine in ENGINE_OK,
                 "engine_note": _engine_note(engine),
                 "path": str(path),
                 "text": text,

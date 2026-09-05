@@ -55,7 +55,18 @@
 
     <div class="card">
       <h2>今天规则扫描</h2>
-      <p class="sub">买入 = 路径到达，不是成交指令。</p>
+      <div class="tabs" style="margin:8px 0 10px">
+        <button
+          class="btn"
+          v-for="rs in rulesets"
+          :key="rs.id"
+          :class="{ primary: rulesetId === rs.id }"
+          @click="switchRuleset(rs.id)"
+        >
+          {{ rs.title }}
+        </button>
+      </div>
+      <p class="sub">{{ currentRuleset ? currentRuleset.file + " · " : "" }}买入 = 路径到达，不是成交指令。</p>
       <div class="grid cols-4">
         <div class="stat"><div class="n">{{ scan.买入 ?? 0 }}</div><div class="k">买入</div></div>
         <div class="stat"><div class="n">{{ scan.观察 ?? 0 }}</div><div class="k">观察</div></div>
@@ -66,7 +77,7 @@
         <div class="ov-block">
           <div class="ov-title">买入池 <span>{{ buyNames.length }}</span></div>
           <div class="name-cloud" v-if="buyNames.length">
-            <router-link class="name-chip 买入" v-for="s in buyNames" :key="'hb'+s.code" :to="'/chart/' + s.code">
+            <router-link class="name-chip 买入" v-for="s in buyNames" :key="'hb'+s.code" :to="scanChart(s.code)">
               {{ s.name }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
             </router-link>
           </div>
@@ -75,7 +86,7 @@
         <div class="ov-block">
           <div class="ov-title">观察池 <span>{{ watchNames.length }}</span></div>
           <div class="name-cloud" v-if="watchNames.length">
-            <router-link class="name-chip 观察" v-for="s in watchNames" :key="'hw'+s.code" :to="'/chart/' + s.code">
+            <router-link class="name-chip 观察" v-for="s in watchNames" :key="'hw'+s.code" :to="scanChart(s.code)">
               {{ s.name }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
             </router-link>
           </div>
@@ -83,7 +94,7 @@
         </div>
       </div>
       <div class="row-btns" style="margin-top:14px">
-        <router-link class="btn" to="/scan">打开规则扫描</router-link>
+        <router-link class="btn" :to="{ path: '/scan', query: { ruleset: rulesetId } }">打开规则扫描</router-link>
       </div>
     </div>
 
@@ -135,6 +146,9 @@ const judgeNote = ref("");
 const statuses = STATUSES;
 const buyNames = computed(() => names.value.买入 || []);
 const watchNames = computed(() => names.value.观察 || []);
+const rulesets = ref([]);
+const rulesetId = ref("rules");
+const currentRuleset = computed(() => rulesets.value.find((r) => r.id === rulesetId.value) || null);
 
 function snap(card) {
   return (card.trigger && card.trigger.snapshot) || {};
@@ -147,7 +161,22 @@ function pct(v) {
 }
 function chartLink(card) {
   const date = snap(card).date || "";
-  return { name: "chart", params: { code: card.code }, query: { watch: card.id, trigger: date } };
+  return { name: "chart", params: { code: card.code }, query: { watch: card.id, trigger: date, ruleset: rulesetId.value } };
+}
+function scanChart(code) {
+  return { path: "/chart/" + code, query: { ruleset: rulesetId.value } };
+}
+async function switchRuleset(id) {
+  rulesetId.value = id;
+  if (id === "rules") {
+    const data = await api.home();
+    scan.value = data.scan_summary || {};
+    names.value = data.names || {};
+    return;
+  }
+  const data = await api.scan(id);
+  scan.value = data.by_gate || data.summary || {};
+  names.value = data.names || {};
 }
 function openJudge(card) {
   judgeCard.value = card;
@@ -173,6 +202,11 @@ async function load() {
   poolCount.value = data.pool_count || 0;
   poolDate.value = data.pool_trade_date || "";
   reminders.value = data.reminders || [];
+  rulesets.value = data.rulesets || [];
+  if (!rulesets.value.length) {
+    const rs = await api.rulesets().catch(() => ({ items: [] }));
+    rulesets.value = rs.items || [];
+  }
 }
 onMounted(load);
 </script>

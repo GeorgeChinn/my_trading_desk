@@ -698,6 +698,13 @@ def scan_universe(
 ) -> list[dict]:
     from .rules_bind import parse_flags
 
+    if engine == "pullback_restart":
+        from .structure_one import scan_structure_one
+
+        rows = scan_structure_one(settings, trades)
+        order = {name: i for i, name in enumerate(GATES)}
+        rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))
+        return rows
     if engine != "low_golden":
         return []
     if flags is None:

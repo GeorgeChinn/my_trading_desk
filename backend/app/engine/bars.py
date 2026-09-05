@@ -53,7 +53,7 @@ def list_csv_files() -> list[dict]:
     return rows
 
 
-def load_bars(code: str) -> list[dict]:
+def load_bars(code: str, last_n: int | None = None) -> list[dict]:
     path = csv_path_for(code)
     if not path.exists():
         return []
@@ -102,6 +102,8 @@ def load_bars(code: str) -> list[dict]:
                 }
             )
     bars.sort(key=lambda item: item["date"])
+    if last_n and last_n > 0 and len(bars) > last_n:
+        return bars[-last_n:]
     return bars
 
 

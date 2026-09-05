@@ -257,6 +257,8 @@ def home():
         "pool_trade_date": load_settings().get("last_trade_date") or "",
         "data_source": load_settings().get("data_source") or "csv",
         "reminders": funnel_reminders(load_settings()),
+        "ruleset": public_ruleset(get_ruleset("rules")),
+        "rulesets": [public_ruleset(item) for item in list_rulesets()],
     }
 
 
@@ -279,9 +281,21 @@ def scan(ruleset: str = Query("rules")):
     reminders = funnel_reminders(load_settings()) + list(bind.get("unimplemented") or [])
     if not rs.get("engine_ok"):
         reminders = [rs["engine_note"]] + reminders
+    if rs.get("engine") == "pullback_restart":
+        from .engine.structure_one import _load_industry_map
+
+        if len(_load_industry_map()) < 100:
+            reminders.append("第3条 底池：板块归属表为空或过少。请到数据与设置刷新板块后再扫 RULES2。")
     buy_n = (tallied.get("by_gate") or {}).get("买入") or 0
     if buy_n > 1:
         reminders.append(f"第6条 / 第8条：买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
+    pullback = rs.get("engine") == "pullback_restart"
+    pool_count = len(rows) if pullback else len(load_universe())
+    pool_note = (
+        "RULES2 底池：非ST、股价≥5、成交额≥1亿、有板块归属。下列按当前规则列出，不截断。"
+        if pullback
+        else "PROFILE 同时跟踪 100 只。下列按当前规则全量列出，不截断。"
+    )
     return {
         "rows": rows,
         **tallied,
@@ -292,21 +306,43 @@ def scan(ruleset: str = Query("rules")):
         "ruleset": public_ruleset(rs),
         "rulesets": [public_ruleset(item) for item in list_rulesets()],
         "pool": {
-            "count": len(load_universe()),
+            "count": pool_count,
             "trade_date": snap.get("trade_date") or load_settings().get("last_trade_date"),
             "source": snap.get("source") or load_settings().get("data_source"),
             "preferred": snap.get("preferred"),
             "funnel": snap,
-            "note": "PROFILE 同时跟踪 100 只。下列按当前规则全量列出，不截断。",
+            "note": pool_note,
         },
     }
 
 
+def _classify_for(code: str, ruleset_id: str | None = None) -> dict:
+    rs = get_ruleset(ruleset_id)
+    if rs and rs.get("engine") == "pullback_restart":
+        from .engine.structure_one import classify_one_s1
+
+        return classify_one_s1(code, load_settings(), load_trades())
+    if rs and rs.get("engine") == "low_golden":
+        uni = _universe_map()
+        meta = uni.get(ts_code(code)) or {"code": code, "name": _name_of(code)}
+        return classify_stock(meta, load_settings(), load_trades())
+    note = (rs or {}).get("engine_note") or "没有这个规则文件"
+    return {
+        "code": ts_code(code),
+        "name": _name_of(code),
+        "status": "排除",
+        "gate": "排除",
+        "hit_rules": [],
+        "missing_rules": [note],
+        "facts": {},
+        "fact_note": "这是事实记录",
+        "position_block": note,
+    }
+
+
 @app.get("/api/scan/{code}")
-def scan_one(code: str):
-    uni = _universe_map()
-    meta = uni.get(ts_code(code)) or {"code": code, "name": _name_of(code)}
-    return classify_stock(meta, load_settings(), load_trades())
+def scan_one(code: str, ruleset: str = Query("rules")):
+    return _classify_for(code, ruleset)
 
 
 @app.get("/api/cycles")
@@ -339,7 +375,7 @@ def cycles(
 
 
 @app.get("/api/chart/{code}")
-def chart(code: str):
+def chart(code: str, ruleset: str = Query("rules")):
     bars = attach_indicators(load_bars(code))
     if not bars:
         raise HTTPException(404, "没有这只股票的本地 CSV，证据不足")
@@ -349,7 +385,9 @@ def chart(code: str):
         "fact_note": "这是事实记录",
         "indicators": "MACD(7,28,4) + KDJ + 均线辅助展示",
         "bars": bars,
-        "scan": scan_one(code),
+        "scan": _classify_for(code, ruleset),
+        "ruleset": public_ruleset(get_ruleset(ruleset)),
+        "rulesets": [public_ruleset(item) for item in list_rulesets()],
     }
 
 
@@ -476,11 +514,19 @@ def trade_del(trade_id: str):
 
 @app.get("/api/rules")
 def rules():
+    items = list_rulesets()
     return {
         "editable": False,
-        "banner": "我的规则只读。仓位上限以 RULES.md 为准，网站不能改数字。总闸买入只表示路径到达，不是成交指令。",
+        "banner": "我的规则只读。仓位上限以对应 RULES 文件为准，网站不能改数字。总闸买入只表示路径到达，不是成交指令。",
         "profile": PROFILE_PATH.read_text(encoding="utf-8") if PROFILE_PATH.exists() else "",
         "rules": RULES_PATH.read_text(encoding="utf-8") if RULES_PATH.exists() else "",
+        "items": [
+            {
+                **public_ruleset(item),
+                "text": item.get("text") or "",
+            }
+            for item in items
+        ],
     }
 
 

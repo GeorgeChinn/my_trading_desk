@@ -33,7 +33,7 @@
         <div class="ov-title">买入池 <span>{{ buyNames.length }}</span></div>
         <p class="sub" style="margin:0 0 8px">路径到达，不是成交指令</p>
         <div class="name-cloud" v-if="buyNames.length">
-          <router-link class="name-chip 买入" v-for="s in buyNames" :key="'b'+s.code" :to="'/chart/' + s.code">
+          <router-link class="name-chip 买入" v-for="s in buyNames" :key="'b'+s.code" :to="chartLink(s.code)">
             {{ s.name }}
             <em v-if="s.pe != null">PE {{ pe(s.pe) }}</em>
           </router-link>
@@ -43,7 +43,7 @@
       <div class="ov-block">
         <div class="ov-title">观察池 <span>{{ watchNames.length }}</span></div>
         <div class="name-cloud" v-if="watchNames.length">
-          <router-link class="name-chip 观察" v-for="s in watchNames" :key="'w'+s.code" :to="'/chart/' + s.code">
+          <router-link class="name-chip 观察" v-for="s in watchNames" :key="'w'+s.code" :to="chartLink(s.code)">
             {{ s.name }}
             <em v-if="s.pe != null">PE {{ pe(s.pe) }}</em>
           </router-link>
@@ -94,9 +94,10 @@
         {{ row.fact_note }} · {{ row.facts && row.facts.date }} 收盘 {{ money(row.facts && row.facts.close) }}
         · DIF {{ fmt(row.facts && row.facts.dif) }}
         <span v-if="row.facts && row.facts.pe != null"> · 动态市盈 {{ pe(row.facts.pe) }}</span>
+        <span v-if="row.key_kind"> · {{ row.key_kind }} 关键位 {{ money(row.key_price) }} 止损 {{ money(row.stop_price) }}</span>
       </p>
       <div class="row-btns" style="margin-top:10px">
-        <router-link class="btn" :to="'/chart/' + row.code">查看日线与事实</router-link>
+        <router-link class="btn" :to="chartLink(row.code)">查看日线与事实</router-link>
       </div>
     </div>
   </div>
@@ -144,6 +145,9 @@ function money(v) {
 }
 function pe(v) {
   return v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(1);
+}
+function chartLink(code) {
+  return { path: "/chart/" + code, query: { ruleset: rulesetId.value } };
 }
 function switchRuleset(id) {
   router.replace({ path: "/scan", query: { ruleset: id } });

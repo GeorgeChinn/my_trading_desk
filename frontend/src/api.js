@@ -25,8 +25,10 @@ export const api = {
     const q = new URLSearchParams({ ruleset: ruleset || "rules", ...params });
     return request(`/api/cycles?${q.toString()}`);
   },
-  scanOne: (code) => request(`/api/scan/${code}`),
-  chart: (code) => request(`/api/chart/${code}`),
+  scanOne: (code, ruleset = "rules") =>
+    request(`/api/scan/${encodeURIComponent(code)}?ruleset=${encodeURIComponent(ruleset || "rules")}`),
+  chart: (code, ruleset = "rules") =>
+    request(`/api/chart/${encodeURIComponent(code)}?ruleset=${encodeURIComponent(ruleset || "rules")}`),
   watch: () => request("/api/watch"),
   addWatch: (body) => request("/api/watch", { method: "POST", body }),
   delWatch: (id) => request(`/api/watch/${id}`, { method: "DELETE" }),
