@@ -39,6 +39,58 @@ def csv_path_for(code: str) -> Path:
     return CSV_DIR / f"{ts_code(code)}.csv"
 
 
+def peek_last_bar(code: str) -> dict | None:
+    """只读表头 + 最后一行，避免为筛池把整份 CSV 读进内存。"""
+    path = csv_path_for(code)
+    if not path.exists():
+        return None
+    with path.open("rb") as handle:
+        header_raw = handle.readline()
+        handle.seek(0, 2)
+        size = handle.tell()
+        if size <= len(header_raw):
+            return None
+        handle.seek(max(len(header_raw), size - 720))
+        tail = handle.read().decode("utf-8", errors="ignore").strip().splitlines()
+    header = header_raw.decode("utf-8-sig", errors="ignore").strip()
+    if not tail:
+        return None
+    last_line = tail[-1]
+    if last_line.strip() == header.strip():
+        return None
+    try:
+        fields = next(csv.reader([header]))
+        vals = next(csv.reader([last_line]))
+    except Exception:
+        return None
+    rec = {}
+    for i, name in enumerate(fields):
+        rec[(name or "").strip().lower()] = vals[i].strip() if i < len(vals) else ""
+    try:
+        date = parse_date(str(rec.get("date") or ""))
+        c = float(rec.get("close") or 0)
+    except (TypeError, ValueError):
+        return None
+    try:
+        volume = float(rec.get("volume") or 0)
+    except ValueError:
+        volume = 0.0
+    try:
+        amount = float(rec.get("amount") or 0)
+    except ValueError:
+        amount = 0.0
+    if amount <= 0:
+        amount = c * volume
+    return {
+        "code": ts_code(code),
+        "date": date,
+        "close": c,
+        "volume": volume,
+        "amount": amount,
+        "name": str(rec.get("name") or "").strip(),
+    }
+
+
 def list_csv_files() -> list[dict]:
     ensure_dirs()
     rows = []
@@ -53,7 +105,101 @@ def list_csv_files() -> list[dict]:
     return rows
 
 
+def _row_to_bar(code: str, fields: dict, row: dict) -> dict | None:
+    try:
+        date = parse_date(str(row[fields["date"]]))
+        o = float(row[fields["open"]])
+        h = float(row[fields["high"]])
+        l = float(row[fields["low"]])
+        c = float(row[fields["close"]])
+    except (KeyError, TypeError, ValueError):
+        return None
+    volume = 0.0
+    if "volume" in fields and row.get(fields["volume"]) not in (None, ""):
+        try:
+            volume = float(row[fields["volume"]])
+        except ValueError:
+            volume = 0.0
+    amount = None
+    if "amount" in fields and row.get(fields["amount"]) not in (None, ""):
+        try:
+            amount = float(row[fields["amount"]])
+        except ValueError:
+            amount = None
+    if amount is None:
+        amount = c * volume
+    stock_name = ""
+    if "name" in fields and row.get(fields["name"]) not in (None, ""):
+        stock_name = str(row[fields["name"]]).strip()
+    return {
+        "code": ts_code(code),
+        "date": date,
+        "open": o,
+        "high": h,
+        "low": l,
+        "close": c,
+        "volume": volume,
+        "amount": amount,
+        "name": stock_name,
+    }
+
+
+def _fill_names(bars: list[dict]) -> list[dict]:
+    last_name = ""
+    for row in reversed(bars):
+        if row.get("name"):
+            last_name = row["name"]
+            break
+    if last_name:
+        for row in bars:
+            if not row.get("name"):
+                row["name"] = last_name
+    return bars
+
+
+def _load_bars_tail(code: str, last_n: int) -> list[dict] | None:
+    path = csv_path_for(code)
+    if not path.exists():
+        return []
+    with path.open("rb") as handle:
+        header_raw = handle.readline()
+        handle.seek(0, 2)
+        size = handle.tell()
+        need = max(2048, (last_n + 12) * 140)
+        handle.seek(max(len(header_raw), size - need))
+        chunk = handle.read()
+    header = header_raw.decode("utf-8-sig", errors="ignore").strip()
+    text = chunk.decode("utf-8", errors="ignore")
+    lines = text.splitlines()
+    if size > need and lines:
+        lines = lines[1:]
+    body = "\n".join(lines)
+    try:
+        reader = csv.DictReader([header] + body.splitlines())
+    except Exception:
+        return None
+    if not reader.fieldnames:
+        return None
+    fields = {name.strip().lower(): name for name in reader.fieldnames if name}
+    if not all(key in fields for key in ("date", "open", "high", "low", "close")):
+        return None
+    bars = []
+    for row in reader:
+        item = _row_to_bar(code, fields, row)
+        if item:
+            bars.append(item)
+    bars.sort(key=lambda item: item["date"])
+    if len(bars) < min(last_n, 8) and size > need:
+        return None
+    bars = _fill_names(bars)
+    return bars[-last_n:] if len(bars) > last_n else bars
+
+
 def load_bars(code: str, last_n: int | None = None) -> list[dict]:
+    if last_n and last_n > 0:
+        tail = _load_bars_tail(code, last_n)
+        if tail is not None:
+            return tail
     path = csv_path_for(code)
     if not path.exists():
         return []

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from ..config import CSV_DIR, DATA_DIR, GATES, POOL_MIN_PRICE
 from ..store import load_universe, read_json
-from .bars import load_bars, ts_code
+from .bars import load_bars, peek_last_bar, ts_code
 from .indicators import sma
 from .pool import is_st_name
 from .scanner import FACT_NOTE, detect_limit_streak, dyn_pe_value
@@ -613,10 +613,9 @@ def list_s1_cycle_universe() -> list[dict]:
     out = []
     for path in CSV_DIR.glob("*.csv"):
         code = path.stem
-        bars = load_bars(code, last_n=2)
-        if len(bars) < 1:
+        last = peek_last_bar(code)
+        if not last:
             continue
-        last = bars[-1]
         name = last.get("name") or (uni.get(code) or {}).get("name") or code
         if is_st_name(name):
             continue
@@ -635,10 +634,9 @@ def list_s1_pool() -> list[dict]:
     cands = []
     for path in CSV_DIR.glob("*.csv"):
         code = path.stem
-        bars = load_bars(code, last_n=80)
-        if len(bars) < 25:
+        last = peek_last_bar(code)
+        if not last:
             continue
-        last = bars[-1]
         name = last.get("name") or (uni.get(code) or {}).get("name") or code
         if is_st_name(name):
             continue
@@ -649,6 +647,11 @@ def list_s1_pool() -> list[dict]:
         industry = imap.get(code) or (uni.get(code) or {}).get("industry")
         if not industry:
             continue
+        bars = load_bars(code, last_n=80)
+        if len(bars) < 25:
+            continue
+        last = bars[-1]
+        name = last.get("name") or name
         meta = dict(uni.get(code) or {})
         meta.update({"code": code, "name": name, "bars": bars, "industry": industry})
         cands.append(meta)

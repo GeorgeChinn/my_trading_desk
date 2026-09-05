@@ -47,14 +47,16 @@
       <div class="page">
         <router-view />
       </div>
+    </div>
+    <IdeaModal v-if="showIdea" @close="showIdea = false" />
+    <Teleport to="body">
       <div class="page-mask" v-if="pageLoading">
         <div class="page-mask-box">
           <div class="spin"></div>
           <p>{{ pageLoadingText }}</p>
         </div>
       </div>
-    </div>
-    <IdeaModal v-if="showIdea" @close="showIdea = false" />
+    </Teleport>
   </div>
 </template>
 

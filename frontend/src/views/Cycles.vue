@@ -17,6 +17,9 @@
     </div>
     <p class="sub" v-if="currentRuleset">{{ currentRuleset.file }} · {{ currentRuleset.title }}</p>
     <div class="warn-banner">{{ data.note || "收盘未变则读缓存。" }}</div>
+    <div class="warn-banner" v-if="data.warming">
+      RULES2 轨迹首次回放中 {{ data.warm_done || 0 }}/{{ data.warm_total || "…" }}，请稍候，页面会自动刷新。
+    </div>
 
     <div class="grid cols-4" style="margin-bottom:16px">
       <div class="card stat">
@@ -118,10 +121,10 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api } from "../api";
-import { setLoadingText } from "../loading.js";
+import { setLoadingText, showLoading } from "../loading.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -140,6 +143,7 @@ const summary = computed(() => data.value.summary || {});
 const segments = computed(() => data.value.segments || []);
 const pages = computed(() => data.value.pages || 1);
 const emptyText = computed(() => {
+  if (data.value.warming) return "RULES2 轨迹首次回放中，完成后自动出现。";
   if (currentRuleset.value && !currentRuleset.value.engine_ok) {
     return currentRuleset.value.engine_note || "本规则尚未写成扫描器，没有轨迹。";
   }
@@ -171,6 +175,7 @@ function pnlClass(v) {
 }
 function switchRuleset(id) {
   page.value = 1;
+  showLoading(id === "rules2" ? "正在切换到 RULES2 轨迹…" : "正在切换规则轨迹…");
   router.replace({ path: "/cycles", query: { ruleset: id } });
 }
 function setTab(t) {
@@ -184,29 +189,49 @@ function stockTitle(row) {
   if (!name || name === code) return code;
   return `${name}  ${code}`;
 }
-async function load() {
-  loading.value = true;
-  setLoadingText(rulesetId.value === "rules2" ? "正在回放 RULES2 轨迹…" : "正在读取规则轨迹…");
+let pollTimer = 0;
+function clearPoll() {
+  if (pollTimer) {
+    window.clearTimeout(pollTimer);
+    pollTimer = 0;
+  }
+}
+async function load(silent = false) {
+  loading.value = !silent;
+  if (!silent) {
+    setLoadingText(rulesetId.value === "rules2" ? "正在读取 RULES2 轨迹…" : "正在读取规则轨迹…");
+  }
   try {
-    data.value = await api.cycles(rulesetId.value, {
-      tab: tab.value,
-      q: q.value,
-      sort: sort.value,
-      order: order.value,
-      page: String(page.value),
-      page_size: "40",
-    });
+    data.value = await api.cycles(
+      rulesetId.value,
+      {
+        tab: tab.value,
+        q: q.value,
+        sort: sort.value,
+        order: order.value,
+        page: String(page.value),
+        page_size: "40",
+      },
+      silent
+    );
+    clearPoll();
+    if (data.value && data.value.warming) {
+      pollTimer = window.setTimeout(() => load(true), 2000);
+    }
   } finally {
     loading.value = false;
   }
 }
 watch(rulesetId, () => {
   page.value = 1;
-  load();
+  clearPoll();
+  load(false);
 });
-onMounted(async () => {
-  const rs = await api.rulesets().catch(() => ({ items: [] }));
-  extraRulesets.value = rs.items || [];
-  await load();
+onMounted(() => {
+  api.rulesets().then((rs) => {
+    extraRulesets.value = rs.items || [];
+  }).catch(() => {});
+  load(false);
 });
+onUnmounted(clearPoll);
 </script>

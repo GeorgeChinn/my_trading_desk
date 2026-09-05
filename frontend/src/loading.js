@@ -20,3 +20,8 @@ export function endLoading() {
 export function setLoadingText(text) {
   if (text) pageLoadingText.value = text;
 }
+
+export function showLoading(text) {
+  pageLoading.value = true;
+  if (text) pageLoadingText.value = text;
+}

@@ -135,7 +135,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api, GATES } from "../api";
-import { setLoadingText } from "../loading.js";
+import { setLoadingText, showLoading } from "../loading.js";
 import StatusBadge from "../components/StatusBadge.vue";
 
 const route = useRoute();
@@ -230,6 +230,7 @@ function chartLink(code) {
 }
 function switchRuleset(id) {
   filter.value = "观察";
+  showLoading(id === "rules2" ? "正在切换到 RULES2…" : "正在切换规则…");
   router.replace({ path: "/scan", query: { ruleset: id } });
 }
 async function load() {
@@ -242,9 +243,10 @@ async function load() {
   }
 }
 watch(rulesetId, load);
-onMounted(async () => {
-  const rs = await api.rulesets().catch(() => ({ items: [] }));
-  extraRulesets.value = rs.items || [];
-  await load();
+onMounted(() => {
+  api.rulesets().then((rs) => {
+    extraRulesets.value = rs.items || [];
+  }).catch(() => {});
+  load();
 });
 </script>

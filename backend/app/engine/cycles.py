@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import threading
 from datetime import datetime
 
 from ..config import CYCLE_CACHE_DIR, CYCLES_PATH, KDJ_LOW, ensure_dirs
@@ -257,8 +258,12 @@ def _segment_row(code: str, name: str, stats: dict, seq: int) -> dict:
 
 
 def walk_stock_segments(code: str, name: str, flags: dict, engine: str = "low_golden") -> list[dict]:
-    bars = attach_indicators(load_bars(code))
-    closed, live = walk_cycles(bars, flags, engine=engine)
+    if engine == "pullback_restart":
+        bars = load_bars(code, last_n=160)
+        closed, live = walk_cycles_s1(bars)
+    else:
+        bars = attach_indicators(load_bars(code))
+        closed, live = walk_cycles(bars, flags, engine=engine)
     out = []
     for i, item in enumerate(closed, start=1):
         out.append(_segment_row(code, name, item, i))
@@ -358,6 +363,181 @@ def _sort_segments(rows: list[dict], sort: str, order: str) -> list[dict]:
     return sorted(rows, key=sk, reverse=rev)
 
 
+_warm_lock = threading.Lock()
+_warming: set[str] = set()
+
+
+def _asof() -> str:
+    from ..store import load_settings
+
+    return str((load_settings() or {}).get("last_trade_date") or "")
+
+
+def _codes_to_segments(codes: dict) -> list[dict]:
+    segments: list[dict] = []
+    for code, hit in (codes or {}).items():
+        segs = hit.get("segments") if isinstance(hit, dict) else None
+        if not isinstance(segs, list):
+            continue
+        for seg in segs:
+            row = dict(seg)
+            row.setdefault("code", code)
+            row.setdefault("name", row.get("name") or code)
+            segments.append(row)
+    return segments
+
+
+def _paginate(segments: list[dict], tab: str, q: str, sort: str, order: str, page: int, page_size: int, warm: bool) -> tuple[list[dict], int, int, int]:
+    query = (q or "").strip()
+    filtered = []
+    for s in segments:
+        if tab == "open" and s.get("closed"):
+            continue
+        if tab == "done" and not s.get("closed"):
+            continue
+        if query and query not in (s.get("code") or "") and query not in (s.get("name") or ""):
+            continue
+        filtered.append(s)
+    if sort in ("", "default"):
+        open_rows = [s for s in filtered if not s.get("closed")]
+        closed_rows = [s for s in filtered if s.get("closed")]
+        open_rows.sort(key=lambda s: (s.get("buy_date") or "", s.get("code") or ""), reverse=True)
+        closed_rows.sort(key=lambda s: (s.get("sell_date") or "", s.get("code") or ""), reverse=True)
+        filtered = open_rows + closed_rows
+    else:
+        filtered = _sort_segments(filtered, sort, order)
+    total = len(filtered)
+    size = max(1, min(int(page_size or 40), 200))
+    pages = max(1, (total + size - 1) // size)
+    cur = max(1, min(int(page or 1), pages))
+    start = (cur - 1) * size
+    page_rows = filtered if warm else filtered[start : start + size]
+    return page_rows, total, size, (1 if warm else cur), (1 if warm else pages)
+
+
+def _warm_cycles(scan_uni: list[dict], flags: dict, engine: str, rules_hash: str, ruleset_id: str) -> None:
+    path = _cache_path(ruleset_id)
+    store = read_json(path, {}) if path.exists() else {}
+    codes = store.get("codes") if isinstance(store.get("codes"), dict) else {}
+    if store.get("rules_hash") != rules_hash:
+        codes = {}
+    asof = _asof()
+    total = len(scan_uni)
+    for i, meta in enumerate(scan_uni, start=1):
+        code = ts_code(str(meta.get("code") or ""))
+        name = meta.get("name") or code
+        if not code:
+            continue
+        segs = walk_stock_segments(code, name, flags, engine=engine)
+        codes[code] = {"last_date": _last_date(code), "segments": segs}
+        if i == 1 or i % 20 == 0 or i == total:
+            write_json(
+                path,
+                {
+                    "rules_hash": rules_hash,
+                    "asof": asof,
+                    "warming": i < total,
+                    "done": i,
+                    "total": total,
+                    "codes": codes,
+                    "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                },
+            )
+    write_json(
+        path,
+        {
+            "rules_hash": rules_hash,
+            "asof": asof,
+            "warming": False,
+            "done": total,
+            "total": total,
+            "codes": codes,
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        },
+    )
+
+
+def _cycles_page_s1(
+    flags: dict,
+    ruleset: dict,
+    pub: dict | None,
+    rules_hash: str,
+    ruleset_id: str,
+    note: str,
+    tab: str,
+    q: str,
+    sort: str,
+    order: str,
+    page: int,
+    page_size: int,
+    warm: bool,
+) -> dict:
+    from .structure_one import list_s1_cycle_universe
+
+    path = _cache_path(ruleset_id)
+    store = read_json(path, {}) if path.exists() else {}
+    if not isinstance(store, dict):
+        store = {}
+    asof = _asof()
+    hash_ok = store.get("rules_hash") == rules_hash
+    asof_ok = (not asof) or store.get("asof") == asof
+    codes = store.get("codes") if isinstance(store.get("codes"), dict) else {}
+    with _warm_lock:
+        in_flight = ruleset_id in _warming
+    warming = bool(store.get("warming")) or in_flight
+    complete = bool(hash_ok and asof_ok and codes and not warming)
+
+    if warm and not complete:
+        uni = list_s1_cycle_universe()
+        _warm_cycles(uni, flags, "pullback_restart", rules_hash, ruleset_id)
+        store = read_json(path, {}) if path.exists() else {}
+        codes = store.get("codes") if isinstance(store.get("codes"), dict) else {}
+        complete = True
+        warming = False
+
+    if not complete and not in_flight:
+        def boot():
+            try:
+                uni = list_s1_cycle_universe()
+                _warm_cycles(uni, flags, "pullback_restart", rules_hash, ruleset_id)
+            finally:
+                with _warm_lock:
+                    _warming.discard(ruleset_id)
+
+        with _warm_lock:
+            if ruleset_id not in _warming:
+                _warming.add(ruleset_id)
+                threading.Thread(target=boot, daemon=True, name=f"cycles-{ruleset_id}").start()
+        warming = True
+
+    segments = _codes_to_segments(codes)
+    page_rows, total, size, cur, pages = _paginate(segments, tab, q, sort, order, page, page_size, warm)
+    done = int(store.get("done") or 0)
+    all_n = int(store.get("total") or 0)
+    payload = {
+        "fact_note": "这是事实记录",
+        "note": (
+            f"RULES2 轨迹回放中 {done}/{all_n or '?'}，完成后自动刷新。买入不是成交指令。"
+            if warming
+            else note
+        ),
+        "ruleset": pub,
+        "segments": page_rows,
+        "summary": summarize_segments(segments),
+        "page": cur,
+        "page_size": size,
+        "pages": pages,
+        "filtered": total,
+        "cached": bool(codes) and not warming,
+        "warming": warming,
+        "warm_done": done,
+        "warm_total": all_n,
+        "updated_at": store.get("updated_at") or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    save_cycles(payload, ruleset_id)
+    return payload
+
+
 def cycles_page(
     universe: list[dict],
     flags: dict | None = None,
@@ -394,12 +574,24 @@ def cycles_page(
         }
         save_cycles(payload, ruleset_id)
         return payload
+    if engine == "pullback_restart":
+        return _cycles_page_s1(
+            flags,
+            ruleset or {},
+            pub,
+            rules_hash,
+            ruleset_id,
+            note,
+            tab,
+            q,
+            sort,
+            order,
+            page,
+            page_size,
+            warm,
+        )
     segments: list[dict] = []
     scan_uni = universe
-    if engine == "pullback_restart":
-        from .structure_one import list_s1_cycle_universe
-
-        scan_uni = list_s1_cycle_universe()
     pe_map = {ts_code(str(m.get("code") or "")): m.get("pe") for m in universe}
     path = _cache_path(ruleset_id)
     store = read_json(path, {}) if path.exists() else {}

@@ -21,6 +21,7 @@ from .config import (
     PROFILE_PATH,
     ROOT,
     RULES_PATH,
+    SCAN_CACHE_DIR,
     ensure_dirs,
 )
 from .engine.bars import attach_indicators, list_csv_files, load_bars, ts_code
@@ -41,10 +42,12 @@ from .store import (
     load_trades,
     load_universe,
     load_watches,
+    read_json,
     save_ideas,
     save_settings,
     save_trades,
     save_watches,
+    write_json,
 )
 
 ensure_dirs()
@@ -156,19 +159,52 @@ def _refreshed_watches() -> list[dict]:
     return out
 
 
+def _scan_cache_path(ruleset_id: str):
+    ensure_dirs()
+    return SCAN_CACHE_DIR / f"{ruleset_id}.json"
+
+
 def _scan_bundle(ruleset_id: str | None = None):
     rs = get_ruleset(ruleset_id)
     if rs is None:
         return None
     flags = parse_flags(rs["text"])
     bind = refresh_bind(rs["text"], rs["id"])
+    settings = load_settings()
+    trades = load_trades()
+    asof = settings.get("last_trade_date") or ""
+    token = f"{bind.get('rules_hash')}:{asof}:{rs.get('engine')}:{len(trades)}"
+    cache_path = _scan_cache_path(rs["id"])
+    cached = read_json(cache_path, {}) if cache_path.exists() else {}
+    if (
+        isinstance(cached, dict)
+        and cached.get("token") == token
+        and isinstance(cached.get("rows"), list)
+    ):
+        if rs.get("engine") == "pullback_restart":
+            from .engine.structure_one import scan_structure_one as s1_scan
+
+            s1_scan.funnel = cached.get("boards") or []
+            s1_scan.market = cached.get("market")
+        return rs, flags, bind, cached["rows"]
     rows = scan_universe(
         load_universe(),
-        load_settings(),
-        load_trades(),
+        settings,
+        trades,
         flags=flags,
         engine=rs["engine"],
     )
+    payload = {
+        "token": token,
+        "rows": rows,
+        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    if rs.get("engine") == "pullback_restart":
+        from .engine.structure_one import scan_structure_one as s1_scan
+
+        payload["boards"] = list(getattr(s1_scan, "funnel", None) or [])
+        payload["market"] = getattr(s1_scan, "market", None)
+    write_json(cache_path, payload)
     return rs, flags, bind, rows
 
 

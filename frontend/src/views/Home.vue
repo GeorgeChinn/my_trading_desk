@@ -127,7 +127,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { api, STATUSES } from "../api";
-import { setLoadingText } from "../loading.js";
+import { setLoadingText, showLoading } from "../loading.js";
 
 const cards = ref([]);
 const triggeredCount = ref(0);
@@ -175,6 +175,7 @@ function chipTitle(s) {
 }
 async function switchRuleset(id) {
   rulesetId.value = id;
+  showLoading(id === "rules2" ? "正在按 RULES2 扫描…" : "正在加载扫描…");
   setLoadingText(id === "rules2" ? "正在按 RULES2 扫描…" : "正在加载扫描…");
   if (id === "rules") {
     const data = await api.home();

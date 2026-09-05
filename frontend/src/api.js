@@ -3,15 +3,18 @@ import { beginLoading, endLoading } from "./loading.js";
 const QUIET = ["/api/session", "/api/health"];
 
 async function request(path, options = {}) {
-  const quiet = QUIET.some((p) => path === p || path.startsWith(p + "?"));
+  const silent = Boolean(options.silent);
+  const rest = { ...options };
+  delete rest.silent;
+  const quiet = silent || QUIET.some((p) => path === p || path.startsWith(p + "?"));
   if (!quiet) beginLoading();
   try {
-    const headers = { ...(options.headers || {}) };
-    if (options.body && !(options.body instanceof FormData)) {
+    const headers = { ...(rest.headers || {}) };
+    if (rest.body && !(rest.body instanceof FormData)) {
       headers["Content-Type"] = "application/json";
-      options.body = JSON.stringify(options.body);
+      rest.body = JSON.stringify(rest.body);
     }
-    const res = await fetch(path, { ...options, headers, credentials: "include" });
+    const res = await fetch(path, { ...rest, headers, credentials: "include" });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const msg = data.detail || data.message || res.statusText;
@@ -31,9 +34,9 @@ export const api = {
   home: () => request("/api/home"),
   rulesets: () => request("/api/rulesets"),
   scan: (ruleset = "rules") => request(`/api/scan?ruleset=${encodeURIComponent(ruleset || "rules")}`),
-  cycles: (ruleset = "rules", params = {}) => {
+  cycles: (ruleset = "rules", params = {}, silent = false) => {
     const q = new URLSearchParams({ ruleset: ruleset || "rules", ...params });
-    return request(`/api/cycles?${q.toString()}`);
+    return request(`/api/cycles?${q.toString()}`, { silent });
   },
   scanOne: (code, ruleset = "rules") =>
     request(`/api/scan/${encodeURIComponent(code)}?ruleset=${encodeURIComponent(ruleset || "rules")}`),
