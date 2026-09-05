@@ -66,7 +66,7 @@
     </div>
 
     <div class="card" style="margin-top:14px">
-      <h3>RULES §3 漏斗（全市场 → 入池）</h3>
+      <h3>第3条 漏斗（全市场 → 入池）</h3>
       <p class="sub">流通市值 ≥ 300 亿 · 日成交额 ≥ 5 亿 · 非 ST · 股价 ≥ 5 元。优先样本只加标签。PROFILE 跟踪带宽 100 只，扫描不截断。</p>
       <div class="grid cols-4" v-if="funnel && Object.keys(funnel).length">
         <div class="stat"><div class="n">{{ funnel.listed || 0 }}</div><div class="k">上市 A 股</div></div>

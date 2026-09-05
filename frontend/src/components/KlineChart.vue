@@ -10,9 +10,15 @@ const props = defineProps({
   bars: { type: Array, default: () => [] },
   triggerDate: { type: String, default: "" },
 });
+const emit = defineEmits(["pick"]);
 
 const el = ref(null);
 let chart;
+
+function n2(v) {
+  const x = Number(v);
+  return v == null || Number.isNaN(x) ? "—" : x.toFixed(2);
+}
 
 function render() {
   if (!el.value) return;
@@ -52,9 +58,25 @@ function render() {
       },
       tooltip: {
         trigger: "axis",
-        axisPointer: { type: "cross" },
+        triggerOn: "mousemove",
+        axisPointer: { type: "line", label: { show: false } },
+        backgroundColor: "rgba(7, 16, 24, 0.42)",
+        borderWidth: 0,
+        padding: [6, 10],
+        textStyle: { color: "#e7eef4", fontSize: 12 },
+        extraCssText: "backdrop-filter: blur(8px); pointer-events: none; box-shadow: none;",
+        formatter: (params) => {
+          const idx = params && params[0] ? params[0].dataIndex : null;
+          const b = idx == null ? null : bars[idx];
+          if (!b) return "";
+          return `${b.date}<br/>收 ${n2(b.close)}`;
+        },
       },
-      axisPointer: { link: [{ xAxisIndex: "all" }] },
+      axisPointer: {
+        link: [{ xAxisIndex: "all" }],
+        label: { show: false },
+        lineStyle: { color: "rgba(224,163,92,0.45)", width: 1 },
+      },
       grid: [
         { left: 48, right: 18, top: 36, height: "48%" },
         { left: 48, right: 18, top: "62%", height: "14%" },
@@ -89,6 +111,12 @@ function render() {
     },
     true
   );
+  chart.off("click");
+  chart.on("click", (params) => {
+    const idx = params && params.dataIndex;
+    if (idx == null || !bars[idx]) return;
+    emit("pick", bars[idx]);
+  });
 }
 
 onMounted(() => {

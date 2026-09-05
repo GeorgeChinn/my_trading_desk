@@ -59,7 +59,7 @@ def _cross_up(fast: list, slow: list) -> bool:
 def recent_dif_golden_cross(
     dif: list, dea: list, within_two_days: bool = False
 ) -> tuple[bool, str, int | None]:
-    """§6 默认只认当日收盘金叉。within_two_days 仅当 RULES §6 仍写「近一两日」时打开。"""
+    """§6 默认只认当日收盘金叉。within_two_days 仅当 第6 仍写「近一两日」时打开。"""
     last = len(dif) - 1
     if last < 1:
         return False, "DIF/DEA 窗口不足", None
@@ -370,7 +370,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         base["risk"].append("打板、连板、高位接力、隔夜情绪票不在主路径")
         return base
 
-    # RULES §4 否决 → 排除
+    # 第4 否决 → 排除
     veto_hits = [tag for tag in tags if tag in VETO_EXCLUDE]
     if amount_yi < VETO_AMOUNT_YI:
         veto_hits.append(f"日成交额 {amount_yi:.2f} 亿 < 1 亿")
@@ -378,10 +378,10 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         veto_hits.append("ST / *ST")
     if veto_hits:
         base["veto"] = veto_hits
-        base["hit_rules"].append("RULES §4 否决：" + "、".join(veto_hits))
+        base["hit_rules"].append("第4条 否决：" + "、".join(veto_hits))
         return base
 
-    # RULES §3 池子
+    # 第3 池子
     pool_fail = []
     pool_hit = []
     if float_mcap is None:
@@ -411,14 +411,14 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         base["facts"]["pe"] = pe
     if flags.get("pool_need_pe_positive", True):
         if pe is None:
-            base["missing_rules"].append("RULES §3 动态市盈证据不足（快照无此字段，本条不挡入池；有值且 ≤0 才排除）")
+            base["missing_rules"].append("第3条 动态市盈证据不足（快照无此字段，本条不挡入池；有值且 ≤0 才排除）")
         elif pe <= 0:
             pool_fail.append(f"动态市盈 {pe:.2f} ≤ 0（亏损票排除）")
         else:
             pool_hit.append(f"动态市盈 {pe:.2f} > 0")
 
     if pool_fail:
-        base["missing_rules"].extend(["RULES §3 池子未过：" + x for x in pool_fail])
+        base["missing_rules"].extend(["第3条 池子未过：" + x for x in pool_fail])
         base["hit_rules"].extend(["池子已见：" + x for x in pool_hit])
         return base
 
@@ -431,7 +431,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     h_line = [row.get("high") for row in bars]
     c_line = [row.get("close") for row in bars]
 
-    # RULES §4 技术否决 → 排除（硬闸）
+    # 第4 技术否决 → 排除（硬闸）
     veto_tech: list[str] = []
     s4_unknown: list[str] = []
     if flags.get("veto_kdj_overbought", True):
@@ -460,14 +460,14 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         m30 = False
     if veto_tech:
         base["veto"] = veto_tech
-        base["hit_rules"].append("RULES §4 否决：" + "；".join(veto_tech))
+        base["hit_rules"].append("第4条 否决：" + "；".join(veto_tech))
         return base
 
     # Passed pool. Stop at 观察 unless §5 is complete.
     base["status"] = "观察"
     base["gate"] = "观察"
     base["summary_bucket"] = "观察"
-    base["hit_rules"].append("RULES §3 池子：" + "；".join(pool_hit))
+    base["hit_rules"].append("第3条 池子：" + "；".join(pool_hit))
     if meta.get("index_member"):
         base["hit_rules"].append("优先样本：" + " / ".join(meta["index_member"]))
 
@@ -478,7 +478,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         base["risk"].append("人不在场：只输出观察，不升仓位档")
 
     if s4_unknown:
-        base["missing_rules"].extend(["RULES §4 证据不足：" + x for x in s4_unknown])
+        base["missing_rules"].extend(["第4条 证据不足：" + x for x in s4_unknown])
 
     h0, h1 = hist[-2], hist[-1]
     cond_macd_watch, macd_watch_detail = macd_section5(hist)
@@ -495,20 +495,20 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         k_last, j_last = last.get("k"), last.get("j")
         cond_kdj_band = k_last is not None and j_last is not None and j_last < 80 and k_last <= 50
         if cond_kdj_band:
-            base["hit_rules"].append(f"RULES §5 KDJ 带宽：J {j_last:.2f} < 80 且 K {k_last:.2f} ≤ 50")
+            base["hit_rules"].append(f"第5条 KDJ 带宽：J {j_last:.2f} < 80 且 K {k_last:.2f} ≤ 50")
         else:
             if k_last is None or j_last is None:
                 band_detail = "J/K 证据不足，不得买入"
             else:
                 band_detail = f"J {j_last:.2f} / K {k_last:.2f} 未同时满足 J < 80 且 K ≤ 50，不得买入"
-            base["missing_rules"].append("RULES §5 KDJ 带宽：" + band_detail)
+            base["missing_rules"].append("第5条 KDJ 带宽：" + band_detail)
     else:
         cond_kdj_band = True
 
     if cond_macd_watch:
-        base["hit_rules"].append("RULES §5 MACD：" + macd_watch_detail)
+        base["hit_rules"].append("第5条 MACD：" + macd_watch_detail)
     else:
-        base["missing_rules"].append("RULES §5 MACD：" + macd_watch_detail)
+        base["missing_rules"].append("第5条 MACD：" + macd_watch_detail)
 
     if cond_kdj_watch:
         detail = []
@@ -516,7 +516,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
             detail.append("K/D 低于或等于 20 金叉")
         if kdj_not_new_low:
             detail.append("KDJ 不创新低")
-        base["hit_rules"].append("RULES §5 KDJ：" + "；".join(detail))
+        base["hit_rules"].append("第5条 KDJ：" + "；".join(detail))
     else:
         notes = []
         if kd_cross and not kd_le_20:
@@ -525,21 +525,21 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
             notes.append("KDJ 创新低或窗口不足")
         if not notes:
             notes.append("K/D 未金叉且未满足不创新低")
-        base["missing_rules"].append("RULES §5 KDJ：" + "；".join(notes))
+        base["missing_rules"].append("第5条 KDJ：" + "；".join(notes))
 
     if flags.get("wait_need_low_zone", True):
         dif_low, dif_low_detail = nearer_to_window_low(dif, last.get("dif"), "DIF")
         px_low, px_low_detail = nearer_to_window_low(c_line, last.get("close"), "收盘")
         cond_low = dif_low is True and px_low is True
         if cond_low:
-            base["hit_rules"].append("RULES §5 低位：" + dif_low_detail + "；" + px_low_detail)
+            base["hit_rules"].append("第5条 低位：" + dif_low_detail + "；" + px_low_detail)
         else:
             why = []
             if dif_low is not True:
                 why.append(dif_low_detail)
             if px_low is not True:
                 why.append(px_low_detail)
-            base["missing_rules"].append("RULES §5 低位（中高位缩短绿柱不得买入）：" + "；".join(why))
+            base["missing_rules"].append("第5条 低位（中高位缩短绿柱不得买入）：" + "；".join(why))
     else:
         cond_low = True
 
@@ -548,18 +548,18 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
 
         sec = sector_of(code)
         if not sec or sec.get("weak") is None:
-            base["missing_rules"].append("RULES §2 板块近3日相对大盘证据不足，本条不挡观察")
+            base["missing_rules"].append("第2条 板块近3日相对大盘证据不足，本条不挡观察")
             cond_sector = True
         elif sec.get("weak") is True:
             cond_sector = False
             base["missing_rules"].append(
-                f"RULES §2 板块弱于大盘（{sec.get('board') or sec.get('industry') or '板块'} "
+                f"第2条 板块弱于大盘（{sec.get('board') or sec.get('industry') or '板块'} "
                 f"{sec.get('board_ret_3d_pct')}% / 沪深300 {sec.get('market_ret_3d_pct')}%），不得进入买入"
             )
         else:
             cond_sector = True
             base["hit_rules"].append(
-                f"RULES §2 板块近3日相对大盘不弱（{sec.get('board') or sec.get('industry')} "
+                f"第2条 板块近3日相对大盘不弱（{sec.get('board') or sec.get('industry')} "
                 f"{sec.get('board_ret_3d_pct')}% / 沪深300 {sec.get('market_ret_3d_pct')}%）"
             )
     else:
@@ -581,14 +581,14 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     buy_hist = bool(cont and near_zero and still_green_ok) or hist_green_to_red or (buy_cross and already_gold)
 
     if buy_cross:
-        base["hit_rules"].append("RULES §6：" + cross_detail)
+        base["hit_rules"].append("第6条：" + cross_detail)
     else:
-        base["missing_rules"].append("RULES §6：" + cross_detail)
+        base["missing_rules"].append("第6条：" + cross_detail)
 
     if buy_hist:
-        base["hit_rules"].append("RULES §6：绿柱连续缩短向 0 收敛 / 已金叉或已由绿转红")
+        base["hit_rules"].append("第6条：绿柱连续缩短向 0 收敛 / 已金叉或已由绿转红")
     else:
-        base["missing_rules"].append("RULES §6：绿柱未连续缩短向 0 收敛，且未见绿转红")
+        base["missing_rules"].append("第6条：绿柱未连续缩短向 0 收敛，且未见绿转红")
 
     if flags.get("buy_need_dif_near_min", True):
         near_low, near_detail = nearer_to_window_low(dif, last.get("dif"), "DIF")
@@ -596,37 +596,37 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
             base["facts"]["dif_20_min"] = min(_recent(dif, DIF_LOOKBACK))
             base["facts"]["dif_to_20min"] = last["dif"] - min(_recent(dif, DIF_LOOKBACK))
         if near_low is True:
-            base["hit_rules"].append("RULES §6：" + near_detail)
+            base["hit_rules"].append("第6条：" + near_detail)
         elif near_low is False:
-            base["missing_rules"].append("RULES §6：" + near_detail + "，不得买入")
+            base["missing_rules"].append("第6条：" + near_detail + "，不得买入")
         else:
-            base["missing_rules"].append("RULES §6：" + near_detail)
+            base["missing_rules"].append("第6条：" + near_detail)
     else:
         near_low = True
 
     if flags.get("buy_need_zero_axis", True):
         zero_ok, zero_detail = zero_axis_golden(dif, dea, cross_idx)
         if zero_ok is True:
-            base["hit_rules"].append("RULES §6：" + zero_detail)
+            base["hit_rules"].append("第6条：" + zero_detail)
         else:
-            base["missing_rules"].append("RULES §6：" + zero_detail)
+            base["missing_rules"].append("第6条：" + zero_detail)
     else:
         zero_ok = True
 
     if flags.get("buy_need_price_low", True):
         px6, px6_detail = nearer_to_window_low(c_line, last.get("close"), "收盘")
         if px6 is True:
-            base["hit_rules"].append("RULES §6 股价低位区：" + px6_detail)
+            base["hit_rules"].append("第6条 股价低位区：" + px6_detail)
         else:
-            base["missing_rules"].append("RULES §6 股价不在近20日低位区（第二段加速金叉不得买入）：" + px6_detail)
+            base["missing_rules"].append("第6条 股价不在近20日低位区（第二段加速金叉不得买入）：" + px6_detail)
     else:
         px6 = True
 
     s4_clear = not s4_unknown
     if s4_unknown:
-        base["missing_rules"].append("RULES §6：第4节否决未能全部核对，不得买入")
+        base["missing_rules"].append("第6条：第4条否决未能全部核对，不得买入")
     else:
-        base["hit_rules"].append("RULES §6：第4节否决全部未命中")
+        base["hit_rules"].append("第6条：第4条否决全部未命中")
 
     path_ready = bool(
         buy_cross and buy_hist and near_low is True and zero_ok is True and px6 is True and s4_clear
@@ -636,7 +636,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         base["status"] = "买入"
         base["gate"] = "买入"
         base["summary_bucket"] = "买入"
-        base["hit_rules"].append("RULES §6 路径到达买入。买入不是成交指令")
+        base["hit_rules"].append("第6条 路径到达买入。买入不是成交指令")
     else:
         base["summary_bucket"] = "观察"
 
@@ -673,12 +673,12 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
             base["status"] = "卖出"
             base["gate"] = "卖出"
             base["summary_bucket"] = "卖出"
-            base["hit_rules"].append(f"RULES §{section} 卖出已见：{note}；{detail}")
+            base["hit_rules"].append(f"第{section}条 卖出已见：{note}；{detail}")
         else:
             base["status"] = "买入"
             base["gate"] = "买入"
             base["summary_bucket"] = "买入"
-            base["hit_rules"].append("RULES §7 对照未齐，持仓仍按买入闸记录：" + note)
+            base["hit_rules"].append("第7条 对照未齐，持仓仍按买入闸记录：" + note)
     elif not person_present:
         base["risk"].append("人不在场：只输出观察，不升买入")
         base["status"] = "观察"

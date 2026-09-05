@@ -281,7 +281,7 @@ def scan(ruleset: str = Query("rules")):
         reminders = [rs["engine_note"]] + reminders
     buy_n = (tallied.get("by_gate") or {}).get("买入") or 0
     if buy_n > 1:
-        reminders.append(f"RULES §6/§8：买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
+        reminders.append(f"第6条 / 第8条：买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
     return {
         "rows": rows,
         **tallied,
@@ -543,7 +543,7 @@ def pool_get():
         "preferred": sum(1 for x in items if x.get("index_member")),
         "snapshot": snap,
         "profile_bandwidth": 100,
-        "note": "PROFILE 同时跟踪 100 只。股池按 RULES §3 全量保留，扫描不截断。",
+        "note": "PROFILE 同时跟踪 100 只。股池按第3条全量保留，扫描不截断。",
     }
 
 
@@ -565,7 +565,7 @@ def sync_start(force: bool = Query(False)):
 
     _sync_thread = threading.Thread(target=run, daemon=True)
     _sync_thread.start()
-    return {"ok": True, "started": True, "message": "已开始：按 RULES §3 筛全部入池股并拉取确认收盘"}
+    return {"ok": True, "started": True, "message": "已开始：按第3条筛全部入池股并拉取确认收盘"}
 
 
 @app.post("/api/sync/history")

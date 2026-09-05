@@ -166,9 +166,9 @@ def _cycle_stats(
     if closed:
         result = "盈利" if ret > 0 else ("亏损" if ret < 0 else "持平")
         if exit_section == "7.1":
-            result = f"{result} · §7.1 失败离场"
+            result = f"{result} · 第7条 失败离场"
         elif exit_section == "7.2":
-            result = f"{result} · §7.2 波段离场"
+            result = f"{result} · 第7条 波段离场"
         status = "已结束"
     else:
         result = "浮动"

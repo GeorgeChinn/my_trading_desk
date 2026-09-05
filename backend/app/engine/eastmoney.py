@@ -550,7 +550,7 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
         if members:
             funnel["preferred"] += 1
     pool = sort_pool(pool)
-    talk(f"RULES §3 入池 {len(pool)} 只（优先样本 {funnel['preferred']}）")
+    talk(f"第3条 入池 {len(pool)} 只（优先样本 {funnel['preferred']}）")
     return pool, funnel
 
 

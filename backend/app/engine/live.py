@@ -217,7 +217,7 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
             funnel["preferred"] += 1
 
     pool = sort_pool(pool)
-    talk(f"RULES §3 入池 {len(pool)} 只（优先样本 {funnel['preferred']}）")
+    talk(f"第3条 入池 {len(pool)} 只（优先样本 {funnel['preferred']}）")
     return pool, funnel
 
 
@@ -373,7 +373,7 @@ def build_pool_akshare(log: Callable[[str], None] | None = None) -> tuple[list[d
         if members:
             funnel["preferred"] += 1
     pool = sort_pool(pool)
-    talk(f"RULES §3 入池 {len(pool)} 只")
+    talk(f"第3条 入池 {len(pool)} 只")
     return pool, funnel
 
 
@@ -464,7 +464,7 @@ def _sync_live(force_bars: bool = False) -> dict:
         )
 
     status_holder: dict = {"bars_done": 0, "bars_total": 0, "step": "pool", "funnel": {}, "source": "", "trade_date": ""}
-    _status(state="running", message="开始按 RULES §3 筛池", started_at=started, step="pool")
+    _status(state="running", message="开始按第3条筛池", started_at=started, step="pool")
 
     pool: list[dict] = []
     funnel: dict = {}

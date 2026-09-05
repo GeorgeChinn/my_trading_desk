@@ -1,24 +1,25 @@
 <template>
   <div>
     <h1>{{ code }} {{ name }} · 日线与事实</h1>
-    <p class="sub">{{ factNote }} · 只展示 MACD(7,28,4) + KDJ + 均线辅助。当前行情不改写已确认收盘事实。</p>
+    <p class="sub">{{ factNote }} · 悬停看日期和收盘价，点击 K 线在下方看指标。买入不是成交指令。</p>
     <div class="warn-banner" v-if="scan.position_block">{{ scan.position_block }} · 总闸 {{ scan.status }}</div>
     <div class="card" style="margin-bottom:14px">
-      <div class="fact-strip">
-        <div><small>确认收盘日</small><b>{{ last.date || "—" }}</b></div>
-        <div><small>收盘</small><b>{{ fmt(last.close) }}</b></div>
-        <div><small>5日均线</small><b>{{ fmt(last.ma5) }}</b></div>
-        <div><small>离均线</small><b>{{ pct(last.ma5_gap_pct) }}</b></div>
-      </div>
-      <div class="fact-strip">
-        <div><small>DIF</small><b>{{ fmt4(last.dif) }}</b></div>
-        <div><small>DEA</small><b>{{ fmt4(last.dea) }}</b></div>
-        <div><small>MACD柱</small><b>{{ fmt4(last.hist) }}</b></div>
-        <div><small>KDJ</small><b>{{ fmt(last.k) }} / {{ fmt(last.d) }} / {{ fmt(last.j) }}</b></div>
-      </div>
+      <KlineChart :bars="bars" :trigger-date="triggerDate" @pick="picked = $event" />
     </div>
     <div class="card" style="margin-bottom:14px">
-      <KlineChart :bars="bars" :trigger-date="triggerDate" />
+      <div class="ov-title">{{ picked ? "点击日 " + picked.date : "点击 K 线查看该日指标" }}</div>
+      <div class="fact-strip" v-if="picked">
+        <div><small>开</small><b>{{ n2(picked.open) }}</b></div>
+        <div><small>高</small><b>{{ n2(picked.high) }}</b></div>
+        <div><small>低</small><b>{{ n2(picked.low) }}</b></div>
+        <div><small>收</small><b>{{ n2(picked.close) }}</b></div>
+      </div>
+      <div class="fact-strip" v-if="picked">
+        <div><small>MA5 / 10 / 20</small><b>{{ n2(picked.ma5) }} / {{ n2(picked.ma10) }} / {{ n2(picked.ma20) }}</b></div>
+        <div><small>DIF / DEA / 柱</small><b>{{ n3(picked.dif) }} / {{ n3(picked.dea) }} / {{ n3(picked.hist) }}</b></div>
+        <div><small>K / D / J</small><b>{{ n1(picked.k) }} / {{ n1(picked.d) }} / {{ n1(picked.j) }}</b></div>
+        <div><small>PE</small><b>{{ n1(scan.facts && scan.facts.pe) }}</b></div>
+      </div>
     </div>
     <div class="grid cols-2">
       <div class="card">
@@ -49,21 +50,17 @@ const name = ref("");
 const bars = ref([]);
 const scan = ref({});
 const factNote = ref("这是事实记录");
+const picked = ref(null);
 const triggerDate = computed(() => route.query.trigger || "");
-const last = computed(() => {
-  const row = bars.value[bars.value.length - 1] || {};
-  const gap = row.close && row.ma5 ? ((row.close - row.ma5) / row.ma5) * 100 : null;
-  return { ...row, ma5_gap_pct: gap };
-});
 
-function fmt(v) {
+function n1(v) {
+  return v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(1);
+}
+function n2(v) {
   return v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(2);
 }
-function fmt4(v) {
-  return v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(4);
-}
-function pct(v) {
-  return v == null || Number.isNaN(Number(v)) ? "—" : `${Number(v).toFixed(2)}%`;
+function n3(v) {
+  return v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(3);
 }
 
 async function load() {
@@ -73,6 +70,7 @@ async function load() {
   bars.value = data.bars || [];
   scan.value = data.scan || {};
   factNote.value = data.fact_note;
+  picked.value = bars.value[bars.value.length - 1] || null;
   if (route.query.watch) {
     await api.viewWatch(route.query.watch).catch(() => {});
   }
