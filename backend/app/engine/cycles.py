@@ -279,8 +279,22 @@ def _cache_path(ruleset_id: str):
     return CYCLE_CACHE_DIR / f"{ruleset_id}.json"
 
 
+def _engine_fingerprint() -> str:
+    """改 structure_one / cycles 后缓存自动作废，不必 SSH 删文件。"""
+    from pathlib import Path
+
+    here = Path(__file__).resolve().parent
+    parts = []
+    for name in ("cycles.py", "structure_one.py"):
+        path = here / name
+        if path.exists():
+            parts.append(path.read_bytes())
+    return hashlib.sha256(b"".join(parts)).hexdigest()[:16]
+
+
 def _rules_hash(text: str) -> str:
-    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()[:16]
+    raw = f"{text or ''}|{_engine_fingerprint()}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
 def _last_date(code: str) -> str:
