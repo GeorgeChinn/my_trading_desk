@@ -38,8 +38,15 @@ def _loop() -> None:
             try:
                 sync_live(force_bars=False)
                 from ..jobs import run_rules_scan
+                from ..store import load_universe
+                from .cycles import cycles_page
+                from .rules_bind import parse_flags
+                from .rulesets import get_ruleset
 
                 run_rules_scan()
+                rs = get_ruleset("rules")
+                if rs and rs.get("engine_ok"):
+                    cycles_page(load_universe(), parse_flags(rs["text"]), rs, warm=True)
             except Exception:
                 pass
         _stop.wait(20)

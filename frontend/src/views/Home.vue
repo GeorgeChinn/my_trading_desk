@@ -2,8 +2,8 @@
   <div>
     <h1>首页</h1>
     <p class="sub">
-      主路径 {{ path }} · 总闸：排除 → 观察 → 等待 → 买入 → 减仓 / 清仓。
-      扫描默认最高停在等待。符合 = 路径到达，待人确认，不是成交指令。
+      主路径 {{ path }} · 总闸：排除 → 观察 → 买入 → 卖出。
+      买入 = 路径到达，不是成交指令。
     </p>
 
     <div class="warn-banner">{{ positionBlock }} · 人{{ personPresent ? "在场" : "不在场" }} · 大盘开关：{{ marketRegime }} · RULES 池子 {{ poolCount }} 只{{ poolDate ? "（确认收盘 " + poolDate + "）" : "" }}</div>
@@ -55,12 +55,32 @@
 
     <div class="card">
       <h2>今天规则扫描</h2>
-      <p class="sub">摘要只数。符合 = §6 路径到达。扫描不自动升到买入。</p>
+      <p class="sub">买入 = 路径到达，不是成交指令。</p>
       <div class="grid cols-4">
-        <div class="stat"><div class="n">{{ scan.符合 ?? 0 }}</div><div class="k">符合</div></div>
-        <div class="stat"><div class="n">{{ scan.继续跟踪 ?? 0 }}</div><div class="k">继续跟踪</div></div>
+        <div class="stat"><div class="n">{{ scan.买入 ?? 0 }}</div><div class="k">买入</div></div>
         <div class="stat"><div class="n">{{ scan.观察 ?? 0 }}</div><div class="k">观察</div></div>
+        <div class="stat"><div class="n">{{ scan.卖出 ?? 0 }}</div><div class="k">卖出</div></div>
         <div class="stat"><div class="n">{{ scan.排除 ?? 0 }}</div><div class="k">排除</div></div>
+      </div>
+      <div class="overview" style="margin-top:14px">
+        <div class="ov-block">
+          <div class="ov-title">买入池 <span>{{ buyNames.length }}</span></div>
+          <div class="name-cloud" v-if="buyNames.length">
+            <router-link class="name-chip 买入" v-for="s in buyNames" :key="'hb'+s.code" :to="'/chart/' + s.code">
+              {{ s.name }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
+            </router-link>
+          </div>
+          <div class="empty mini" v-else>空</div>
+        </div>
+        <div class="ov-block">
+          <div class="ov-title">观察池 <span>{{ watchNames.length }}</span></div>
+          <div class="name-cloud" v-if="watchNames.length">
+            <router-link class="name-chip 观察" v-for="s in watchNames" :key="'hw'+s.code" :to="'/chart/' + s.code">
+              {{ s.name }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
+            </router-link>
+          </div>
+          <div class="empty mini" v-else>空</div>
+        </div>
       </div>
       <div class="row-btns" style="margin-top:14px">
         <router-link class="btn" to="/scan">打开规则扫描</router-link>
@@ -94,13 +114,14 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { api, STATUSES } from "../api";
 
 const cards = ref([]);
 const triggeredCount = ref(0);
 const queues = ref({});
 const scan = ref({});
+const names = ref({});
 const path = ref("波段持有");
 const positionBlock = ref("");
 const marketRegime = ref("未设置");
@@ -112,6 +133,8 @@ const judgeCard = ref(null);
 const judgeStatus = ref("观察");
 const judgeNote = ref("");
 const statuses = STATUSES;
+const buyNames = computed(() => names.value.买入 || []);
+const watchNames = computed(() => names.value.观察 || []);
 
 function snap(card) {
   return (card.trigger && card.trigger.snapshot) || {};
@@ -142,6 +165,7 @@ async function load() {
   triggeredCount.value = data.triggered_count || 0;
   queues.value = data.queues || {};
   scan.value = data.scan_summary || {};
+  names.value = data.names || {};
   path.value = data.path;
   positionBlock.value = data.position_block;
   marketRegime.value = data.market_regime;

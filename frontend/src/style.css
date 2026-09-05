@@ -171,10 +171,51 @@ h1 { font-size: 22px; letter-spacing: 0.01em; }
 }
 .badge.排除 { background: #24313a; color: #b7c4ce; }
 .badge.观察 { background: rgba(110, 168, 255, 0.16); color: var(--blue); }
-.badge.等待 { background: rgba(230, 195, 92, 0.16); color: var(--amber); }
 .badge.买入 { background: var(--cyan-dim); color: var(--cyan); }
+.badge.卖出 { background: rgba(227, 106, 106, 0.16); color: var(--red); }
 .badge.减仓 { background: rgba(224, 163, 92, 0.18); color: var(--copper); }
 .badge.清仓 { background: rgba(227, 106, 106, 0.16); color: var(--red); }
+.badge.等待 { background: rgba(230, 195, 92, 0.16); color: var(--amber); }
+
+.overview {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+}
+.ov-block {
+  background: #0b151c;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.ov-title {
+  font-size: 13px;
+  font-weight: 650;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+.ov-title span { color: var(--muted); font-weight: 500; }
+.name-cloud { display: flex; flex-wrap: wrap; gap: 6px; max-height: 132px; overflow: auto; }
+.name-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.name-chip em { color: var(--muted); font-style: normal; font-variant-numeric: tabular-nums; }
+.name-chip.买入 { color: var(--cyan); border-color: rgba(94, 224, 197, 0.28); }
+.name-chip.观察 { color: var(--blue); border-color: rgba(110, 168, 255, 0.28); }
+.pe-tag {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--copper);
+  font-variant-numeric: tabular-nums;
+}
+.empty.mini { padding: 8px 0; font-size: 12px; }
 .badge.禁止 { background: rgba(227, 106, 106, 0.16); color: var(--red); }
 .badge.符合 { background: var(--copper-dim); color: var(--copper); }
 .badge.继续跟踪 { background: rgba(230, 195, 92, 0.16); color: var(--amber); }
@@ -342,7 +383,7 @@ h1 { font-size: 22px; letter-spacing: 0.01em; }
     padding-bottom: calc(28px + env(safe-area-inset-bottom));
   }
   h1 { font-size: 18px; }
-  .grid.cols-3, .grid.cols-4, .grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .grid.cols-3, .grid.cols-4, .grid.cols-2, .overview { grid-template-columns: 1fr 1fr; }
   .fact-strip { grid-template-columns: 1fr 1fr; }
   .stat .n { font-size: 22px; }
   .btn { min-height: 40px; }

@@ -498,9 +498,9 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
             base["hit_rules"].append(f"RULES §5 KDJ 带宽：J {j_last:.2f} < 80 且 K {k_last:.2f} ≤ 50")
         else:
             if k_last is None or j_last is None:
-                band_detail = "J/K 证据不足，不得升等待"
+                band_detail = "J/K 证据不足，不得买入"
             else:
-                band_detail = f"J {j_last:.2f} / K {k_last:.2f} 未同时满足 J < 80 且 K ≤ 50，不得升等待"
+                band_detail = f"J {j_last:.2f} / K {k_last:.2f} 未同时满足 J < 80 且 K ≤ 50，不得买入"
             base["missing_rules"].append("RULES §5 KDJ 带宽：" + band_detail)
     else:
         cond_kdj_band = True
@@ -539,7 +539,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
                 why.append(dif_low_detail)
             if px_low is not True:
                 why.append(px_low_detail)
-            base["missing_rules"].append("RULES §5 低位（中高位缩短绿柱不得升等待）：" + "；".join(why))
+            base["missing_rules"].append("RULES §5 低位（中高位缩短绿柱不得买入）：" + "；".join(why))
     else:
         cond_low = True
 
@@ -548,13 +548,13 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
 
         sec = sector_of(code)
         if not sec or sec.get("weak") is None:
-            base["missing_rules"].append("RULES §2 板块近3日相对大盘证据不足，本条不挡等待")
+            base["missing_rules"].append("RULES §2 板块近3日相对大盘证据不足，本条不挡观察")
             cond_sector = True
         elif sec.get("weak") is True:
             cond_sector = False
             base["missing_rules"].append(
                 f"RULES §2 板块弱于大盘（{sec.get('board') or sec.get('industry') or '板块'} "
-                f"{sec.get('board_ret_3d_pct')}% / 沪深300 {sec.get('market_ret_3d_pct')}%），不得进入等待/买入"
+                f"{sec.get('board_ret_3d_pct')}% / 沪深300 {sec.get('market_ret_3d_pct')}%），不得进入买入"
             )
         else:
             cond_sector = True
@@ -567,11 +567,6 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
 
     if not (cond_macd_watch and cond_kdj_watch and cond_low and cond_kdj_band and cond_sector):
         return base
-
-    # §5 complete → 等待
-    base["status"] = "等待"
-    base["gate"] = "等待"
-    base["summary_bucket"] = "继续跟踪"
 
     buy_cross, cross_detail, cross_idx = recent_dif_golden_cross(
         dif, dea, within_two_days=bool(flags.get("cross_within_two_days", False))
@@ -638,10 +633,12 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     )
     base["path_ready"] = path_ready
     if path_ready:
-        base["summary_bucket"] = "符合"
-        base["hit_rules"].append("RULES §6 路径到达。扫描最高停在等待，买入须人工确认，不是成交指令")
+        base["status"] = "买入"
+        base["gate"] = "买入"
+        base["summary_bucket"] = "买入"
+        base["hit_rules"].append("RULES §6 路径到达买入。买入不是成交指令")
     else:
-        base["summary_bucket"] = "继续跟踪"
+        base["summary_bucket"] = "观察"
 
     open_trade = None
     for trade in trades or []:
@@ -673,23 +670,20 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         hit, section, detail = evaluate_exit(series, entry_idx)
         note = f"手工开仓记录存在（仓位 {open_trade.get('position_pct')}%）"
         if hit:
-            if section == "7.2":
-                base["status"] = "减仓"
-                base["gate"] = "减仓"
-            else:
-                base["status"] = "清仓"
-                base["gate"] = "清仓"
-            base["hit_rules"].append(f"RULES §{section} 离场已见：{note}；{detail}")
+            base["status"] = "卖出"
+            base["gate"] = "卖出"
+            base["summary_bucket"] = "卖出"
+            base["hit_rules"].append(f"RULES §{section} 卖出已见：{note}；{detail}")
         else:
             base["status"] = "买入"
             base["gate"] = "买入"
+            base["summary_bucket"] = "买入"
             base["hit_rules"].append("RULES §7 对照未齐，持仓仍按买入闸记录：" + note)
     elif not person_present:
-        base["risk"].append("人不在场：只输出观察，不升等待/买入")
+        base["risk"].append("人不在场：只输出观察，不升买入")
         base["status"] = "观察"
         base["gate"] = "观察"
-        if path_ready:
-            base["summary_bucket"] = "观察"
+        base["summary_bucket"] = "观察"
         return base
 
     return base
@@ -715,14 +709,22 @@ def scan_universe(
 
 
 def summarize(rows: list[dict]) -> dict:
-    counts = {key: 0 for key in ("符合", "继续跟踪", "观察", "排除")}
     by_gate = {key: 0 for key in GATES}
+    names = {key: [] for key in GATES}
     for row in rows:
-        bucket = row.get("summary_bucket") or "排除"
-        if bucket not in counts:
-            bucket = "排除"
-        counts[bucket] += 1
         gate = row.get("gate") or row.get("status") or "排除"
-        if gate in by_gate:
-            by_gate[gate] += 1
-    return {"summary": counts, "by_gate": by_gate, "total": len(rows)}
+        if gate not in by_gate:
+            gate = "排除"
+        by_gate[gate] += 1
+        pe = None
+        facts = row.get("facts") or {}
+        if facts.get("pe") is not None:
+            pe = facts.get("pe")
+        names[gate].append(
+            {
+                "code": row.get("code"),
+                "name": row.get("name"),
+                "pe": pe,
+            }
+        )
+    return {"summary": by_gate, "by_gate": by_gate, "names": names, "total": len(rows)}

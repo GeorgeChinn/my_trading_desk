@@ -58,7 +58,7 @@ def main() -> None:
         if not item.get("engine_ok"):
             continue
         flags = parse_flags(item["text"])
-        page = cycles_page(load_universe(), flags=flags, ruleset=item)
+        page = cycles_page(load_universe(), flags=flags, ruleset=item, warm=True)
         summary = page.get("summary") or {}
         print("cycles", item["id"], "open", summary.get("open"), "closed", summary.get("closed"))
 

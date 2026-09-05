@@ -1,13 +1,12 @@
 """RULES §2 板块近 3 个交易日相对大盘。弱则不得进入等待/买入。不编造。"""
 from __future__ import annotations
 
-import time
 from datetime import datetime
 
 from ..config import SECTOR_PATH
 from ..store import read_json, write_json
 from .bars import load_bars, ts_code
-from .eastmoney import fetch_index_kline, fetch_industry_boards, fetch_stock_industry
+from .eastmoney import fetch_index_kline, fetch_industry_boards, fetch_sina_industry_map
 
 
 def _norm(name: str) -> str:
@@ -71,17 +70,13 @@ def refresh_sector_snap(pool: list[dict], log=None) -> dict:
     boards = fetch_industry_boards()
     talk(f"行业板块 {len(boards)} 条")
 
-    for i, item in enumerate(pool, start=1):
+    industry_map = fetch_sina_industry_map()
+    talk(f"新浪行业归属 {len(industry_map)} 只")
+    for item in pool:
         code = ts_code(str(item.get("code") or ""))
         if not code:
             continue
-        try:
-            item["industry"] = fetch_stock_industry(code)
-        except Exception:
-            item["industry"] = item.get("industry")
-        time.sleep(0.03)
-        if i % 40 == 0:
-            talk(f"板块归属 {i}/{len(pool)}")
+        item["industry"] = industry_map.get(code) or item.get("industry")
 
     stocks: dict[str, dict] = {}
     for item in pool:

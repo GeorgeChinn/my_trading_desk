@@ -1,11 +1,12 @@
 """RULES path cycles: 买入日 → 清仓条件日. Live log + history backtest. Not an order."""
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime
 
-from ..config import CYCLES_PATH, KDJ_LOW
+from ..config import CYCLE_CACHE_DIR, CYCLES_PATH, KDJ_LOW, ensure_dirs
 from ..store import read_json, write_json
-from .bars import attach_indicators, load_bars, ts_code
+from .bars import attach_indicators, csv_path_for, load_bars, ts_code
 from .rules_bind import parse_flags
 from .exits import evaluate_exit
 from .scanner import (
@@ -234,6 +235,44 @@ def walk_stock_segments(code: str, name: str, flags: dict) -> list[dict]:
     return out
 
 
+def _cache_path(ruleset_id: str):
+    ensure_dirs()
+    return CYCLE_CACHE_DIR / f"{ruleset_id}.json"
+
+
+def _rules_hash(text: str) -> str:
+    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()[:16]
+
+
+def _last_date(code: str) -> str:
+    path = csv_path_for(code)
+    if not path.exists():
+        return ""
+    with path.open("rb") as handle:
+        handle.seek(0, 2)
+        size = handle.tell()
+        handle.seek(max(0, size - 480))
+        tail = handle.read().decode("utf-8", errors="ignore").strip().splitlines()
+    if not tail:
+        return ""
+    parts = tail[-1].split(",")
+    if len(parts) > 1 and len(parts[1]) >= 8:
+        return parts[1][:10]
+    bars = load_bars(code)
+    return str(bars[-1]["date"]) if bars else ""
+
+
+def cached_stock_segments(code: str, name: str, flags: dict, ruleset_id: str, rules_hash: str) -> list[dict]:
+    path = _cache_path(ruleset_id)
+    store = read_json(path, {}) if path.exists() else {}
+    codes = store.get("codes") if isinstance(store.get("codes"), dict) else {}
+    last = _last_date(code)
+    hit = codes.get(code) or {}
+    if store.get("rules_hash") == rules_hash and hit.get("last_date") == last and isinstance(hit.get("segments"), list):
+        return [{**dict(seg), "name": name} for seg in hit["segments"]]
+    return walk_stock_segments(code, name, flags)
+
+
 def _empty_summary() -> dict:
     return {
         "open": 0,
@@ -250,9 +289,9 @@ def _empty_summary() -> dict:
 def summarize_segments(segments: list[dict]) -> dict:
     closed = [s for s in segments if s.get("closed")]
     open_n = sum(1 for s in segments if not s.get("closed"))
-    wins = sum(1 for s in closed if s.get("result") == "盈利")
-    losses = sum(1 for s in closed if s.get("result") == "亏损")
-    flat = sum(1 for s in closed if s.get("result") == "持平")
+    wins = sum(1 for s in closed if s.get("win"))
+    losses = sum(1 for s in closed if not s.get("win") and (s.get("pnl_pct") or 0) < 0)
+    flat = sum(1 for s in closed if (s.get("pnl_pct") or 0) == 0)
     n = len(closed)
     avg = sum(s.get("pnl_pct") or 0 for s in closed) / n if n else None
     return {
@@ -267,14 +306,47 @@ def summarize_segments(segments: list[dict]) -> dict:
     }
 
 
-def cycles_page(universe: list[dict], flags: dict | None = None, ruleset: dict | None = None) -> dict:
-    """One segment = listed in 买入 pool → §7 sell. Same stock may have many segments."""
+def _sort_segments(rows: list[dict], sort: str, order: str) -> list[dict]:
+    rev = (order or "desc").lower() != "asc"
+    key = sort or "buy_date"
+    numeric = key in ("pnl_pct", "pnl_per_share", "buy_price", "sell_price", "seq", "bars")
+
+    def sk(item: dict):
+        val = item.get(key)
+        if numeric:
+            try:
+                return float(val)
+            except (TypeError, ValueError):
+                return 0.0
+        return val or ""
+
+    if key == "status":
+        rows = sorted(rows, key=lambda s: (1 if s.get("closed") else 0, s.get("buy_date") or ""), reverse=rev)
+        return rows
+    return sorted(rows, key=sk, reverse=rev)
+
+
+def cycles_page(
+    universe: list[dict],
+    flags: dict | None = None,
+    ruleset: dict | None = None,
+    tab: str = "all",
+    q: str = "",
+    sort: str = "buy_date",
+    order: str = "desc",
+    page: int = 1,
+    page_size: int = 40,
+    warm: bool = False,
+) -> dict:
+    """One segment = 买入条件日 → 卖出条件日. Cache by code + rules hash + last bar date."""
     from .rulesets import ENGINE_LOW_GOLDEN, public_ruleset
 
     flags = flags or parse_flags()
     pub = public_ruleset(ruleset) if ruleset else None
     engine = (ruleset or {}).get("engine") or ENGINE_LOW_GOLDEN
-    note = "一段轨迹 = 路径到达买入条件的确认收盘 → §7.1 失败离场或 §7.2 波段离场。买入价/卖出价用当日收盘。这是事实记录，不是成交指令。"
+    ruleset_id = (ruleset or {}).get("id") or "rules"
+    rules_hash = _rules_hash((ruleset or {}).get("text") or "")
+    note = "一段轨迹 = 路径到达买入的确认收盘 → 卖出条件日。买入价/卖出价用当日收盘。这是事实记录，不是成交指令。"
     if engine != ENGINE_LOW_GOLDEN:
         payload = {
             "fact_note": "这是事实记录",
@@ -282,31 +354,89 @@ def cycles_page(universe: list[dict], flags: dict | None = None, ruleset: dict |
             "ruleset": pub,
             "segments": [],
             "summary": _empty_summary(),
+            "page": 1,
+            "page_size": page_size,
+            "pages": 1,
+            "cached": False,
             "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
-        save_cycles(payload, (ruleset or {}).get("id") or "rules")
+        save_cycles(payload, ruleset_id)
         return payload
     segments: list[dict] = []
+    pe_map = {ts_code(str(m.get("code") or "")): m.get("pe") for m in universe}
+    path = _cache_path(ruleset_id)
+    store = read_json(path, {}) if path.exists() else {}
+    if not isinstance(store, dict):
+        store = {}
+    codes = store.get("codes") if isinstance(store.get("codes"), dict) else {}
+    hash_ok = store.get("rules_hash") == rules_hash
+    dirty = not hash_ok
+    if not hash_ok:
+        codes = {}
     for meta in universe:
         code = ts_code(str(meta.get("code") or ""))
         name = meta.get("name") or code
         if not code:
             continue
-        segments.extend(walk_stock_segments(code, name, flags))
-    open_rows = [s for s in segments if not s.get("closed")]
-    closed_rows = [s for s in segments if s.get("closed")]
-    open_rows.sort(key=lambda s: (s.get("buy_date") or "", s.get("code") or ""), reverse=True)
-    closed_rows.sort(key=lambda s: (s.get("sell_date") or "", s.get("code") or ""), reverse=True)
-    segments = open_rows + closed_rows
+        last = _last_date(code)
+        hit = codes.get(code) or {}
+        if hash_ok and hit.get("last_date") == last and isinstance(hit.get("segments"), list):
+            segs = [{**dict(seg), "name": name} for seg in hit["segments"]]
+        else:
+            segs = walk_stock_segments(code, name, flags)
+            codes[code] = {"last_date": last, "segments": segs}
+            dirty = True
+        for seg in segs:
+            if seg.get("pe") is None:
+                seg["pe"] = pe_map.get(code)
+        segments.extend(segs)
+    if dirty:
+        write_json(
+            path,
+            {
+                "rules_hash": rules_hash,
+                "codes": codes,
+                "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            },
+        )
+    query = (q or "").strip()
+    filtered = []
+    for s in segments:
+        if tab == "open" and s.get("closed"):
+            continue
+        if tab == "done" and not s.get("closed"):
+            continue
+        if query and query not in (s.get("code") or "") and query not in (s.get("name") or ""):
+            continue
+        filtered.append(s)
+    if sort in ("", "default"):
+        open_rows = [s for s in filtered if not s.get("closed")]
+        closed_rows = [s for s in filtered if s.get("closed")]
+        open_rows.sort(key=lambda s: (s.get("buy_date") or "", s.get("code") or ""), reverse=True)
+        closed_rows.sort(key=lambda s: (s.get("sell_date") or "", s.get("code") or ""), reverse=True)
+        filtered = open_rows + closed_rows
+    else:
+        filtered = _sort_segments(filtered, sort, order)
+    total = len(filtered)
+    size = max(1, min(int(page_size or 40), 200))
+    pages = max(1, (total + size - 1) // size)
+    cur = max(1, min(int(page or 1), pages))
+    start = (cur - 1) * size
+    page_rows = filtered if warm else filtered[start : start + size]
     payload = {
         "fact_note": "这是事实记录",
         "note": note,
         "ruleset": pub,
-        "segments": segments,
+        "segments": page_rows,
         "summary": summarize_segments(segments),
+        "page": 1 if warm else cur,
+        "page_size": size,
+        "pages": 1 if warm else pages,
+        "filtered": total,
+        "cached": True,
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
-    save_cycles(payload, (ruleset or {}).get("id") or "rules")
+    save_cycles(payload, ruleset_id)
     return payload
 
 

@@ -13,7 +13,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "机械行业"
   },
   {
     "code": "000977",
@@ -29,7 +30,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "600150",
@@ -46,7 +48,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "船舶制造"
   },
   {
     "code": "603986",
@@ -63,7 +66,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600183",
@@ -80,7 +84,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "688256",
@@ -97,7 +102,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600176",
@@ -113,7 +119,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "玻璃行业"
   },
   {
     "code": "000938",
@@ -129,7 +136,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "601138",
@@ -145,7 +153,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300750",
@@ -161,7 +170,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600584",
@@ -177,7 +187,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "002475",
@@ -193,7 +204,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "688008",
@@ -210,7 +222,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600519",
@@ -227,7 +240,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "酿酒行业"
   },
   {
     "code": "601899",
@@ -244,7 +258,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "000725",
@@ -260,7 +275,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "300059",
@@ -276,7 +292,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "300274",
@@ -292,7 +309,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电器行业"
   },
   {
     "code": "601318",
@@ -309,7 +327,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "688012",
@@ -326,7 +345,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002371",
@@ -342,7 +362,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600547",
@@ -358,7 +379,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "603259",
@@ -375,7 +397,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600030",
@@ -392,7 +415,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "688981",
@@ -409,7 +433,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300408",
@@ -425,7 +450,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600036",
@@ -442,7 +468,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "300033",
@@ -458,7 +485,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "002714",
@@ -474,7 +502,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "农林牧渔"
   },
   {
     "code": "688041",
@@ -491,7 +520,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000858",
@@ -507,7 +537,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "酿酒行业"
   },
   {
     "code": "600309",
@@ -524,7 +555,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "603019",
@@ -541,7 +573,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "300433",
@@ -557,7 +590,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "300223",
@@ -573,7 +607,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "000338",
@@ -589,7 +624,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "汽车制造"
   },
   {
     "code": "300454",
@@ -605,7 +641,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "603993",
@@ -622,7 +659,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000063",
@@ -638,7 +676,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "600460",
@@ -654,7 +693,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600362",
@@ -670,7 +710,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "600276",
@@ -687,7 +728,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "生物制药"
   },
   {
     "code": "002916",
@@ -703,7 +745,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300759",
@@ -719,7 +762,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002466",
@@ -735,7 +779,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "601919",
@@ -752,7 +797,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "交通运输"
   },
   {
     "code": "600887",
@@ -769,7 +815,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "食品行业"
   },
   {
     "code": "601398",
@@ -786,7 +833,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "300498",
@@ -802,7 +850,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601888",
@@ -819,7 +868,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "酒店旅游"
   },
   {
     "code": "600900",
@@ -836,7 +886,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电力行业"
   },
   {
     "code": "601872",
@@ -852,7 +903,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "交通运输"
   },
   {
     "code": "600489",
@@ -868,7 +920,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "601601",
@@ -885,7 +938,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "601166",
@@ -902,7 +956,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "002050",
@@ -918,7 +973,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "机械行业"
   },
   {
     "code": "002594",
@@ -934,7 +990,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "汽车制造"
   },
   {
     "code": "600893",
@@ -950,7 +1007,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "飞机制造"
   },
   {
     "code": "601288",
@@ -967,7 +1025,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "300760",
@@ -983,7 +1042,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688111",
@@ -1000,7 +1060,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600809",
@@ -1017,7 +1078,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "酿酒行业"
   },
   {
     "code": "600048",
@@ -1033,7 +1095,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "房地产"
   },
   {
     "code": "601988",
@@ -1050,7 +1113,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "000333",
@@ -1066,7 +1130,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "家电行业"
   },
   {
     "code": "002460",
@@ -1082,7 +1147,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "603799",
@@ -1098,7 +1164,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "603501",
@@ -1115,7 +1182,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600989",
@@ -1131,7 +1199,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601600",
@@ -1148,7 +1217,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "000776",
@@ -1164,7 +1234,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "601336",
@@ -1180,7 +1251,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "000568",
@@ -1196,7 +1268,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "酿酒行业"
   },
   {
     "code": "000425",
@@ -1212,7 +1285,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "机械行业"
   },
   {
     "code": "002938",
@@ -1228,7 +1302,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002241",
@@ -1244,7 +1319,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "002202",
@@ -1260,7 +1336,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "发电设备"
   },
   {
     "code": "601127",
@@ -1276,7 +1353,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601689",
@@ -1292,7 +1370,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "汽车制造"
   },
   {
     "code": "000617",
@@ -1308,7 +1387,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "机械行业"
   },
   {
     "code": "300751",
@@ -1324,7 +1404,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600111",
@@ -1341,7 +1422,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "000792",
@@ -1357,7 +1439,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "农药化肥"
   },
   {
     "code": "601658",
@@ -1374,7 +1457,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002415",
@@ -1390,7 +1474,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "仪器仪表"
   },
   {
     "code": "600089",
@@ -1407,7 +1492,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "发电设备"
   },
   {
     "code": "000651",
@@ -1423,7 +1509,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "家电行业"
   },
   {
     "code": "601169",
@@ -1439,7 +1526,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "002709",
@@ -1455,7 +1543,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "601360",
@@ -1471,7 +1560,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601328",
@@ -1488,7 +1578,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "000768",
@@ -1504,7 +1595,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "飞机制造"
   },
   {
     "code": "601628",
@@ -1521,7 +1613,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "601211",
@@ -1538,7 +1631,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600999",
@@ -1554,7 +1648,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "600875",
@@ -1570,7 +1665,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "发电设备"
   },
   {
     "code": "300124",
@@ -1586,7 +1682,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "仪器仪表"
   },
   {
     "code": "601688",
@@ -1603,7 +1700,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "002821",
@@ -1619,7 +1717,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002812",
@@ -1635,7 +1734,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002230",
@@ -1651,7 +1751,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "300661",
@@ -1667,7 +1768,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300014",
@@ -1683,7 +1785,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600188",
@@ -1699,7 +1802,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "煤炭行业"
   },
   {
     "code": "600938",
@@ -1715,7 +1819,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601857",
@@ -1732,7 +1837,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "石油行业"
   },
   {
     "code": "600570",
@@ -1748,7 +1854,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "001979",
@@ -1764,7 +1871,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002555",
@@ -1780,7 +1888,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "汽车制造"
   },
   {
     "code": "600690",
@@ -1796,7 +1905,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "家电行业"
   },
   {
     "code": "600919",
@@ -1812,7 +1922,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000001",
@@ -1828,7 +1939,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "601985",
@@ -1844,7 +1956,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688396",
@@ -1860,7 +1973,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601088",
@@ -1877,7 +1991,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "煤炭行业"
   },
   {
     "code": "600031",
@@ -1894,7 +2009,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "机械行业"
   },
   {
     "code": "002648",
@@ -1910,7 +2026,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "600028",
@@ -1927,7 +2044,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "石油行业"
   },
   {
     "code": "002920",
@@ -1943,7 +2061,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601225",
@@ -1959,7 +2078,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "煤炭行业"
   },
   {
     "code": "601877",
@@ -1975,7 +2095,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "发电设备"
   },
   {
     "code": "600760",
@@ -1992,7 +2113,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "汽车制造"
   },
   {
     "code": "002142",
@@ -2008,7 +2130,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "600406",
@@ -2025,7 +2148,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "601939",
@@ -2041,7 +2165,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "688271",
@@ -2057,7 +2182,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300450",
@@ -2073,7 +2199,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "其它行业"
   },
   {
     "code": "600926",
@@ -2089,7 +2216,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601319",
@@ -2105,7 +2233,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002049",
@@ -2121,7 +2250,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "605117",
@@ -2137,7 +2267,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600000",
@@ -2153,7 +2284,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "000596",
@@ -2169,7 +2301,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "酿酒行业"
   },
   {
     "code": "600426",
@@ -2185,7 +2318,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "农药化肥"
   },
   {
     "code": "601995",
@@ -2201,7 +2335,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600015",
@@ -2217,7 +2352,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "000408",
@@ -2233,7 +2369,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "商业百货"
   },
   {
     "code": "605499",
@@ -2249,7 +2386,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002311",
@@ -2265,7 +2403,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "农林牧渔"
   },
   {
     "code": "600958",
@@ -2281,7 +2420,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "600941",
@@ -2297,7 +2437,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601009",
@@ -2313,7 +2454,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "301269",
@@ -2329,7 +2471,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000301",
@@ -2345,7 +2488,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "综合行业"
   },
   {
     "code": "601377",
@@ -2361,7 +2505,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "600795",
@@ -2377,7 +2522,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电力行业"
   },
   {
     "code": "601766",
@@ -2393,7 +2539,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "交通运输"
   },
   {
     "code": "002001",
@@ -2409,7 +2556,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "生物制药"
   },
   {
     "code": "601066",
@@ -2425,7 +2573,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300015",
@@ -2441,7 +2590,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "医疗器械"
   },
   {
     "code": "002179",
@@ -2457,7 +2607,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600346",
@@ -2473,7 +2624,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "机械行业"
   },
   {
     "code": "601898",
@@ -2489,7 +2641,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "煤炭行业"
   },
   {
     "code": "601728",
@@ -2506,7 +2659,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "603288",
@@ -2522,7 +2676,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "食品行业"
   },
   {
     "code": "002493",
@@ -2538,7 +2693,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化纤行业"
   },
   {
     "code": "600585",
@@ -2554,7 +2710,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "水泥行业"
   },
   {
     "code": "601698",
@@ -2570,7 +2727,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601998",
@@ -2586,7 +2744,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "603369",
@@ -2602,7 +2761,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "酿酒行业"
   },
   {
     "code": "600660",
@@ -2618,7 +2778,8 @@
     ],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "汽车制造"
   },
   {
     "code": "300502",
@@ -2632,7 +2793,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688825",
@@ -2646,7 +2808,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600487",
@@ -2660,7 +2823,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "300394",
@@ -2674,7 +2838,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "300058",
@@ -2688,7 +2853,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "印刷包装"
   },
   {
     "code": "002384",
@@ -2702,7 +2868,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "603228",
@@ -2716,7 +2883,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600869",
@@ -2730,7 +2898,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电力行业"
   },
   {
     "code": "688347",
@@ -2744,7 +2913,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002536",
@@ -2758,7 +2928,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "汽车制造"
   },
   {
     "code": "002463",
@@ -2772,7 +2943,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600601",
@@ -2786,7 +2958,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "002837",
@@ -2800,7 +2973,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300857",
@@ -2814,7 +2988,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300604",
@@ -2828,7 +3003,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300475",
@@ -2842,7 +3018,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "603083",
@@ -2856,7 +3033,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300476",
@@ -2870,7 +3048,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002156",
@@ -2884,7 +3063,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600522",
@@ -2898,7 +3078,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "688205",
@@ -2912,7 +3093,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002428",
@@ -2926,7 +3108,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "002602",
@@ -2940,7 +3123,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "汽车制造"
   },
   {
     "code": "300285",
@@ -2954,7 +3138,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "002008",
@@ -2968,7 +3153,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "仪器仪表"
   },
   {
     "code": "002436",
@@ -2982,7 +3168,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "000636",
@@ -2996,7 +3183,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "002851",
@@ -3010,7 +3198,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600105",
@@ -3024,7 +3213,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "001309",
@@ -3038,7 +3228,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688498",
@@ -3052,7 +3243,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601869",
@@ -3066,7 +3258,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002281",
@@ -3080,7 +3273,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "600378",
@@ -3094,7 +3288,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "688525",
@@ -3108,7 +3303,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000988",
@@ -3122,7 +3318,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "仪器仪表"
   },
   {
     "code": "688766",
@@ -3136,7 +3333,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002636",
@@ -3150,7 +3348,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "688195",
@@ -3164,7 +3363,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002407",
@@ -3178,7 +3378,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "688627",
@@ -3192,7 +3393,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "603256",
@@ -3206,7 +3408,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000657",
@@ -3220,7 +3423,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "301308",
@@ -3234,7 +3438,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002558",
@@ -3248,7 +3453,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "酒店旅游"
   },
   {
     "code": "688361",
@@ -3262,7 +3468,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300803",
@@ -3276,7 +3483,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300017",
@@ -3290,7 +3498,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "300620",
@@ -3304,7 +3513,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "301217",
@@ -3318,7 +3528,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600206",
@@ -3332,7 +3543,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600498",
@@ -3346,7 +3558,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "301526",
@@ -3360,7 +3573,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300548",
@@ -3374,7 +3588,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688072",
@@ -3388,7 +3603,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601208",
@@ -3402,7 +3618,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "300570",
@@ -3416,7 +3633,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "603629",
@@ -3430,7 +3648,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600988",
@@ -3444,7 +3663,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002185",
@@ -3458,7 +3678,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "002353",
@@ -3472,7 +3693,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "机械行业"
   },
   {
     "code": "688313",
@@ -3486,7 +3708,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "603893",
@@ -3500,7 +3723,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600667",
@@ -3514,7 +3738,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "301511",
@@ -3528,7 +3753,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688808",
@@ -3542,7 +3768,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002484",
@@ -3556,7 +3783,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "002155",
@@ -3570,7 +3798,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "301165",
@@ -3584,7 +3813,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688048",
@@ -3598,7 +3828,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688146",
@@ -3612,7 +3843,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688300",
@@ -3626,7 +3858,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000021",
@@ -3640,7 +3873,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "688017",
@@ -3654,7 +3888,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688002",
@@ -3668,7 +3903,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002028",
@@ -3682,7 +3918,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "发电设备"
   },
   {
     "code": "300666",
@@ -3696,7 +3933,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600026",
@@ -3710,7 +3948,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "交通运输"
   },
   {
     "code": "002080",
@@ -3724,7 +3963,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化纤行业"
   },
   {
     "code": "002409",
@@ -3738,7 +3978,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "600549",
@@ -3752,7 +3993,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "300136",
@@ -3766,7 +4008,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "688183",
@@ -3780,7 +4023,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688630",
@@ -3794,7 +4038,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601168",
@@ -3808,7 +4053,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "000703",
@@ -3822,7 +4068,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化纤行业"
   },
   {
     "code": "000426",
@@ -3836,7 +4083,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "688120",
@@ -3850,7 +4098,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000811",
@@ -3864,7 +4113,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "机械行业"
   },
   {
     "code": "000807",
@@ -3878,7 +4128,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "300870",
@@ -3892,7 +4143,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600737",
@@ -3906,7 +4158,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "食品行业"
   },
   {
     "code": "002517",
@@ -3920,7 +4173,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "服装鞋类"
   },
   {
     "code": "603296",
@@ -3934,7 +4188,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600909",
@@ -3948,7 +4203,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300567",
@@ -3962,7 +4218,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300395",
@@ -3976,7 +4233,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "玻璃行业"
   },
   {
     "code": "688519",
@@ -3990,7 +4248,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300054",
@@ -4004,7 +4263,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "000630",
@@ -4018,7 +4278,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "688318",
@@ -4032,7 +4293,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000783",
@@ -4046,7 +4308,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "金融行业"
   },
   {
     "code": "002600",
@@ -4060,7 +4323,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "688037",
@@ -4074,7 +4338,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688200",
@@ -4088,7 +4353,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601179",
@@ -4102,7 +4368,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "发电设备"
   },
   {
     "code": "688676",
@@ -4116,7 +4383,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300390",
@@ -4130,7 +4398,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "688019",
@@ -4144,7 +4413,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688668",
@@ -4158,7 +4428,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600711",
@@ -4172,7 +4443,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "688629",
@@ -4186,7 +4458,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688147",
@@ -4200,7 +4473,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300346",
@@ -4214,7 +4488,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "000831",
@@ -4228,7 +4503,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "605376",
@@ -4242,7 +4518,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002432",
@@ -4256,7 +4533,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "医疗器械"
   },
   {
     "code": "603308",
@@ -4270,7 +4548,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "机械行业"
   },
   {
     "code": "601233",
@@ -4284,7 +4563,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化纤行业"
   },
   {
     "code": "688777",
@@ -4298,7 +4578,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300442",
@@ -4312,7 +4593,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "机械行业"
   },
   {
     "code": "003031",
@@ -4326,7 +4608,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002222",
@@ -4340,7 +4623,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600118",
@@ -4354,7 +4638,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "飞机制造"
   },
   {
     "code": "688082",
@@ -4368,7 +4653,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600497",
@@ -4382,7 +4668,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "601126",
@@ -4396,7 +4683,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "发电设备"
   },
   {
     "code": "688025",
@@ -4410,7 +4698,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000975",
@@ -4424,7 +4713,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688235",
@@ -4438,7 +4728,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000960",
@@ -4452,7 +4743,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "600673",
@@ -4466,7 +4758,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "300251",
@@ -4480,7 +4773,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "传媒娱乐"
   },
   {
     "code": "002738",
@@ -4494,7 +4788,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "建筑建材"
   },
   {
     "code": "300373",
@@ -4508,7 +4803,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600096",
@@ -4522,7 +4818,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "农药化肥"
   },
   {
     "code": "600256",
@@ -4536,7 +4833,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "综合行业"
   },
   {
     "code": "601991",
@@ -4550,7 +4848,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电力行业"
   },
   {
     "code": "000933",
@@ -4564,7 +4863,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "煤炭行业"
   },
   {
     "code": "600392",
@@ -4578,7 +4878,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "603268",
@@ -4592,7 +4893,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "陶瓷行业"
   },
   {
     "code": "600415",
@@ -4606,7 +4908,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "商业百货"
   },
   {
     "code": "600879",
@@ -4620,7 +4923,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "飞机制造"
   },
   {
     "code": "002138",
@@ -4634,7 +4938,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "002126",
@@ -4648,7 +4953,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "汽车制造"
   },
   {
     "code": "301377",
@@ -4662,7 +4968,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002273",
@@ -4676,7 +4983,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600141",
@@ -4690,7 +4998,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "688548",
@@ -4704,7 +5013,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600482",
@@ -4718,7 +5028,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电器行业"
   },
   {
     "code": "002532",
@@ -4732,7 +5043,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "机械行业"
   },
   {
     "code": "605589",
@@ -4746,7 +5058,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601696",
@@ -4760,7 +5073,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "301358",
@@ -4774,7 +5088,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300115",
@@ -4788,7 +5103,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "600580",
@@ -4802,7 +5118,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "发电设备"
   },
   {
     "code": "600885",
@@ -4816,7 +5133,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电器行业"
   },
   {
     "code": "600160",
@@ -4830,7 +5148,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "301236",
@@ -4844,7 +5163,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002625",
@@ -4858,7 +5178,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "汽车制造"
   },
   {
     "code": "300037",
@@ -4872,7 +5193,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "601136",
@@ -4886,7 +5208,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002195",
@@ -4900,7 +5223,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子信息"
   },
   {
     "code": "002414",
@@ -4914,7 +5238,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "仪器仪表"
   },
   {
     "code": "000878",
@@ -4928,7 +5253,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "302132",
@@ -4942,7 +5268,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600352",
@@ -4956,7 +5283,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化工行业"
   },
   {
     "code": "688099",
@@ -4970,7 +5298,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "300866",
@@ -4984,7 +5313,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688729",
@@ -4998,7 +5328,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "301200",
@@ -5012,7 +5343,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688536",
@@ -5026,7 +5358,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "000893",
@@ -5040,7 +5373,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "食品行业"
   },
   {
     "code": "000559",
@@ -5054,7 +5388,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "汽车制造"
   },
   {
     "code": "688249",
@@ -5068,7 +5403,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600895",
@@ -5082,7 +5418,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "开发区"
   },
   {
     "code": "601958",
@@ -5096,7 +5433,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "有色金属"
   },
   {
     "code": "688169",
@@ -5110,7 +5448,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "601231",
@@ -5124,7 +5463,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "688331",
@@ -5138,7 +5478,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "600707",
@@ -5152,7 +5493,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "电子器件"
   },
   {
     "code": "601108",
@@ -5166,7 +5508,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "688585",
@@ -5180,7 +5523,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "603650",
@@ -5194,7 +5538,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   },
   {
     "code": "002653",
@@ -5208,7 +5553,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "生物制药"
   },
   {
     "code": "002064",
@@ -5222,7 +5568,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "化纤行业"
   },
   {
     "code": "002422",
@@ -5236,7 +5583,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "生物制药"
   },
   {
     "code": "601727",
@@ -5250,7 +5598,8 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": "发电设备"
   },
   {
     "code": "603156",
@@ -5264,6 +5613,7 @@
     "index_member": [],
     "tags": [],
     "trade_date": "2026-09-05",
-    "source": "sina"
+    "source": "sina",
+    "industry": null
   }
 ]

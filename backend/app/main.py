@@ -249,7 +249,8 @@ def home():
         "queues": queues,
         "scan_summary": summary["summary"],
         "by_gate": summary["by_gate"],
-        "position_block": "扫描默认最高停在等待。路径到达不是成交指令",
+        "names": summary.get("names") or {},
+        "position_block": "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令",
         "market_regime": load_settings().get("market_regime"),
         "person_present": load_settings().get("person_present"),
         "pool_count": len(load_universe()),
@@ -270,21 +271,22 @@ def scan(ruleset: str = Query("rules")):
     if not bundle:
         raise HTTPException(404, "没有这个规则文件")
     rs, _flags, bind, rows = bundle
-    grouped = {key: [] for key in ("排除", "观察", "等待", "买入", "减仓", "清仓")}
+    grouped = {key: [] for key in ("排除", "观察", "买入", "卖出")}
     for row in rows:
         grouped.setdefault(row["status"], []).append(row)
     snap = load_pool_snapshot()
+    tallied = summarize(rows)
     reminders = funnel_reminders(load_settings()) + list(bind.get("unimplemented") or [])
     if not rs.get("engine_ok"):
         reminders = [rs["engine_note"]] + reminders
-    path_n = sum(1 for r in rows if r.get("path_ready"))
-    if path_n > 1:
-        reminders.append(f"RULES §6/§8：路径到达 {path_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满观察池。")
+    buy_n = (tallied.get("by_gate") or {}).get("买入") or 0
+    if buy_n > 1:
+        reminders.append(f"RULES §6/§8：买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
     return {
         "rows": rows,
-        **summarize(rows),
+        **tallied,
         "grouped": grouped,
-        "position_block": "总闸：排除 → 观察 → 等待 → 买入 → 减仓 / 清仓。买入不是成交指令。",
+        "position_block": "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令。",
         "reminders": reminders,
         "rules_bind": bind,
         "ruleset": public_ruleset(rs),
@@ -308,14 +310,32 @@ def scan_one(code: str):
 
 
 @app.get("/api/cycles")
-def cycles(ruleset: str = Query("rules")):
+def cycles(
+    ruleset: str = Query("rules"),
+    tab: str = Query("all"),
+    q: str = Query(""),
+    sort: str = Query("default"),
+    order: str = Query("desc"),
+    page: int = Query(1),
+    page_size: int = Query(40),
+):
     rs = get_ruleset(ruleset)
     if rs is None:
         raise HTTPException(404, "没有这个规则文件")
     flags = parse_flags(rs["text"])
-    page = cycles_page(load_universe(), flags=flags, ruleset=rs)
-    page["rulesets"] = [public_ruleset(item) for item in list_rulesets()]
-    return page
+    payload = cycles_page(
+        load_universe(),
+        flags=flags,
+        ruleset=rs,
+        tab=tab,
+        q=q,
+        sort=sort,
+        order=order,
+        page=page,
+        page_size=page_size,
+    )
+    payload["rulesets"] = [public_ruleset(item) for item in list_rulesets()]
+    return payload
 
 
 @app.get("/api/chart/{code}")
@@ -398,7 +418,7 @@ def watch_viewed(watch_id: str):
 @app.post("/api/watch/{watch_id}/judgement")
 def watch_judge(watch_id: str, payload: JudgementIn):
     if payload.status not in ALLOWED_STATUS:
-        raise HTTPException(400, "状态只能是：排除、观察、等待、买入、减仓、清仓")
+        raise HTTPException(400, "状态只能是：排除、观察、买入、卖出")
     warning = None
     if payload.status == "买入":
         warning = "总闸买入只表示路径到达。这是你自己的判断记录，不是成交指令。"

@@ -1,0 +1,2813 @@
+{
+  "updated_at": "2026-09-05 09:36:38",
+  "asof": "2026-09-04",
+  "market": {
+    "symbol": "sh000300",
+    "name": "沪深300",
+    "ret_3d_pct": -1.37
+  },
+  "board_count": 0,
+  "stocks": {
+    "300308": {
+      "industry": "机械行业",
+      "board": null,
+      "board_ret_3d_pct": -2.05,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -0.67,
+      "weak": true
+    },
+    "000977": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.77,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.39,
+      "weak": true
+    },
+    "600150": {
+      "industry": "船舶制造",
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "603986": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600183": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.86,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.49,
+      "weak": true
+    },
+    "688256": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600176": {
+      "industry": "玻璃行业",
+      "board": null,
+      "board_ret_3d_pct": -5.15,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.78,
+      "weak": true
+    },
+    "000938": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.83,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.45,
+      "weak": true
+    },
+    "601138": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300750": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600584": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.75,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.38,
+      "weak": true
+    },
+    "002475": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.87,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.5,
+      "weak": true
+    },
+    "688008": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600519": {
+      "industry": "酿酒行业",
+      "board": null,
+      "board_ret_3d_pct": 1.43,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.81,
+      "weak": false
+    },
+    "601899": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.45,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.07,
+      "weak": true
+    },
+    "000725": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.85,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.48,
+      "weak": true
+    },
+    "300059": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -4.14,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.77,
+      "weak": true
+    },
+    "300274": {
+      "industry": "电器行业",
+      "board": null,
+      "board_ret_3d_pct": 3.64,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 5.02,
+      "weak": false
+    },
+    "601318": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.46,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.83,
+      "weak": false
+    },
+    "688012": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002371": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.88,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.5,
+      "weak": true
+    },
+    "600547": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.63,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.26,
+      "weak": true
+    },
+    "603259": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600030": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.54,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.91,
+      "weak": false
+    },
+    "688981": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300408": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -5.0,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.62,
+      "weak": true
+    },
+    "600036": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.45,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.82,
+      "weak": false
+    },
+    "300033": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -4.1,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.72,
+      "weak": true
+    },
+    "002714": {
+      "industry": "农林牧渔",
+      "board": null,
+      "board_ret_3d_pct": -4.27,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.89,
+      "weak": true
+    },
+    "688041": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000858": {
+      "industry": "酿酒行业",
+      "board": null,
+      "board_ret_3d_pct": 1.86,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.23,
+      "weak": false
+    },
+    "600309": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.63,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.26,
+      "weak": true
+    },
+    "603019": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.99,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.61,
+      "weak": true
+    },
+    "300433": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.83,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.46,
+      "weak": true
+    },
+    "300223": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.84,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.46,
+      "weak": true
+    },
+    "000338": {
+      "industry": "汽车制造",
+      "board": null,
+      "board_ret_3d_pct": 1.92,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.29,
+      "weak": false
+    },
+    "300454": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "603993": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000063": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -4.04,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.66,
+      "weak": true
+    },
+    "600460": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.82,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.44,
+      "weak": true
+    },
+    "600362": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.28,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.91,
+      "weak": true
+    },
+    "600276": {
+      "industry": "生物制药",
+      "board": null,
+      "board_ret_3d_pct": 1.9,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.28,
+      "weak": false
+    },
+    "002916": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300759": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002466": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -3.96,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.59,
+      "weak": true
+    },
+    "601919": {
+      "industry": "交通运输",
+      "board": null,
+      "board_ret_3d_pct": 3.37,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 4.75,
+      "weak": false
+    },
+    "600887": {
+      "industry": "食品行业",
+      "board": null,
+      "board_ret_3d_pct": 1.21,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.59,
+      "weak": false
+    },
+    "601398": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.54,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.92,
+      "weak": false
+    },
+    "300498": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601888": {
+      "industry": "酒店旅游",
+      "board": null,
+      "board_ret_3d_pct": 2.67,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 4.05,
+      "weak": false
+    },
+    "600900": {
+      "industry": "电力行业",
+      "board": null,
+      "board_ret_3d_pct": 5.82,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 7.2,
+      "weak": false
+    },
+    "601872": {
+      "industry": "交通运输",
+      "board": null,
+      "board_ret_3d_pct": 0.1,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.47,
+      "weak": false
+    },
+    "600489": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.55,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.17,
+      "weak": true
+    },
+    "601601": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.39,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.76,
+      "weak": false
+    },
+    "601166": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.47,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.85,
+      "weak": false
+    },
+    "002050": {
+      "industry": "机械行业",
+      "board": null,
+      "board_ret_3d_pct": -2.44,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.06,
+      "weak": true
+    },
+    "002594": {
+      "industry": "汽车制造",
+      "board": null,
+      "board_ret_3d_pct": 1.88,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.26,
+      "weak": false
+    },
+    "600893": {
+      "industry": "飞机制造",
+      "board": null,
+      "board_ret_3d_pct": -0.08,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.3,
+      "weak": false
+    },
+    "601288": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.59,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.96,
+      "weak": false
+    },
+    "300760": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688111": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600809": {
+      "industry": "酿酒行业",
+      "board": null,
+      "board_ret_3d_pct": 1.59,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.96,
+      "weak": false
+    },
+    "600048": {
+      "industry": "房地产",
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601988": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.6,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.97,
+      "weak": false
+    },
+    "000333": {
+      "industry": "家电行业",
+      "board": null,
+      "board_ret_3d_pct": 1.91,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.29,
+      "weak": false
+    },
+    "002460": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.19,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.81,
+      "weak": true
+    },
+    "603799": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "603501": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600989": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601600": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.44,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.07,
+      "weak": true
+    },
+    "000776": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.48,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.85,
+      "weak": false
+    },
+    "601336": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.48,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.86,
+      "weak": false
+    },
+    "000568": {
+      "industry": "酿酒行业",
+      "board": null,
+      "board_ret_3d_pct": 1.58,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.96,
+      "weak": false
+    },
+    "000425": {
+      "industry": "机械行业",
+      "board": null,
+      "board_ret_3d_pct": -2.45,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.08,
+      "weak": true
+    },
+    "002938": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002241": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.95,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.58,
+      "weak": true
+    },
+    "002202": {
+      "industry": "发电设备",
+      "board": null,
+      "board_ret_3d_pct": 0.18,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.56,
+      "weak": false
+    },
+    "601127": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601689": {
+      "industry": "汽车制造",
+      "board": null,
+      "board_ret_3d_pct": 1.88,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.25,
+      "weak": false
+    },
+    "000617": {
+      "industry": "机械行业",
+      "board": null,
+      "board_ret_3d_pct": -2.45,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.08,
+      "weak": true
+    },
+    "300751": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600111": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.32,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.95,
+      "weak": true
+    },
+    "000792": {
+      "industry": "农药化肥",
+      "board": null,
+      "board_ret_3d_pct": -3.75,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.38,
+      "weak": true
+    },
+    "601658": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002415": {
+      "industry": "仪器仪表",
+      "board": null,
+      "board_ret_3d_pct": -4.81,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.44,
+      "weak": true
+    },
+    "600089": {
+      "industry": "发电设备",
+      "board": null,
+      "board_ret_3d_pct": -0.2,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.18,
+      "weak": false
+    },
+    "000651": {
+      "industry": "家电行业",
+      "board": null,
+      "board_ret_3d_pct": 1.4,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.77,
+      "weak": false
+    },
+    "601169": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.45,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.82,
+      "weak": false
+    },
+    "002709": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.18,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.81,
+      "weak": true
+    },
+    "601360": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601328": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.5,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.87,
+      "weak": false
+    },
+    "000768": {
+      "industry": "飞机制造",
+      "board": null,
+      "board_ret_3d_pct": -0.34,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.03,
+      "weak": false
+    },
+    "601628": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.52,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.9,
+      "weak": false
+    },
+    "601211": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600999": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.57,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.95,
+      "weak": false
+    },
+    "600875": {
+      "industry": "发电设备",
+      "board": null,
+      "board_ret_3d_pct": -0.19,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.18,
+      "weak": false
+    },
+    "300124": {
+      "industry": "仪器仪表",
+      "board": null,
+      "board_ret_3d_pct": -4.87,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.5,
+      "weak": true
+    },
+    "601688": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.54,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.91,
+      "weak": false
+    },
+    "002821": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002812": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002230": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -4.12,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.74,
+      "weak": true
+    },
+    "300661": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300014": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.93,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.56,
+      "weak": true
+    },
+    "600188": {
+      "industry": "煤炭行业",
+      "board": null,
+      "board_ret_3d_pct": -1.33,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 0.05,
+      "weak": false
+    },
+    "600938": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601857": {
+      "industry": "石油行业",
+      "board": null,
+      "board_ret_3d_pct": -0.72,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 0.65,
+      "weak": false
+    },
+    "600570": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -4.17,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.79,
+      "weak": true
+    },
+    "001979": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002555": {
+      "industry": "汽车制造",
+      "board": null,
+      "board_ret_3d_pct": 1.72,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.09,
+      "weak": false
+    },
+    "600690": {
+      "industry": "家电行业",
+      "board": null,
+      "board_ret_3d_pct": 0.6,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.98,
+      "weak": false
+    },
+    "600919": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000001": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.54,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.92,
+      "weak": false
+    },
+    "601985": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688396": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601088": {
+      "industry": "煤炭行业",
+      "board": null,
+      "board_ret_3d_pct": -2.0,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -0.62,
+      "weak": true
+    },
+    "600031": {
+      "industry": "机械行业",
+      "board": null,
+      "board_ret_3d_pct": -2.47,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.09,
+      "weak": true
+    },
+    "002648": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.28,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.9,
+      "weak": true
+    },
+    "600028": {
+      "industry": "石油行业",
+      "board": null,
+      "board_ret_3d_pct": -2.27,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -0.9,
+      "weak": true
+    },
+    "002920": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601225": {
+      "industry": "煤炭行业",
+      "board": null,
+      "board_ret_3d_pct": -1.9,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -0.53,
+      "weak": true
+    },
+    "601877": {
+      "industry": "发电设备",
+      "board": null,
+      "board_ret_3d_pct": -0.47,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 0.9,
+      "weak": false
+    },
+    "600760": {
+      "industry": "汽车制造",
+      "board": null,
+      "board_ret_3d_pct": 1.6,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.98,
+      "weak": false
+    },
+    "002142": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.51,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.88,
+      "weak": false
+    },
+    "600406": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -4.16,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.79,
+      "weak": true
+    },
+    "601939": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.57,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.95,
+      "weak": false
+    },
+    "688271": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300450": {
+      "industry": "其它行业",
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600926": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601319": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002049": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.96,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.58,
+      "weak": true
+    },
+    "605117": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600000": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.5,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.87,
+      "weak": false
+    },
+    "000596": {
+      "industry": "酿酒行业",
+      "board": null,
+      "board_ret_3d_pct": 1.84,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.22,
+      "weak": false
+    },
+    "600426": {
+      "industry": "农药化肥",
+      "board": null,
+      "board_ret_3d_pct": -3.97,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.59,
+      "weak": true
+    },
+    "601995": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600015": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.53,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.91,
+      "weak": false
+    },
+    "000408": {
+      "industry": "商业百货",
+      "board": null,
+      "board_ret_3d_pct": 1.23,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.61,
+      "weak": false
+    },
+    "605499": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002311": {
+      "industry": "农林牧渔",
+      "board": null,
+      "board_ret_3d_pct": 3.7,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 5.08,
+      "weak": false
+    },
+    "600958": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.52,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.9,
+      "weak": false
+    },
+    "600941": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601009": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.51,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.89,
+      "weak": false
+    },
+    "301269": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000301": {
+      "industry": "综合行业",
+      "board": null,
+      "board_ret_3d_pct": -0.74,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 0.63,
+      "weak": false
+    },
+    "601377": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.53,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.9,
+      "weak": false
+    },
+    "600795": {
+      "industry": "电力行业",
+      "board": null,
+      "board_ret_3d_pct": 4.95,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 6.33,
+      "weak": false
+    },
+    "601766": {
+      "industry": "交通运输",
+      "board": null,
+      "board_ret_3d_pct": 1.88,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.26,
+      "weak": false
+    },
+    "002001": {
+      "industry": "生物制药",
+      "board": null,
+      "board_ret_3d_pct": 2.07,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.45,
+      "weak": false
+    },
+    "601066": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300015": {
+      "industry": "医疗器械",
+      "board": null,
+      "board_ret_3d_pct": -2.26,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -0.88,
+      "weak": true
+    },
+    "002179": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.96,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.58,
+      "weak": true
+    },
+    "600346": {
+      "industry": "机械行业",
+      "board": null,
+      "board_ret_3d_pct": -2.5,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.13,
+      "weak": true
+    },
+    "601898": {
+      "industry": "煤炭行业",
+      "board": null,
+      "board_ret_3d_pct": -1.95,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -0.57,
+      "weak": true
+    },
+    "601728": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "603288": {
+      "industry": "食品行业",
+      "board": null,
+      "board_ret_3d_pct": 1.27,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.65,
+      "weak": false
+    },
+    "002493": {
+      "industry": "化纤行业",
+      "board": null,
+      "board_ret_3d_pct": -5.76,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -4.39,
+      "weak": true
+    },
+    "600585": {
+      "industry": "水泥行业",
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601698": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601998": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.5,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.87,
+      "weak": false
+    },
+    "603369": {
+      "industry": "酿酒行业",
+      "board": null,
+      "board_ret_3d_pct": 1.2,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.57,
+      "weak": false
+    },
+    "600660": {
+      "industry": "汽车制造",
+      "board": null,
+      "board_ret_3d_pct": 1.82,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.2,
+      "weak": false
+    },
+    "300502": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688825": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600487": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.84,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.47,
+      "weak": true
+    },
+    "300394": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -4.15,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.77,
+      "weak": true
+    },
+    "300058": {
+      "industry": "印刷包装",
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002384": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.95,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.58,
+      "weak": true
+    },
+    "603228": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600869": {
+      "industry": "电力行业",
+      "board": null,
+      "board_ret_3d_pct": -0.68,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 0.7,
+      "weak": false
+    },
+    "688347": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002536": {
+      "industry": "汽车制造",
+      "board": null,
+      "board_ret_3d_pct": 0.7,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.07,
+      "weak": false
+    },
+    "002463": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.77,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.39,
+      "weak": true
+    },
+    "600601": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -4.52,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.15,
+      "weak": true
+    },
+    "002837": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300857": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300604": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300475": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "603083": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300476": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002156": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.78,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.4,
+      "weak": true
+    },
+    "600522": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.88,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.51,
+      "weak": true
+    },
+    "688205": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002428": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.11,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.73,
+      "weak": true
+    },
+    "002602": {
+      "industry": "汽车制造",
+      "board": null,
+      "board_ret_3d_pct": 0.38,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.75,
+      "weak": false
+    },
+    "300285": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.13,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.76,
+      "weak": true
+    },
+    "002008": {
+      "industry": "仪器仪表",
+      "board": null,
+      "board_ret_3d_pct": -3.71,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.34,
+      "weak": true
+    },
+    "002436": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.91,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.54,
+      "weak": true
+    },
+    "000636": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.8,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.43,
+      "weak": true
+    },
+    "002851": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600105": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -4.05,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.68,
+      "weak": true
+    },
+    "001309": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688498": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601869": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002281": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.86,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.49,
+      "weak": true
+    },
+    "600378": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.08,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.7,
+      "weak": true
+    },
+    "688525": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000988": {
+      "industry": "仪器仪表",
+      "board": null,
+      "board_ret_3d_pct": -4.08,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.71,
+      "weak": true
+    },
+    "688766": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002636": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.64,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.27,
+      "weak": true
+    },
+    "688195": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002407": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.11,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.74,
+      "weak": true
+    },
+    "688627": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "603256": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000657": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.14,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.77,
+      "weak": true
+    },
+    "301308": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002558": {
+      "industry": "酒店旅游",
+      "board": null,
+      "board_ret_3d_pct": 2.04,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.41,
+      "weak": false
+    },
+    "688361": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300803": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300017": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.99,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.61,
+      "weak": true
+    },
+    "300620": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "301217": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600206": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.77,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.4,
+      "weak": true
+    },
+    "600498": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.86,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.49,
+      "weak": true
+    },
+    "301526": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300548": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688072": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601208": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.22,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.85,
+      "weak": true
+    },
+    "300570": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "603629": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600988": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002185": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.83,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.46,
+      "weak": true
+    },
+    "002353": {
+      "industry": "机械行业",
+      "board": null,
+      "board_ret_3d_pct": -2.41,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.04,
+      "weak": true
+    },
+    "688313": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "603893": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600667": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.79,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.42,
+      "weak": true
+    },
+    "301511": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688808": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002484": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.85,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.47,
+      "weak": true
+    },
+    "002155": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.56,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.18,
+      "weak": true
+    },
+    "301165": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688048": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688146": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688300": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000021": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.94,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.57,
+      "weak": true
+    },
+    "688017": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688002": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002028": {
+      "industry": "发电设备",
+      "board": null,
+      "board_ret_3d_pct": -0.91,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 0.46,
+      "weak": false
+    },
+    "300666": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600026": {
+      "industry": "交通运输",
+      "board": null,
+      "board_ret_3d_pct": -0.65,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 0.72,
+      "weak": false
+    },
+    "002080": {
+      "industry": "化纤行业",
+      "board": null,
+      "board_ret_3d_pct": -4.53,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.15,
+      "weak": true
+    },
+    "002409": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.13,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.76,
+      "weak": true
+    },
+    "600549": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.23,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.86,
+      "weak": true
+    },
+    "300136": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.97,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.6,
+      "weak": true
+    },
+    "688183": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688630": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601168": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.36,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.99,
+      "weak": true
+    },
+    "000703": {
+      "industry": "化纤行业",
+      "board": null,
+      "board_ret_3d_pct": -4.82,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.45,
+      "weak": true
+    },
+    "000426": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.4,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.02,
+      "weak": true
+    },
+    "688120": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000811": {
+      "industry": "机械行业",
+      "board": null,
+      "board_ret_3d_pct": -1.91,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -0.53,
+      "weak": true
+    },
+    "000807": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.48,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.11,
+      "weak": true
+    },
+    "300870": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600737": {
+      "industry": "食品行业",
+      "board": null,
+      "board_ret_3d_pct": 0.74,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.12,
+      "weak": false
+    },
+    "002517": {
+      "industry": "服装鞋类",
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "603296": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600909": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300567": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300395": {
+      "industry": "玻璃行业",
+      "board": null,
+      "board_ret_3d_pct": -6.6,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -5.23,
+      "weak": true
+    },
+    "688519": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300054": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.22,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.84,
+      "weak": true
+    },
+    "000630": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.3,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.93,
+      "weak": true
+    },
+    "688318": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000783": {
+      "industry": "金融行业",
+      "board": null,
+      "board_ret_3d_pct": 0.51,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.89,
+      "weak": false
+    },
+    "002600": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -5.05,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.68,
+      "weak": true
+    },
+    "688037": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688200": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601179": {
+      "industry": "发电设备",
+      "board": null,
+      "board_ret_3d_pct": -0.18,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.2,
+      "weak": false
+    },
+    "688676": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300390": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -3.91,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.54,
+      "weak": true
+    },
+    "688019": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688668": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600711": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.38,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.01,
+      "weak": true
+    },
+    "688629": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688147": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300346": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.83,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.45,
+      "weak": true
+    },
+    "000831": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.21,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.84,
+      "weak": true
+    },
+    "605376": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002432": {
+      "industry": "医疗器械",
+      "board": null,
+      "board_ret_3d_pct": 1.21,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.58,
+      "weak": false
+    },
+    "603308": {
+      "industry": "机械行业",
+      "board": null,
+      "board_ret_3d_pct": -2.27,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -0.9,
+      "weak": true
+    },
+    "601233": {
+      "industry": "化纤行业",
+      "board": null,
+      "board_ret_3d_pct": -5.13,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.75,
+      "weak": true
+    },
+    "688777": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300442": {
+      "industry": "机械行业",
+      "board": null,
+      "board_ret_3d_pct": -2.26,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -0.89,
+      "weak": true
+    },
+    "003031": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002222": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.87,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.49,
+      "weak": true
+    },
+    "600118": {
+      "industry": "飞机制造",
+      "board": null,
+      "board_ret_3d_pct": 2.26,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.63,
+      "weak": false
+    },
+    "688082": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600497": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.22,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.85,
+      "weak": true
+    },
+    "601126": {
+      "industry": "发电设备",
+      "board": null,
+      "board_ret_3d_pct": -0.24,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.14,
+      "weak": false
+    },
+    "688025": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000975": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688235": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000960": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.22,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.85,
+      "weak": true
+    },
+    "600673": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.34,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.97,
+      "weak": true
+    },
+    "300251": {
+      "industry": "传媒娱乐",
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002738": {
+      "industry": "建筑建材",
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300373": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.88,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.51,
+      "weak": true
+    },
+    "600096": {
+      "industry": "农药化肥",
+      "board": null,
+      "board_ret_3d_pct": -4.09,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.72,
+      "weak": true
+    },
+    "600256": {
+      "industry": "综合行业",
+      "board": null,
+      "board_ret_3d_pct": 1.18,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.55,
+      "weak": false
+    },
+    "601991": {
+      "industry": "电力行业",
+      "board": null,
+      "board_ret_3d_pct": 7.44,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 8.81,
+      "weak": false
+    },
+    "000933": {
+      "industry": "煤炭行业",
+      "board": null,
+      "board_ret_3d_pct": -2.23,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -0.86,
+      "weak": true
+    },
+    "600392": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "603268": {
+      "industry": "陶瓷行业",
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600415": {
+      "industry": "商业百货",
+      "board": null,
+      "board_ret_3d_pct": -4.19,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.82,
+      "weak": true
+    },
+    "600879": {
+      "industry": "飞机制造",
+      "board": null,
+      "board_ret_3d_pct": 1.91,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.28,
+      "weak": false
+    },
+    "002138": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.88,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.51,
+      "weak": true
+    },
+    "002126": {
+      "industry": "汽车制造",
+      "board": null,
+      "board_ret_3d_pct": 1.79,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.17,
+      "weak": false
+    },
+    "301377": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002273": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.88,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.51,
+      "weak": true
+    },
+    "600141": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.36,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.99,
+      "weak": true
+    },
+    "688548": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600482": {
+      "industry": "电器行业",
+      "board": null,
+      "board_ret_3d_pct": 1.46,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.83,
+      "weak": false
+    },
+    "002532": {
+      "industry": "机械行业",
+      "board": null,
+      "board_ret_3d_pct": -2.54,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.16,
+      "weak": true
+    },
+    "605589": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601696": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "301358": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300115": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.94,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.57,
+      "weak": true
+    },
+    "600580": {
+      "industry": "发电设备",
+      "board": null,
+      "board_ret_3d_pct": -0.12,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.25,
+      "weak": false
+    },
+    "600885": {
+      "industry": "电器行业",
+      "board": null,
+      "board_ret_3d_pct": 1.17,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.55,
+      "weak": false
+    },
+    "600160": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.34,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.97,
+      "weak": true
+    },
+    "301236": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002625": {
+      "industry": "汽车制造",
+      "board": null,
+      "board_ret_3d_pct": 1.65,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.02,
+      "weak": false
+    },
+    "300037": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.32,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.94,
+      "weak": true
+    },
+    "601136": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002195": {
+      "industry": "电子信息",
+      "board": null,
+      "board_ret_3d_pct": -4.06,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.68,
+      "weak": true
+    },
+    "002414": {
+      "industry": "仪器仪表",
+      "board": null,
+      "board_ret_3d_pct": -4.7,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.32,
+      "weak": true
+    },
+    "000878": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.41,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -2.04,
+      "weak": true
+    },
+    "302132": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600352": {
+      "industry": "化工行业",
+      "board": null,
+      "board_ret_3d_pct": -4.4,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.03,
+      "weak": true
+    },
+    "688099": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "300866": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688729": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "301200": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688536": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "000893": {
+      "industry": "食品行业",
+      "board": null,
+      "board_ret_3d_pct": 1.77,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.14,
+      "weak": false
+    },
+    "000559": {
+      "industry": "汽车制造",
+      "board": null,
+      "board_ret_3d_pct": 2.01,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 3.39,
+      "weak": false
+    },
+    "688249": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600895": {
+      "industry": "开发区",
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601958": {
+      "industry": "有色金属",
+      "board": null,
+      "board_ret_3d_pct": -3.26,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -1.89,
+      "weak": true
+    },
+    "688169": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "601231": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.89,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.52,
+      "weak": true
+    },
+    "688331": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "600707": {
+      "industry": "电子器件",
+      "board": null,
+      "board_ret_3d_pct": -4.83,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.46,
+      "weak": true
+    },
+    "601108": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "688585": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "603650": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    },
+    "002653": {
+      "industry": "生物制药",
+      "board": null,
+      "board_ret_3d_pct": 0.42,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.79,
+      "weak": false
+    },
+    "002064": {
+      "industry": "化纤行业",
+      "board": null,
+      "board_ret_3d_pct": -4.58,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": -3.21,
+      "weak": true
+    },
+    "002422": {
+      "industry": "生物制药",
+      "board": null,
+      "board_ret_3d_pct": 0.86,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 2.24,
+      "weak": false
+    },
+    "601727": {
+      "industry": "发电设备",
+      "board": null,
+      "board_ret_3d_pct": -0.24,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": 1.13,
+      "weak": false
+    },
+    "603156": {
+      "industry": null,
+      "board": null,
+      "board_ret_3d_pct": null,
+      "market_ret_3d_pct": -1.37,
+      "vs_market": null,
+      "weak": null
+    }
+  },
+  "note": "板块近3日涨跌幅相对沪深300。弱于大盘不得进入等待/买入。这是事实记录。"
+}

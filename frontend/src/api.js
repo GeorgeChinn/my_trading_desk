@@ -21,7 +21,10 @@ export const api = {
   home: () => request("/api/home"),
   rulesets: () => request("/api/rulesets"),
   scan: (ruleset = "rules") => request(`/api/scan?ruleset=${encodeURIComponent(ruleset || "rules")}`),
-  cycles: (ruleset = "rules") => request(`/api/cycles?ruleset=${encodeURIComponent(ruleset || "rules")}`),
+  cycles: (ruleset = "rules", params = {}) => {
+    const q = new URLSearchParams({ ruleset: ruleset || "rules", ...params });
+    return request(`/api/cycles?${q.toString()}`);
+  },
   scanOne: (code) => request(`/api/scan/${code}`),
   chart: (code) => request(`/api/chart/${code}`),
   watch: () => request("/api/watch"),
@@ -52,5 +55,5 @@ export const api = {
   seed: () => request("/api/seed", { method: "POST" }),
 };
 
-export const STATUSES = ["排除", "观察", "等待", "买入", "减仓", "清仓"];
-export const GATES = ["排除", "观察", "等待", "买入", "减仓", "清仓"];
+export const STATUSES = ["排除", "观察", "买入", "卖出"];
+export const GATES = ["排除", "观察", "买入", "卖出"];

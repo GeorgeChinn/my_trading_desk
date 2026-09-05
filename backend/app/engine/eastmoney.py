@@ -306,15 +306,60 @@ def fetch_industry_boards() -> list[dict]:
     return out
 
 
+def fetch_sina_industry_map() -> dict[str, str]:
+    """code -> 新浪行业名. One request per industry node."""
+    sess = _session()
+    try:
+        payload = _get_json(sess, "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodes", {}, timeout=20)
+    except Exception:
+        return {}
+    nodes: list[tuple[str, str]] = []
+
+    def walk(node, path):
+        if not isinstance(node, list):
+            return
+        if (
+            len(node) >= 3
+            and isinstance(node[0], str)
+            and isinstance(node[2], str)
+            and str(node[2]).startswith("new_")
+        ):
+            if path and path[-1] == "新浪行业":
+                nodes.append((node[0], node[2]))
+            return
+        for item in node:
+            if isinstance(item, list):
+                nxt = path + [node[0]] if isinstance(node[0], str) else path
+                walk(item, nxt)
+
+    walk(payload, [])
+    mapping: dict[str, str] = {}
+    for name, node_id in nodes:
+        try:
+            rows = fetch_node(sess, node_id, page_size=80)
+        except Exception:
+            continue
+        for rec in rows:
+            code = ts_code(str(rec.get("code") or rec.get("symbol") or ""))
+            if code:
+                mapping[code] = name
+        time.sleep(0.04)
+    return mapping
+
+
 def fetch_stock_industry(code: str) -> str | None:
     sess = _session()
     sess.headers["Referer"] = "https://quote.eastmoney.com/"
-    payload = _get_json(
-        sess,
-        "https://push2.eastmoney.com/api/qt/stock/get",
-        {"secid": secid(code), "invt": 2, "fltt": 2, "fields": "f57,f58,f127"},
-        timeout=12,
-    )
+    try:
+        resp = sess.get(
+            "https://push2.eastmoney.com/api/qt/stock/get",
+            params={"secid": secid(code), "invt": 2, "fltt": 2, "fields": "f57,f58,f127"},
+            timeout=6,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+    except Exception:
+        return None
     data = (payload or {}).get("data") or {}
     name = data.get("f127")
     if isinstance(name, str) and name and name not in ("-", "None"):

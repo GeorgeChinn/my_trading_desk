@@ -35,9 +35,10 @@ HHV_LOOKBACK = 20
 HISTORY_YEARS = 3
 HISTORY_BARS = 800  # ~3 年交易日，不含编造
 
-ALLOWED_STATUS = ("排除", "观察", "等待", "买入", "减仓", "清仓")
-GATES = ("排除", "观察", "等待", "买入", "减仓", "清仓")
-SCAN_SUMMARY_BUCKETS = ("符合", "继续跟踪", "观察", "排除")
+ALLOWED_STATUS = ("排除", "观察", "买入", "卖出")
+GATES = ("排除", "观察", "买入", "卖出")
+SCAN_SUMMARY_BUCKETS = ("买入", "观察", "排除", "卖出")
+CYCLE_CACHE_DIR = DATA_DIR / "cycle_cache"
 
 BUILTIN_CONDITIONS = [
     {
@@ -55,3 +56,4 @@ def ensure_dirs() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     CSV_DIR.mkdir(parents=True, exist_ok=True)
     JOURNAL_DIR.mkdir(parents=True, exist_ok=True)
+    CYCLE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
