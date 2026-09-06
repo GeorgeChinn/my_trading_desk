@@ -532,7 +532,7 @@ def classify_s1(
         return base
     base["hit_rules"].append("第6条 需求转强：" + "；".join(demand))
     base["path_ready"] = True
-    if pe is None:
+    if pe is None and not structure_only:
         base["status"] = "观察"
         base["gate"] = "观察"
         base["summary_bucket"] = "观察"
