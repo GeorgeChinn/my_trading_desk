@@ -87,8 +87,9 @@ def find_structure(bars: list[dict]) -> dict | None:
     vols = [_vol(b) for b in bars[win0:]]
     avg20 = sum(vols) / len(vols) if vols else 0.0
     best = None
-    for e in range(n - 5, win0 + 3, -1):
-        pb_len = n - 1 - e
+    # 回调段不含最后一根（候选买日），避免 8/20 放量把缩量洗没。
+    for e in range(n - 6, win0 + 3, -1):
+        pb_len = n - 2 - e
         if pb_len < 4 or pb_len > 8:
             continue
         s_hi = e - 4
@@ -116,7 +117,9 @@ def find_structure(bars: list[dict]) -> dict | None:
                 # 收阳日均量 ≥ 收阴日均量。一根洗盘阴把日均量抬高时，仍要求阳量合计不低于阴量合计。
                 if y_avg < n_avg and y_sum < n_sum:
                     continue
-            pb = bars[e + 1 :]
+            pb = bars[e + 1 : n - 1]
+            if not pb:
+                continue
             if max(x["close"] for x in pb) > run_close_high:
                 continue
             vol_up = sum(_vol(x) for x in seg) / len(seg)
@@ -496,8 +499,8 @@ def classify_s1(
     pb_vols = [_vol(x) for x in bars[st["strong_end"] + 1 : -1]]
     vol_dn_ex = (sum(pb_vols) / len(pb_vols)) if pb_vols else st["vol_dn"]
     vol_ok = yang and _vol(last) > vol_dn_ex
-    stand_a1 = kind == "A1" and last["close"] >= key_px and _within_pct(last["close"], key_px)
-    stand_a2 = kind == "A2" and last["close"] >= key_px and _within_pct(last["close"], key_px)
+    stand_a1 = kind == "A1" and last["close"] >= key_px
+    stand_a2 = kind == "A2" and last["close"] >= key_px
     vs_board = False
     chg = _ret(bars[-2]["close"], last["close"]) if len(bars) > 1 else None
     if chg is not None and chg > 0 and ind.get("ret_3d") is not None:
@@ -516,8 +519,18 @@ def classify_s1(
     if _any_limit(bars, code, 3):
         demand_ready = False
 
-    if not at_key:
-        base["missing_rules"].append("现价未落入关键位 ±2%，不得买入")
+    pb_excl = bars[st["strong_end"] + 1 : -1]
+    touched_key = False
+    if key_px and pb_excl:
+        touched_key = any(
+            _within_pct(x["close"], key_px) or _within_pct(x["low"], key_px) for x in pb_excl
+        )
+    # ±2% 约束观察/回调，不约束买日。买日允许站上关键位（白银 8/20 收 5.54、关键位 5.30）。
+    if not at_key and not touched_key:
+        base["missing_rules"].append("回调未回到关键位 ±2%，不得观察/买入")
+        return base
+    if not at_key and not demand_ready:
+        base["missing_rules"].append("现价未落入关键位 ±2%，继续观察，不得买入")
         base["status"] = "观察"
         base["gate"] = "观察"
         return base
