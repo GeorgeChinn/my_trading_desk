@@ -177,23 +177,15 @@ def _key_zone(bars: list[dict], st: dict) -> dict:
                 return True
         return False
 
-    a1_px = None
-    if m20 and m20p is not None and m20 >= m20p and was_above_ma20():
-        a1_px = m20
-    at_a1 = a1_px is not None and (_within_pct(close, a1_px) or _within_pct(low, a1_px))
-    at_a2 = bool(a2) and (_within_pct(close, a2) or _within_pct(low, a2))
+    a1_px = m20
+    at_a1 = m20 is not None and close >= m20
+    at_a2 = False
 
     kind = None
     price = None
     ma_n = None
-    if at_a2:
-        kind, price, ma_n = "A2", a2, None
-    elif at_a1:
-        kind, price, ma_n = "A1", a1_px, 20
-    elif a2:
-        kind, price, ma_n = "A2", a2, None
-    elif a1_px:
-        kind, price, ma_n = "A1", a1_px, 20
+    if m20:
+        kind, price, ma_n = "A1", m20, 20
 
     return {
         "kind": kind,
@@ -202,7 +194,7 @@ def _key_zone(bars: list[dict], st: dict) -> dict:
         "stop": price,
         "ma20": m20,
         "ma20_down": ma20_down,
-        "at_key": bool(at_a1 or at_a2),
+        "at_key": bool(at_a1),
         "a1_price": a1_px,
         "a1_n": 20 if a1_px else None,
         "a2_price": a2,
@@ -312,13 +304,9 @@ def _stock_vs_board(bars: list[dict], ind: dict | None) -> bool:
 
 
 def _choose_kind(zone: dict) -> tuple[str | None, float | None, int | None]:
-    """只认一种：现价落在 A2 ±2% 用 A2，落在 20 日线 ±2% 用 A1，否则仍写 A2 平台下沿。"""
-    if zone.get("kind") == "A2" and zone.get("a2_price"):
-        return "A2", zone["a2_price"], None
-    if zone.get("kind") == "A1" and zone.get("a1_price"):
-        return "A1", zone["a1_price"], 20
-    if zone.get("a2_price"):
-        return "A2", zone["a2_price"], None
+    """买点只认 20 日线。"""
+    if zone.get("ma20"):
+        return "A1", zone["ma20"], 20
     if zone.get("a1_price"):
         return "A1", zone["a1_price"], 20
     return None, None, None
@@ -495,44 +483,20 @@ def classify_s1(
     if last["low"] >= st["pb_low"] - 1e-9:
         decay.append("不创新低")
 
-    yang = last["close"] > last["open"]
     pb_vols = [_vol(x) for x in bars[st["strong_end"] + 1 : -1]]
     vol_dn_ex = (sum(pb_vols) / len(pb_vols)) if pb_vols else st["vol_dn"]
-    vol_ok = yang and _vol(last) > vol_dn_ex
-    stand_a1 = kind == "A1" and last["close"] >= key_px
-    stand_a2 = kind == "A2" and last["close"] >= key_px
-    vs_board = False
-    chg = _ret(bars[-2]["close"], last["close"]) if len(bars) > 1 else None
-    if chg is not None and chg > 0 and ind.get("ret_3d") is not None:
-        vs_board = chg > (ind["ret_3d"] / 3.0)
+    vol_ok = _vol(last) > vol_dn_ex
+    stand_ma20 = bool(zone.get("ma20") and last["close"] >= zone["ma20"])
     b_items = []
-    if yang:
-        b_items.append("收阳")
-    if stand_a1:
-        b_items.append("收盘站回20日线内侧")
-    if stand_a2:
-        b_items.append("收盘站回平台下沿之上")
-    if vs_board:
-        b_items.append("当日涨幅 > 0 且高于所属板块")
+    if stand_ma20:
+        b_items.append("收盘站上20日线")
     demand = (["当日量 > 回调段日均量"] if vol_ok else []) + b_items
-    demand_ready = bool(vol_ok and b_items)
+    demand_ready = bool(vol_ok and stand_ma20)
     if _any_limit(bars, code, 3):
         demand_ready = False
 
-    pb_excl = bars[st["strong_end"] + 1 : -1]
-    touched_key = False
-    if key_px and pb_excl:
-        touched_key = any(
-            _within_pct(x["close"], key_px) or _within_pct(x["low"], key_px) for x in pb_excl
-        )
-    # ±2% 约束观察/回调，不约束买日。买日允许站上关键位（白银 8/20 收 5.54、关键位 5.30）。
-    if not at_key and not touched_key:
-        base["missing_rules"].append("回调未回到关键位 ±2%，不得观察/买入")
-        return base
-    if not at_key and not demand_ready:
-        base["missing_rules"].append("现价未落入关键位 ±2%，继续观察，不得买入")
-        base["status"] = "观察"
-        base["gate"] = "观察"
+    if not stand_ma20:
+        base["veto"] = ["收盘在20日线下方，不是回踩启动"]
         return base
 
     base["data_ok"] = True
