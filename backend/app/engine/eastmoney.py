@@ -8,6 +8,7 @@ from datetime import datetime
 import requests
 
 from ..config import POOL_AMOUNT_YI, POOL_FLOAT_MCAP_YI, POOL_MIN_PRICE
+from ..store import load_quotes, save_quotes
 from .bars import load_bars, save_bars_csv, suffix_for, ts_code
 from .clock import asof_date, expected_close_date, is_weekend_date
 from .pool import is_st_name, passes_pool, sort_pool
@@ -478,9 +479,61 @@ def _round_or_none(val: float | None, ndigits: int = 3) -> float | None:
     return round(val, ndigits)
 
 
+def quotes_from_spot(spot: list[dict]) -> dict:
+    asof = expected_close_date().isoformat()
+    codes = {}
+    for rec in spot or []:
+        code = ts_code(str(rec.get("code") or rec.get("symbol") or ""))
+        if not code:
+            continue
+        amount = _num(rec, "amount")
+        nmc = _num(rec, "nmc")
+        pe = _num(rec, "per", "pe", "pe_ttm")
+        amount_yi = amount / YI if amount is not None and amount > 0 else None
+        float_mcap_yi = nmc / 10_000.0 if nmc is not None and nmc > 0 else None
+        if pe is not None and pe != pe:
+            pe = None
+        codes[code] = {
+            "name": str(rec.get("name") or code),
+            "pe": _round_or_none(pe),
+            "amount": amount if amount is not None and amount > 0 else None,
+            "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
+            "float_mcap_yi": round(float_mcap_yi, 2) if float_mcap_yi is not None else None,
+            "close": _num(rec, "trade"),
+            "trade_date": asof,
+        }
+    return {"trade_date": asof, "source": "sina", "codes": codes}
+
+
+def ensure_quotes(log=None, force: bool = False) -> dict:
+    """All-A quote map for PE / 成交额 / 流通市值. Not the RULES.md 300亿池。"""
+    talk = log or (lambda _m: None)
+    asof = expected_close_date().isoformat()
+    cached = load_quotes()
+    from ..store import read_json
+    from ..config import QUOTES_PATH
+
+    store = read_json(QUOTES_PATH, {}) if QUOTES_PATH.exists() else {}
+    if (
+        not force
+        and isinstance(store, dict)
+        and store.get("trade_date") == asof
+        and isinstance(cached, dict)
+        and len(cached) >= 200
+    ):
+        return cached
+    talk("正在拉新浪全市场快照，补全市盈 / 成交额 / 流通市值…")
+    spot = fetch_spot(log=talk)
+    payload = quotes_from_spot(spot)
+    save_quotes(payload)
+    talk(f"行情快照 {len(payload.get('codes') or {})} 只 · 确认收盘 {payload.get('trade_date')}")
+    return payload.get("codes") or {}
+
+
 def build_pool(log=None) -> tuple[list[dict], dict]:
     talk = log or (lambda _m: None)
     spot = fetch_spot(log=talk)
+    save_quotes(quotes_from_spot(spot))
     hs300 = fetch_index_codes("hs300")
     sse50 = fetch_index_codes("zhishu_000016")
     hgt = fetch_index_codes("hgt")

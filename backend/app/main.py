@@ -288,7 +288,7 @@ def health():
         "csv_count": len(files),
         "pool_count": len(load_universe()),
         "data_source": source,
-        "last_trade_date": settings.get("last_trade_date") or "",
+        "last_trade_date": asof_date(settings.get("last_trade_date") or ""),
         "person": "GeorgeChin",
         "space": "本地个人交易空间",
     }
@@ -365,9 +365,11 @@ def scan(ruleset: str = Query("rules")):
         if len(_load_industry_map()) < 100:
             reminders.append("第3条 底池：板块归属表为空或过少。请到数据与设置刷新板块后再扫 RULES2。")
     buy_n = (tallied.get("by_gate") or {}).get("买入") or 0
-    if buy_n > 1:
-        reminders.append(f"第6条 / 第8条：买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
     pullback = rs.get("engine") == "pullback_restart"
+    if buy_n > 1 and pullback:
+        reminders.append(f"第6条 / 第8条：买入池 {buy_n} 只。开几只由人定，扫描不把其余票打回观察。买入不是成交指令。")
+    elif buy_n > 1 and not pullback:
+        reminders.append(f"第6条 / 第8条：买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
     pool_count = len(rows) if pullback else len(load_universe())
     pool_note = (
         "RULES2：先第3.2条筛板块（近3日≥沪深300且非最弱），再在过关板块里挑个股。"

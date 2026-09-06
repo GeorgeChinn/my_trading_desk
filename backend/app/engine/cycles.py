@@ -135,7 +135,9 @@ def walk_cycles_s1(bars: list[dict]) -> tuple[list[dict], dict | None]:
                 st = find_structure(sl)
                 zone = _key_zone(sl, st) if st else {}
                 kind, px, _n = _choose_kind(zone) if zone else (None, None, None)
-                open_zone = {**(zone or {}), "kind": kind, "stop": px, "price": px}
+                m20 = (zone or {}).get("ma20") or px
+                stop = m20 * 0.95 if m20 else None
+                open_zone = {**(zone or {}), "kind": kind or "A1", "buy_ma20": m20, "stop": stop, "price": m20}
             continue
         hit, section, detail = evaluate_exit_s1(sl, {"date": bars[open_i]["date"]}, open_zone)
         if i > open_i and hit:

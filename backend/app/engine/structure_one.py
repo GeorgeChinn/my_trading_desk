@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from ..config import CSV_DIR, DATA_DIR, GATES, POOL_MIN_PRICE
-from ..store import load_universe, read_json
+from ..store import load_quotes, load_universe, read_json
 from .bars import load_bars, parse_amount, peek_last_bar, ts_code
 from .indicators import sma
 from .pool import is_st_name
@@ -181,19 +181,20 @@ def _key_zone(bars: list[dict], st: dict) -> dict:
 
     a1_px = m20
     at_a1 = m20 is not None and close >= m20
-    at_a2 = False
-
     kind = None
     price = None
     ma_n = None
+    stop = None
     if m20:
         kind, price, ma_n = "A1", m20, 20
+        stop = m20 * 0.95
 
     return {
         "kind": kind,
         "ma_n": ma_n,
         "price": price,
-        "stop": price,
+        "stop": stop,
+        "buy_ma20": m20,
         "ma20": m20,
         "ma20_down": ma20_down,
         "at_key": bool(at_a1),
@@ -503,10 +504,11 @@ def classify_s1(
     vol_dn_ex = (sum(pb_vols) / len(pb_vols)) if pb_vols else st["vol_dn"]
     vol_ok = _vol(last) > vol_dn_ex
     stand_ma20 = bool(zone.get("ma20") and last["close"] >= zone["ma20"])
-    b_items = []
+    demand = []
     if stand_ma20:
-        b_items.append("收盘站上20日线")
-    demand = (["当日量 > 回调段日均量"] if vol_ok else []) + b_items
+        demand.append("收盘站上当日20日线")
+    if vol_ok:
+        demand.append("当日量 > 回调段日均量")
     demand_ready = bool(vol_ok and stand_ma20)
     if _any_limit(bars, code, 3):
         demand_ready = False
@@ -515,21 +517,31 @@ def classify_s1(
         base["veto"] = ["收盘在20日线下方，不是回踩启动"]
         return base
 
+    ma20_px = zone.get("ma20") or key_px
+    stop_px = (ma20_px * 0.95) if ma20_px else None
     base["data_ok"] = True
-    base["key_kind"] = kind
-    base["key_price"] = round(key_px, 3)
-    base["stop_price"] = round(key_px, 3)
-    base["facts"]["key_kind"] = kind
-    base["facts"]["key_price"] = round(key_px, 3)
-    base["facts"]["stop_price"] = round(key_px, 3)
+    base["key_kind"] = "20日线"
+    base["key_price"] = round(ma20_px, 3) if ma20_px else None
+    base["stop_price"] = round(stop_px, 3) if stop_px else None
+    base["facts"]["key_kind"] = "20日线"
+    base["facts"]["key_price"] = base["key_price"]
+    base["facts"]["stop_price"] = base["stop_price"]
+    base["facts"]["buy_ma20"] = round(ma20_px, 3) if ma20_px else None
     base["facts"]["industry"] = industry
+    if pe is not None:
+        base["facts"]["pe"] = pe
+    if amt is not None:
+        base["facts"]["amount_yi"] = round(amt / YI, 2)
+    if mcap is not None:
+        base["facts"]["float_mcap_yi"] = round(mcap, 2)
     base["status"] = "观察"
     base["gate"] = "观察"
     base["summary_bucket"] = "观察"
     if data_gap and not structure_only:
         base["missing_rules"].append(f"{MISSING_NO_BUY}（{'、'.join(data_gap)}）")
+    stop_txt = f"{stop_px:.2f}" if stop_px else "未写"
     base["hit_rules"].append(
-        f"第3条 结构：先强 {st['gain_pct']:.1f}% 后缩量回调 {st['pb_len']} 日；{kind} 关键位 {key_px:.2f}，止损 {key_px:.2f}"
+        f"第3条 结构：先强 {st['gain_pct']:.1f}% 后缩量回调 {st['pb_len']} 日；关键位=20日线 {ma20_px:.2f}，止损 {stop_txt}（买入日20日线×0.95）"
     )
 
     if not decay:
@@ -541,14 +553,17 @@ def classify_s1(
         base["missing_rules"].append("第6条 近3日有涨停，不得买入")
         return base
     if not demand_ready:
-        why = "、".join(demand or ["无"])
+        why = []
+        if not stand_ma20:
+            why.append("收盘未站上当日20日线")
         if not vol_ok:
-            why = "缺A：当日量未大于回调段日均量"
-        elif not b_items:
-            why = "有A无B：量已放大，但未见收阳/站回关键位/强于板块"
-        base["missing_rules"].append("第6条 需求转强未齐（" + why + "）")
+            why.append("当日量未大于回调段日均量")
+        base["missing_rules"].append("第6条 未齐（" + "、".join(why or ["无"]) + "）")
         return base
-    base["hit_rules"].append("第6条 需求转强：" + "；".join(demand))
+    if stop_px is None:
+        base["missing_rules"].append("第6条 止损价未写明，先写后买")
+        return base
+    base["hit_rules"].append("第6条：" + "；".join(demand) + f"；止损 {stop_txt}")
     base["path_ready"] = not bool(data_gap and not structure_only)
     if data_gap and not structure_only:
         base["status"] = "观察"
@@ -575,13 +590,54 @@ def classify_s1(
         if ts_code(str(trade.get("code", ""))) == code and trade.get("direction") in ("开仓", "加仓"):
             open_trade = trade
     if open_trade:
-        hit, section, detail = evaluate_exit_s1(bars, open_trade, {**zone, "kind": kind, "stop": key_px, "price": key_px})
+        hit, section, detail = evaluate_exit_s1(
+            bars,
+            open_trade,
+            {**zone, "kind": "A1", "buy_ma20": ma20_px, "stop": stop_px, "price": ma20_px},
+        )
         if hit:
             base["status"] = "卖出"
             base["gate"] = "卖出"
             base["summary_bucket"] = "卖出"
             base["hit_rules"].append(f"第{section}条 卖出已见：{detail}")
     return base
+
+
+def _ma20_at(bars: list[dict], idx: int) -> float | None:
+    sl = bars[: idx + 1]
+    if len(sl) < 20:
+        return None
+    line = sma([b["close"] for b in sl], 20)
+    return line[-1] if line else None
+
+
+def _is_limit_up(bars: list[dict], i: int, code: str) -> bool:
+    if i < 1:
+        return False
+    prev = bars[i - 1]["close"]
+    if not prev:
+        return False
+    return (bars[i]["close"] / prev - 1) >= _limit_pct(code) - 0.005
+
+
+def _is_big_yang(bars: list[dict], i: int, code: str) -> bool:
+    if i < 1:
+        return False
+    row = bars[i]
+    if row["close"] <= row["open"]:
+        return False
+    prev = bars[i - 1]["close"]
+    if not prev:
+        return False
+    need = 0.12 if ts_code(code).startswith(("3", "68")) else 0.07
+    return (row["close"] / prev - 1) >= need - 1e-12
+
+
+def _had_accel(bars: list[dict], entry_idx: int, code: str) -> bool:
+    for i in range(entry_idx, len(bars)):
+        if _is_limit_up(bars, i, code) or _is_big_yang(bars, i, code):
+            return True
+    return False
 
 
 def evaluate_exit_s1(bars: list[dict], open_trade: dict | None, zone: dict | None) -> tuple[bool, str, str]:
@@ -598,64 +654,55 @@ def evaluate_exit_s1(bars: list[dict], open_trade: dict | None, zone: dict | Non
         return False, "", ""
     last = bars[-1]
     entry = bars[entry_idx]
-    kind = (zone or {}).get("kind")
-    stop = (zone or {}).get("stop") or (zone or {}).get("price")
+    code = str(last.get("code") or (open_trade or {}).get("code") or "")
+    buy_ma20 = (zone or {}).get("buy_ma20") or (zone or {}).get("ma20")
+    if buy_ma20 is None:
+        buy_ma20 = _ma20_at(bars, entry_idx)
+    hard_stop = buy_ma20 * 0.95 if buy_ma20 else ((zone or {}).get("stop"))
     run_high = (zone or {}).get("run_high")
-    if kind == "A1" and stop and last["close"] < stop:
-        return True, "7.1", f"收盘跌破买入时所写均线 {stop:.2f}"
-    if kind == "A2" and stop and last["close"] < stop:
-        return True, "7.1", f"收盘跌破平台下沿/前低 {stop:.2f}"
-    if last["close"] < entry["low"]:
-        return True, "7.1", f"收盘跌破买入日最低价 {entry['low']:.2f}"
+    elapsed = len(bars) - 1 - entry_idx
+
+    if hard_stop and last["close"] < hard_stop:
+        return True, "7.1", f"收盘低于买入日20日线×0.95（{hard_stop:.2f}）"
     vols5 = [_vol(b) for b in bars[-5:]]
     avg5 = sum(vols5) / len(vols5) if vols5 else 0
     prev_closes = [x["close"] for x in bars[entry_idx : len(bars) - 1]]
     if prev_closes and last["close"] < min(prev_closes) and avg5 and _vol(last) >= avg5:
         return True, "7.1", "收盘再创新低且当日量 ≥ 近5日均量"
-    if len(bars) - 1 - entry_idx >= 15 and run_high and last["close"] < run_high:
+    if elapsed >= 15 and run_high and last["close"] < run_high:
         return True, "7.1", "买入后15个交易日仍未收盘站上观察日后区间高点"
 
-    code = str(last.get("code") or (open_trade or {}).get("code") or "")
-    pct = _limit_pct(code)
-    elapsed = len(bars) - 1 - entry_idx
-    hold = bars[entry_idx:]
-    had_limit = False
-    for i in range(entry_idx, len(bars)):
-        if i == 0:
-            continue
-        prev = bars[i - 1]["close"]
-        if prev and (bars[i]["close"] / prev - 1) >= pct - 0.005:
-            had_limit = True
-            break
-    today_limit = False
-    if len(bars) >= 2:
-        prev = bars[-2]["close"]
-        if prev and (last["close"] / prev - 1) >= pct - 0.005:
-            today_limit = True
+    if buy_ma20 and last["close"] < buy_ma20 and len(bars) >= 2 and bars[-2]["close"] < buy_ma20:
+        return True, "7.1b", f"连续2日收盘低于买入日20日线 {buy_ma20:.2f}"
 
-    if had_limit and elapsed >= 3 and not today_limit:
+    today_limit = _is_limit_up(bars, len(bars) - 1, code)
+    had_accel = _had_accel(bars, entry_idx, code)
+    hold = bars[entry_idx:]
+    m20_today = _ma20_at(bars, len(bars) - 1)
+    if had_accel and elapsed >= 3 and not today_limit:
         prior_closes = [x["close"] for x in bars[entry_idx : len(bars) - 1]]
         new_close_high = bool(prior_closes) and last["close"] > max(prior_closes)
         hold_vols = [_vol(x) for x in hold]
         avg_hold = sum(hold_vols) / len(hold_vols) if hold_vols else 0
         order = sorted(range(len(hold_vols)), key=lambda j: hold_vols[j], reverse=True)
-        last_rank = order.index(len(hold) - 1)
+        last_rank = order.index(len(hold) - 1) if hold_vols else 99
         is_top2 = last_rank <= 1
         vol_boom = bool(avg_hold and _vol(last) >= avg_hold * 2)
-        if new_close_high and (is_top2 or vol_boom):
-            return True, "7.2", "高潮离场：收盘新高、未涨停、量能居前"
-    if not had_limit:
-        prior_closes = [x["close"] for x in bars[entry_idx : len(bars) - 1]]
-        prior_hi = max(prior_closes) if prior_closes else last["close"]
-        if len(bars) >= 5:
-            r3y = _ret(bars[-5]["close"], bars[-2]["close"])
-            if r3y is not None and r3y >= 25 and last["close"] <= prior_hi:
-                return True, "7.3", "近3日累计涨幅≥25%，下一交易日收盘不再创新高"
-        if len(bars) >= 2:
-            a, b = bars[-2], bars[-1]
-            if a["close"] < a["open"] and b["close"] < b["open"]:
-                if _vol(a) >= _vol(entry) and _vol(b) >= _vol(entry):
-                    return True, "7.3", "连续2日收阴且两日量都 ≥ 买入日量"
+        left_zone = bool(m20_today and last["close"] > m20_today * 1.12)
+        if new_close_high and (is_top2 or vol_boom) and left_zone:
+            return True, "7.2", "高潮离场：收盘新高、未涨停、量能居前、高于当天20日线12%"
+
+    prior_closes = [x["close"] for x in bars[entry_idx : len(bars) - 1]]
+    prior_hi = max(prior_closes) if prior_closes else last["close"]
+    if len(bars) >= 5:
+        r3y = _ret(bars[-5]["close"], bars[-2]["close"])
+        if r3y is not None and r3y >= 25 and last["close"] <= prior_hi:
+            return True, "7.3", "近3日累计涨幅≥25%，下一交易日收盘不再创新高"
+    if len(bars) >= 2:
+        a, b = bars[-2], bars[-1]
+        if a["close"] < a["open"] and b["close"] < b["open"]:
+            if _vol(a) >= _vol(entry) and _vol(b) >= _vol(entry):
+                return True, "7.3", "连续2日收阴且两日量都 ≥ 买入日量"
     return False, "", ""
 
 
@@ -720,6 +767,7 @@ def list_s1_cycle_universe() -> list[dict]:
 def list_s1_pool() -> list[dict]:
     """RULES2 第3.1条底池，不走 RULES.md 300亿/5亿宇宙。"""
     uni = {ts_code(str(x.get("code") or "")): x for x in load_universe()}
+    quotes = load_quotes()
     imap = _load_industry_map()
     cands = []
     for path in CSV_DIR.glob("*.csv"):
@@ -727,12 +775,15 @@ def list_s1_pool() -> list[dict]:
         last = peek_last_bar(code)
         if not last:
             continue
-        name = last.get("name") or (uni.get(code) or {}).get("name") or code
+        q = quotes.get(code) or {}
+        name = last.get("name") or q.get("name") or (uni.get(code) or {}).get("name") or code
         if is_st_name(name):
             continue
         if last["close"] < POOL_MIN_PRICE:
             continue
         amt = _amt(last)
+        if amt is None and q.get("amount"):
+            amt = q["amount"]
         if amt is not None and amt < YI:
             continue
         industry = imap.get(code) or (uni.get(code) or {}).get("industry")
@@ -742,9 +793,18 @@ def list_s1_pool() -> list[dict]:
         if len(bars) < 25:
             continue
         last = bars[-1]
+        if last.get("amount") in (None, "", 0, 0.0) and q.get("amount"):
+            last["amount"] = q["amount"]
+            bars[-1]["amount"] = q["amount"]
         name = last.get("name") or name
         meta = dict(uni.get(code) or {})
         meta.update({"code": code, "name": name, "bars": bars, "industry": industry})
+        if q.get("pe") is not None:
+            meta["pe"] = q["pe"]
+        if q.get("float_mcap_yi") is not None:
+            meta["float_mcap_yi"] = q["float_mcap_yi"]
+        if q.get("amount_yi") is not None:
+            meta["amount_yi"] = q["amount_yi"]
         cands.append(meta)
     return cands
 
@@ -788,6 +848,9 @@ def board_funnel(industry_stats: dict, market_3d: float | None) -> list[dict]:
 
 
 def scan_structure_one(settings: dict, trades: list | None = None) -> list[dict]:
+    from .eastmoney import ensure_quotes
+
+    ensure_quotes()
     cands = list_s1_pool()
     snap = load_sector_snap()
     market_3d = (snap.get("market") or {}).get("ret_3d_pct")

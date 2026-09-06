@@ -8,7 +8,7 @@
   "pool": 350,
   "preferred": 161,
   "pe_ok": 4086,
-  "trade_date": "2026-09-05",
+  "trade_date": "2026-09-04",
   "source": "sina+eastmoney",
   "rules": {
     "流通市值": "≥ 300 亿",

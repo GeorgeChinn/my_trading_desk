@@ -11,6 +11,7 @@ from .config import (
     JOURNALS_INDEX,
     JUDGEMENTS_PATH,
     POOL_SNAPSHOT_PATH,
+    QUOTES_PATH,
     SETTINGS_PATH,
     SYNC_STATUS_PATH,
     TRADES_PATH,
@@ -60,7 +61,20 @@ def write_json(path: Path, payload: Any) -> None:
 
 def load_universe() -> list[dict]:
     data = read_json(UNIVERSE_PATH, [])
-    return data if isinstance(data, list) else []
+    if not isinstance(data, list):
+        return []
+    from .engine.clock import asof_date, is_weekend_date
+
+    asof = asof_date()
+    dirty = False
+    for item in data:
+        td = str(item.get("trade_date") or "")
+        if td and is_weekend_date(td):
+            item["trade_date"] = asof
+            dirty = True
+    if dirty:
+        write_json(UNIVERSE_PATH, data)
+    return data
 
 
 def save_universe(items: list[dict]) -> None:
@@ -69,11 +83,40 @@ def save_universe(items: list[dict]) -> None:
 
 def load_pool_snapshot() -> dict:
     data = read_json(POOL_SNAPSHOT_PATH, {})
-    return data if isinstance(data, dict) else {}
+    if not isinstance(data, dict):
+        return {}
+    from .engine.clock import asof_date, is_weekend_date
+
+    td = str(data.get("trade_date") or "")
+    if td and is_weekend_date(td):
+        data["trade_date"] = asof_date(td)
+        write_json(POOL_SNAPSHOT_PATH, data)
+    return data
 
 
 def save_pool_snapshot(payload: dict) -> None:
+    from .engine.clock import asof_date
+
+    if isinstance(payload, dict) and payload.get("trade_date"):
+        payload = dict(payload)
+        payload["trade_date"] = asof_date(payload.get("trade_date"))
     write_json(POOL_SNAPSHOT_PATH, payload)
+
+
+def load_quotes() -> dict:
+    data = read_json(QUOTES_PATH, {})
+    if not isinstance(data, dict):
+        return {}
+    codes = data.get("codes")
+    return codes if isinstance(codes, dict) else {}
+
+
+def save_quotes(payload: dict) -> None:
+    from .engine.clock import asof_date
+
+    out = dict(payload or {})
+    out["trade_date"] = asof_date(out.get("trade_date") or "")
+    write_json(QUOTES_PATH, out)
 
 
 def load_sync_status() -> dict:
