@@ -143,7 +143,7 @@ def walk_cycles_s1(bars: list[dict]) -> tuple[list[dict], dict | None]:
             open_i = None
             open_zone = None
     live = None
-    if open_i is not None and is_buy_s1(bars):
+    if open_i is not None:
         live = _cycle_stats(bars, open_i, n - 1, closed=False)
     return cycles, live
 
