@@ -737,6 +737,8 @@ def summarize(rows: list[dict]) -> dict:
                 "name": row.get("name"),
                 "pe": pe,
                 "industry": row.get("industry") or facts.get("industry"),
+                "ruleset": row.get("ruleset"),
+                "engine": row.get("engine"),
             }
         )
     return {"summary": by_gate, "by_gate": by_gate, "names": names, "total": len(rows)}

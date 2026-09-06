@@ -142,9 +142,11 @@ const tab = computed(() => {
   return t === "open" || t === "done" ? t : "all";
 });
 const rulesets = computed(() => (data.value.rulesets && data.value.rulesets.length ? data.value.rulesets : extraRulesets.value));
-const currentRuleset = computed(() => data.value.ruleset || rulesets.value.find((r) => r.id === rulesetId.value) || null);
+const currentRuleset = computed(() => rulesets.value.find((r) => r.id === rulesetId.value) || data.value.ruleset || null);
 const summary = computed(() => data.value.summary || {});
-const segments = computed(() => data.value.segments || []);
+const segments = computed(() =>
+  (data.value.segments || []).filter((s) => !s.ruleset || s.ruleset === rulesetId.value)
+);
 const pages = computed(() => data.value.pages || 1);
 const emptyText = computed(() => {
   if (data.value.warming) return "RULES2 轨迹首次回放中，完成后自动出现。";
@@ -177,20 +179,29 @@ function pnlClass(v) {
   if (v == null || Number.isNaN(n) || n === 0) return "zero";
   return n > 0 ? "pos" : "neg";
 }
+function blankFor(id) {
+  const list = extraRulesets.value.length ? extraRulesets.value : data.value.rulesets || [];
+  return {
+    segments: [],
+    summary: {},
+    rulesets: list,
+    pages: 1,
+    warming: false,
+    note: "",
+    ruleset: list.find((r) => r.id === id) || null,
+  };
+}
 function applyCache(id) {
   const hit = cache[id];
   if (hit) {
     data.value = hit;
     return;
   }
-  data.value = {
-    segments: [],
-    summary: {},
-    rulesets: extraRulesets.value.length ? extraRulesets.value : data.value.rulesets,
-    pages: 1,
-    warming: false,
-    note: "",
-  };
+  data.value = blankFor(id);
+}
+function payloadOf(id, payload) {
+  const rid = payload && payload.ruleset && payload.ruleset.id;
+  return payload && (!rid || rid === id);
 }
 function switchRuleset(id) {
   page.value = 1;
@@ -216,15 +227,17 @@ function clearPoll() {
   }
 }
 async function load(silent = false) {
+  const want = rulesetId.value;
+  const wantTab = tab.value;
   loading.value = !silent;
   if (!silent) {
-    setLoadingText(rulesetId.value === "rules2" ? "正在读取 RULES2 轨迹…" : "正在读取规则轨迹…");
+    setLoadingText(want === "rules2" ? "正在读取 RULES2 轨迹…" : "正在读取规则轨迹…");
   }
   try {
     const payload = await api.cycles(
-      rulesetId.value,
+      want,
       {
-        tab: tab.value,
+        tab: wantTab,
         q: q.value,
         sort: sort.value,
         order: order.value,
@@ -233,15 +246,17 @@ async function load(silent = false) {
       },
       silent
     );
-    data.value = payload;
-    cache[rulesetId.value] = payload;
+    if (!payloadOf(want, payload)) return;
+    cache[want] = payload;
     if (payload.rulesets && payload.rulesets.length) extraRulesets.value = payload.rulesets;
+    if (rulesetId.value !== want) return;
+    data.value = payload;
     clearPoll();
-    if (payload && payload.warming) {
+    if (payload && payload.warming && rulesetId.value === want) {
       pollTimer = window.setTimeout(() => load(true), 2000);
     }
   } finally {
-    loading.value = false;
+    if (rulesetId.value === want) loading.value = false;
   }
 }
 watch(

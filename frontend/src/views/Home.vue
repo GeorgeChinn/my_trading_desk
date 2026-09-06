@@ -145,11 +145,12 @@ const judgeCard = ref(null);
 const judgeStatus = ref("观察");
 const judgeNote = ref("");
 const statuses = STATUSES;
-const buyNames = computed(() => names.value.买入 || []);
-const watchNames = computed(() => names.value.观察 || []);
+const buyNames = computed(() => (names.value.买入 || []).filter((s) => !s.ruleset || s.ruleset === rulesetId.value));
+const watchNames = computed(() => (names.value.观察 || []).filter((s) => !s.ruleset || s.ruleset === rulesetId.value));
 const rulesets = ref([]);
 const rulesetId = ref("rules");
 const currentRuleset = computed(() => rulesets.value.find((r) => r.id === rulesetId.value) || null);
+const scanCache = {};
 
 function snap(card) {
   return (card.trigger && card.trigger.snapshot) || {};
@@ -175,19 +176,44 @@ function chipTitle(s) {
   if (!name || name === code) return code;
   return `${name} ${code}`;
 }
+function showScan(id, payload) {
+  const next = {
+    scan: payload.by_gate || payload.scan_summary || payload.summary || {},
+    names: payload.names || {},
+  };
+  scanCache[id] = next;
+  if (rulesetId.value !== id) return;
+  scan.value = next.scan;
+  names.value = next.names;
+}
+function applyScanCache(id) {
+  const hit = scanCache[id];
+  if (hit) {
+    scan.value = hit.scan;
+    names.value = hit.names;
+    return;
+  }
+  scan.value = {};
+  names.value = {};
+}
 async function switchRuleset(id) {
+  const want = id;
   rulesetId.value = id;
+  applyScanCache(id);
   showLoading(id === "rules2" ? "正在按 RULES2 扫描…" : "正在加载扫描…");
   setLoadingText(id === "rules2" ? "正在按 RULES2 扫描…" : "正在加载扫描…");
   if (id === "rules") {
     const data = await api.home();
-    scan.value = data.scan_summary || {};
-    names.value = data.names || {};
+    if ((data.scan_ruleset || "rules") !== "rules") return;
+    if (rulesetId.value !== want) return;
+    showScan("rules", { scan_summary: data.scan_summary, names: data.names });
     return;
   }
   const data = await api.scan(id);
-  scan.value = data.by_gate || data.summary || {};
-  names.value = data.names || {};
+  const rid = data && data.ruleset && data.ruleset.id;
+  if (rid && rid !== want) return;
+  if (rulesetId.value !== want) return;
+  showScan(want, data);
 }
 function openJudge(card) {
   judgeCard.value = card;
@@ -200,12 +226,11 @@ async function saveJudge() {
   await load();
 }
 async function load() {
+  const want = rulesetId.value;
   const data = await api.home();
   cards.value = data.cards || [];
   triggeredCount.value = data.triggered_count || 0;
   queues.value = data.queues || {};
-  scan.value = data.scan_summary || {};
-  names.value = data.names || {};
   path.value = data.path;
   positionBlock.value = data.position_block;
   marketRegime.value = data.market_regime;
@@ -217,6 +242,14 @@ async function load() {
   if (!rulesets.value.length) {
     const rs = await api.rulesets().catch(() => ({ items: [] }));
     rulesets.value = rs.items || [];
+  }
+  showScan("rules", { scan_summary: data.scan_summary, names: data.names });
+  if (want !== "rules" && rulesetId.value === want) {
+    const payload = await api.scan(want).catch(() => null);
+    const rid = payload && payload.ruleset && payload.ruleset.id;
+    if (payload && (!rid || rid === want) && rulesetId.value === want) {
+      showScan(want, payload);
+    }
   }
 }
 onMounted(load);

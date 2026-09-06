@@ -149,17 +149,21 @@ const loading = ref(true);
 const gates = GATES;
 const rulesetId = computed(() => String(route.query.ruleset || "rules"));
 const rulesets = computed(() => (data.value.rulesets && data.value.rulesets.length ? data.value.rulesets : extraRulesets.value));
-const currentRuleset = computed(() => data.value.ruleset || rulesets.value.find((r) => r.id === rulesetId.value) || null);
+const currentRuleset = computed(() => rulesets.value.find((r) => r.id === rulesetId.value) || data.value.ruleset || null);
 const isPullback = computed(() => (currentRuleset.value && currentRuleset.value.engine) === "pullback_restart");
 const boards = computed(() => data.value.boards || []);
 const passedBoards = computed(() => boards.value.filter((b) => b.pass));
 const failedBoards = computed(() => boards.value.filter((b) => !b.pass));
 const marketRet = computed(() => (data.value.market && data.value.market.ret_3d_pct) ?? null);
-const buyNames = computed(() => (data.value.names && data.value.names.买入) || []);
-const watchNames = computed(() => (data.value.names && data.value.names.观察) || []);
+function ownRow(row) {
+  return !row || !row.ruleset || row.ruleset === rulesetId.value;
+}
+const buyNames = computed(() => ((data.value.names && data.value.names.买入) || []).filter(ownRow));
+const watchNames = computed(() => ((data.value.names && data.value.names.观察) || []).filter(ownRow));
 const visible = computed(() => {
   const query = q.value.trim();
   return (data.value.rows || []).filter((r) => {
+    if (!ownRow(r)) return false;
     if (filter.value === "在池" && r.status !== "观察" && r.status !== "买入") return false;
     if (filter.value !== "全部" && filter.value !== "在池" && r.status !== filter.value) return false;
     if (!query) return true;
@@ -231,21 +235,32 @@ function chartLink(code, pool) {
   if (pool) query.pool = pool;
   return { path: "/chart/" + code, query };
 }
+function blankFor(id) {
+  const list = extraRulesets.value.length ? extraRulesets.value : data.value.rulesets || [];
+  return {
+    rows: [],
+    summary: {},
+    by_gate: {},
+    names: {},
+    pool: {},
+    rulesets: list,
+    boards: [],
+    market: null,
+    reminders: [],
+    ruleset: list.find((r) => r.id === id) || null,
+  };
+}
 function applyCache(id) {
   const hit = cache[id];
   if (hit) {
     data.value = hit;
     return;
   }
-  data.value = {
-    rows: [],
-    summary: {},
-    by_gate: {},
-    names: {},
-    pool: data.value.pool,
-    rulesets: extraRulesets.value.length ? extraRulesets.value : data.value.rulesets,
-    boards: [],
-  };
+  data.value = blankFor(id);
+}
+function payloadOf(id, payload) {
+  const rid = payload && payload.ruleset && payload.ruleset.id;
+  return payload && (!rid || rid === id);
 }
 function switchRuleset(id) {
   filter.value = "观察";
@@ -254,15 +269,18 @@ function switchRuleset(id) {
   router.replace({ path: "/scan", query: { ruleset: id } });
 }
 async function load() {
+  const want = rulesetId.value;
   loading.value = true;
-  setLoadingText(rulesetId.value === "rules2" ? "正在按 RULES2 先筛板块再扫个股…" : "正在按当前规则扫描…");
+  setLoadingText(want === "rules2" ? "正在按 RULES2 先筛板块再扫个股…" : "正在按当前规则扫描…");
   try {
-    const payload = await api.scan(rulesetId.value);
-    data.value = payload;
-    cache[rulesetId.value] = payload;
+    const payload = await api.scan(want);
+    if (!payloadOf(want, payload)) return;
+    cache[want] = payload;
     if (payload.rulesets && payload.rulesets.length) extraRulesets.value = payload.rulesets;
+    if (rulesetId.value !== want) return;
+    data.value = payload;
   } finally {
-    loading.value = false;
+    if (rulesetId.value === want) loading.value = false;
   }
 }
 watch(rulesetId, load);

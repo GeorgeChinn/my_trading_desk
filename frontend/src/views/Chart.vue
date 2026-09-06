@@ -108,18 +108,30 @@ function goPool(item) {
   });
 }
 async function load() {
-  code.value = route.params.code;
-  const data = await api.chart(code.value, rulesetId.value);
+  const want = rulesetId.value;
+  const wantCode = String(route.params.code || "");
+  const wantPool = poolGate.value;
+  const data = await api.chart(wantCode, want);
+  if (rulesetId.value !== want || String(route.params.code || "") !== wantCode) return;
+  const scanRow = data.scan || {};
+  if (scanRow.ruleset && scanRow.ruleset !== want) return;
+  code.value = wantCode;
   name.value = data.name;
   bars.value = data.bars || [];
-  scan.value = data.scan || {};
+  scan.value = scanRow;
   factNote.value = data.fact_note;
-  rulesetTitle.value = (data.ruleset && data.ruleset.title) || rulesetId.value;
+  rulesetTitle.value = (data.ruleset && data.ruleset.title) || want;
   picked.value = bars.value[bars.value.length - 1] || null;
-  if (poolGate.value) {
-    const scanData = await api.scan(rulesetId.value).catch(() => null);
-    const names = (scanData && scanData.names) || {};
-    poolList.value = names[poolGate.value] || [];
+  if (wantPool) {
+    const scanData = await api.scan(want).catch(() => null);
+    if (rulesetId.value !== want || String(route.params.code || "") !== wantCode) return;
+    const rid = scanData && scanData.ruleset && scanData.ruleset.id;
+    if (rid && rid !== want) {
+      poolList.value = [];
+    } else {
+      const names = (scanData && scanData.names) || {};
+      poolList.value = (names[wantPool] || []).filter((s) => !s.ruleset || s.ruleset === want);
+    }
   } else {
     poolList.value = [];
   }

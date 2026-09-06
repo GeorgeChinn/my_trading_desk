@@ -164,6 +164,34 @@ def _scan_cache_path(ruleset_id: str):
     return SCAN_CACHE_DIR / f"{ruleset_id}.json"
 
 
+def _stamp_rows(rows: list, rs: dict) -> list[dict]:
+    rid = rs.get("id") or "rules"
+    eng = rs.get("engine") or ""
+    out = []
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        if row.get("ruleset") and row["ruleset"] != rid:
+            continue
+        row["ruleset"] = rid
+        row["engine"] = eng
+        out.append(row)
+    return out
+
+
+def _cache_mixed(cached: dict, rs: dict) -> bool:
+    rid = rs.get("id") or "rules"
+    eng = rs.get("engine")
+    if cached.get("ruleset") not in (None, rid):
+        return True
+    if cached.get("engine") not in (None, eng):
+        return True
+    for row in cached.get("rows") or []:
+        if isinstance(row, dict) and row.get("ruleset") and row["ruleset"] != rid:
+            return True
+    return False
+
+
 def _scan_bundle(ruleset_id: str | None = None):
     rs = get_ruleset(ruleset_id)
     if rs is None:
@@ -180,22 +208,29 @@ def _scan_bundle(ruleset_id: str | None = None):
         isinstance(cached, dict)
         and cached.get("token") == token
         and isinstance(cached.get("rows"), list)
+        and not _cache_mixed(cached, rs)
     ):
+        rows = _stamp_rows(cached["rows"], rs)
         if rs.get("engine") == "pullback_restart":
             from .engine.structure_one import scan_structure_one as s1_scan
 
             s1_scan.funnel = cached.get("boards") or []
             s1_scan.market = cached.get("market")
-        return rs, flags, bind, cached["rows"]
-    rows = scan_universe(
-        load_universe(),
-        settings,
-        trades,
-        flags=flags,
-        engine=rs["engine"],
+        return rs, flags, bind, rows
+    rows = _stamp_rows(
+        scan_universe(
+            load_universe(),
+            settings,
+            trades,
+            flags=flags,
+            engine=rs["engine"],
+        ),
+        rs,
     )
     payload = {
         "token": token,
+        "ruleset": rs["id"],
+        "engine": rs.get("engine"),
         "rows": rows,
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
@@ -298,6 +333,7 @@ def home():
         "pool_trade_date": load_settings().get("last_trade_date") or "",
         "data_source": load_settings().get("data_source") or "csv",
         "reminders": funnel_reminders(load_settings()),
+        "scan_ruleset": "rules",
         "ruleset": public_ruleset(get_ruleset("rules")),
         "rulesets": [public_ruleset(item) for item in list_rulesets()],
     }
@@ -373,23 +409,28 @@ def _classify_for(code: str, ruleset_id: str | None = None) -> dict:
     if rs and rs.get("engine") == "pullback_restart":
         from .engine.structure_one import classify_one_s1
 
-        return classify_one_s1(code, load_settings(), load_trades())
-    if rs and rs.get("engine") == "low_golden":
+        row = classify_one_s1(code, load_settings(), load_trades())
+    elif rs and rs.get("engine") == "low_golden":
         uni = _universe_map()
         meta = uni.get(ts_code(code)) or {"code": code, "name": _name_of(code)}
-        return classify_stock(meta, load_settings(), load_trades())
-    note = (rs or {}).get("engine_note") or "没有这个规则文件"
-    return {
-        "code": ts_code(code),
-        "name": _name_of(code),
-        "status": "排除",
-        "gate": "排除",
-        "hit_rules": [],
-        "missing_rules": [note],
-        "facts": {},
-        "fact_note": "这是事实记录",
-        "position_block": note,
-    }
+        row = classify_stock(meta, load_settings(), load_trades())
+    else:
+        note = (rs or {}).get("engine_note") or "没有这个规则文件"
+        row = {
+            "code": ts_code(code),
+            "name": _name_of(code),
+            "status": "排除",
+            "gate": "排除",
+            "hit_rules": [],
+            "missing_rules": [note],
+            "facts": {},
+            "fact_note": "这是事实记录",
+            "position_block": note,
+        }
+    if rs:
+        row["ruleset"] = rs["id"]
+        row["engine"] = rs.get("engine")
+    return row
 
 
 @app.get("/api/scan/{code}")
@@ -423,6 +464,12 @@ def cycles(
         page_size=page_size,
     )
     payload["rulesets"] = [public_ruleset(item) for item in list_rulesets()]
+    rid = rs["id"]
+    eng = rs.get("engine")
+    for seg in payload.get("segments") or []:
+        if isinstance(seg, dict):
+            seg["ruleset"] = rid
+            seg["engine"] = eng
     return payload
 
 
