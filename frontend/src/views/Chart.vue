@@ -2,15 +2,23 @@
   <div>
     <h1>{{ code }} {{ name }} · 日线与事实</h1>
     <p class="sub">{{ factNote }} · {{ rulesetTitle }} · 悬停看日期和收盘价，点击 K 线在下方看指标。买入不是成交指令。</p>
-    <div class="row-btns" style="margin:0 0 14px" v-if="poolList.length">
-      <button class="btn" :disabled="!prevStock" @click="goPool(prevStock)">上一只</button>
-      <span class="sub" style="margin:0;align-self:center">{{ poolLabel }} {{ poolIndex + 1 }} / {{ poolList.length }}</span>
-      <button class="btn primary" :disabled="!nextStock" @click="goPool(nextStock)">下一只</button>
+    <div class="row-btns" style="margin:0 0 14px" v-if="poolList.length || canBacktest">
+      <button class="btn" v-if="poolList.length" :disabled="!prevStock" @click="goPool(prevStock)">上一只</button>
+      <span class="sub" style="margin:0;align-self:center" v-if="poolList.length">{{ poolLabel }} {{ poolIndex + 1 }} / {{ poolList.length }}</span>
+      <button class="btn primary" v-if="poolList.length" :disabled="!nextStock" @click="goPool(nextStock)">下一只</button>
+      <button class="btn" v-if="canBacktest" :class="{ primary: backtestOn }" @click="toggleBacktest">历史回测</button>
     </div>
     <div class="warn-banner" v-if="scan.position_block || scan.status">{{ scan.position_block || "总闸" }} · {{ scan.status }}</div>
     <p class="sub" v-if="scan.key_kind">{{ scan.key_kind }} 关键位 {{ n2(scan.key_price) }} · 止损 {{ n2(scan.stop_price) }}</p>
     <div class="card" style="margin-bottom:14px">
-      <KlineChart :bars="bars" :trigger-date="triggerDate" @pick="picked = $event" />
+      <KlineChart :bars="bars" :trigger-date="triggerDate" :segments="backtestOn ? segments : []" @pick="picked = $event" />
+    </div>
+    <div class="card" style="margin-bottom:14px" v-if="backtestOn">
+      <div class="ov-title">
+        历史回测
+        <span>{{ closedCount }} 段已卖出 · {{ openCount }} 段进行中</span>
+      </div>
+      <BacktestTable :rows="segments" :note="backtestNote" :empty-text="backtestEmpty" />
     </div>
     <div class="card" style="margin-bottom:14px">
       <div class="ov-title">{{ picked ? "点击日 " + picked.date : "点击 K 线查看该日指标" }}</div>
@@ -49,7 +57,9 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api } from "../api";
+import { setLoadingText } from "../loading.js";
 import KlineChart from "../components/KlineChart.vue";
+import BacktestTable from "../components/BacktestTable.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -60,6 +70,9 @@ const scan = ref({});
 const factNote = ref("这是事实记录");
 const picked = ref(null);
 const poolList = ref([]);
+const segments = ref([]);
+const backtestOn = ref(false);
+const backtestNote = ref("");
 const triggerDate = computed(() => route.query.trigger || "");
 const rulesetId = computed(() => String(route.query.ruleset || "rules"));
 const poolGate = computed(() => {
@@ -82,6 +95,13 @@ const nextStock = computed(() => {
   if (i < 0 || poolList.value.length < 2) return null;
   return poolList.value[(i + 1) % poolList.value.length];
 });
+const canBacktest = computed(() => {
+  const st = scan.value && scan.value.status;
+  return poolGate.value === "观察" || poolGate.value === "买入" || st === "观察" || st === "买入";
+});
+const closedCount = computed(() => segments.value.filter((s) => s.closed).length);
+const openCount = computed(() => segments.value.filter((s) => !s.closed).length);
+const backtestEmpty = computed(() => "这只股票在当前规则的历史数据上，还没有买入到卖出的轨迹。");
 
 function n1(v) {
   return v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(1);
@@ -102,10 +122,35 @@ function vol(v) {
 
 function goPool(item) {
   if (!item || !item.code) return;
-  router.push({
-    path: "/chart/" + item.code,
-    query: { ruleset: rulesetId.value, pool: poolGate.value },
-  });
+  const query = { ruleset: rulesetId.value, pool: poolGate.value };
+  if (backtestOn.value || String(route.query.backtest || "") === "1") query.backtest = "1";
+  router.push({ path: "/chart/" + item.code, query });
+}
+async function loadBacktest() {
+  const want = rulesetId.value;
+  const wantCode = String(code.value || route.params.code || "");
+  if (!wantCode) return;
+  setLoadingText("正在按当前规则回放买入到卖出…");
+  const data = await api.cycles(want, { code: wantCode }).catch(() => null);
+  if (rulesetId.value !== want || String(route.params.code || "") !== wantCode) return;
+  const rid = data && data.ruleset && data.ruleset.id;
+  if (rid && rid !== want) return;
+  segments.value = ((data && data.segments) || []).filter((s) => !s.ruleset || s.ruleset === want);
+  backtestNote.value = (data && data.note) || "一段轨迹 = 路径到达买入的确认收盘 → 卖出条件日。买入不是成交指令。";
+  backtestOn.value = true;
+}
+async function toggleBacktest() {
+  if (backtestOn.value) {
+    backtestOn.value = false;
+    segments.value = [];
+    if (String(route.query.backtest || "") === "1") {
+      const query = { ...route.query };
+      delete query.backtest;
+      router.replace({ path: route.path, query });
+    }
+    return;
+  }
+  await loadBacktest();
 }
 async function load() {
   const want = rulesetId.value;
@@ -122,6 +167,8 @@ async function load() {
   factNote.value = data.fact_note;
   rulesetTitle.value = (data.ruleset && data.ruleset.title) || want;
   picked.value = bars.value[bars.value.length - 1] || null;
+  backtestOn.value = false;
+  segments.value = [];
   if (wantPool) {
     const scanData = await api.scan(want).catch(() => null);
     if (rulesetId.value !== want || String(route.params.code || "") !== wantCode) return;
@@ -138,7 +185,12 @@ async function load() {
   if (route.query.watch) {
     await api.viewWatch(route.query.watch).catch(() => {});
   }
+  const st = scan.value && scan.value.status;
+  const inPool = wantPool === "观察" || wantPool === "买入" || st === "观察" || st === "买入";
+  if (String(route.query.backtest || "") === "1" && inPool) {
+    await loadBacktest();
+  }
 }
 onMounted(load);
-watch(() => [route.params.code, route.query.ruleset, route.query.pool], load);
+watch(() => [route.params.code, route.query.ruleset, route.query.pool, route.query.backtest], load);
 </script>

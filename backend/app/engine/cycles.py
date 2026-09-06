@@ -259,9 +259,16 @@ def _segment_row(code: str, name: str, stats: dict, seq: int) -> dict:
     }
 
 
-def walk_stock_segments(code: str, name: str, flags: dict, engine: str = "low_golden") -> list[dict]:
+def walk_stock_segments(
+    code: str,
+    name: str,
+    flags: dict,
+    engine: str = "low_golden",
+    last_n: int | None = None,
+) -> list[dict]:
     if engine == "pullback_restart":
-        bars = load_bars(code, last_n=160)
+        n = 160 if last_n is None else last_n
+        bars = load_bars(code) if n <= 0 else load_bars(code, last_n=n)
         closed, live = walk_cycles_s1(bars)
     else:
         bars = attach_indicators(load_bars(code))
@@ -315,7 +322,14 @@ def _last_date(code: str) -> str:
     return str(bars[-1]["date"]) if bars else ""
 
 
-def cached_stock_segments(code: str, name: str, flags: dict, ruleset_id: str, rules_hash: str) -> list[dict]:
+def cached_stock_segments(
+    code: str,
+    name: str,
+    flags: dict,
+    ruleset_id: str,
+    rules_hash: str,
+    engine: str = "low_golden",
+) -> list[dict]:
     path = _cache_path(ruleset_id)
     store = read_json(path, {}) if path.exists() else {}
     codes = store.get("codes") if isinstance(store.get("codes"), dict) else {}
@@ -323,7 +337,7 @@ def cached_stock_segments(code: str, name: str, flags: dict, ruleset_id: str, ru
     hit = codes.get(code) or {}
     if store.get("rules_hash") == rules_hash and hit.get("last_date") == last and isinstance(hit.get("segments"), list):
         return [{**dict(seg), "name": name} for seg in hit["segments"]]
-    return walk_stock_segments(code, name, flags)
+    return walk_stock_segments(code, name, flags, engine=engine)
 
 
 def _empty_summary() -> dict:
@@ -683,6 +697,96 @@ def cycles_page(
     }
     save_cycles(payload, ruleset_id)
     return payload
+
+
+def _stamp_segments(segments: list[dict], rs: dict) -> list[dict]:
+    rid = (rs or {}).get("id") or "rules"
+    eng = (rs or {}).get("engine") or ""
+    out = []
+    for seg in segments or []:
+        if not isinstance(seg, dict):
+            continue
+        if seg.get("ruleset") and seg["ruleset"] != rid:
+            continue
+        seg["ruleset"] = rid
+        seg["engine"] = eng
+        out.append(seg)
+    return out
+
+
+def cycles_for_stock(code: str, name: str, ruleset: dict | None) -> dict:
+    from .rulesets import public_ruleset
+
+    pub = public_ruleset(ruleset) if ruleset else None
+    engine = (ruleset or {}).get("engine") or "low_golden"
+    note = "一段轨迹 = 路径到达买入的确认收盘 → 卖出条件日。买入不是成交指令。"
+    if engine not in ("low_golden", "pullback_restart"):
+        return {
+            "code": ts_code(code),
+            "name": name,
+            "ruleset": pub,
+            "segments": [],
+            "summary": _empty_summary(),
+            "note": (ruleset or {}).get("engine_note") or "本规则尚未写成扫描器，没有轨迹。",
+            "fact_note": "这是事实记录",
+        }
+    flags = parse_flags((ruleset or {}).get("text") or "")
+    last_n = 0 if engine == "pullback_restart" else None
+    segs = _stamp_segments(
+        walk_stock_segments(code, name, flags, engine=engine, last_n=last_n),
+        ruleset or {},
+    )
+    return {
+        "code": ts_code(code),
+        "name": name,
+        "ruleset": pub,
+        "segments": segs,
+        "summary": summarize_segments(segs),
+        "note": note,
+        "fact_note": "这是事实记录",
+        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+
+def cycles_for_pool(items: list[dict], ruleset: dict | None) -> dict:
+    from .rulesets import public_ruleset
+
+    pub = public_ruleset(ruleset) if ruleset else None
+    engine = (ruleset or {}).get("engine") or "low_golden"
+    note = "只回放当前观察池/买入池里的股票。一段 = 买入条件日 → 卖出条件日。买入不是成交指令。"
+    if engine not in ("low_golden", "pullback_restart"):
+        return {
+            "ruleset": pub,
+            "segments": [],
+            "summary": _empty_summary(),
+            "note": (ruleset or {}).get("engine_note") or "本规则尚未写成扫描器，没有轨迹。",
+            "fact_note": "这是事实记录",
+            "pool_count": len(items or []),
+        }
+    flags = parse_flags((ruleset or {}).get("text") or "")
+    last_n = 0 if engine == "pullback_restart" else None
+    segments: list[dict] = []
+    for item in items or []:
+        code = ts_code(str((item or {}).get("code") or ""))
+        if not code:
+            continue
+        name = (item or {}).get("name") or code
+        segs = walk_stock_segments(code, name, flags, engine=engine, last_n=last_n)
+        segments.extend(_stamp_segments(segs, ruleset or {}))
+    closed = [s for s in segments if s.get("closed")]
+    opened = [s for s in segments if not s.get("closed")]
+    closed.sort(key=lambda s: (s.get("sell_date") or "", s.get("code") or ""), reverse=True)
+    opened.sort(key=lambda s: (s.get("buy_date") or "", s.get("code") or ""), reverse=True)
+    ordered = closed + opened
+    return {
+        "ruleset": pub,
+        "segments": ordered,
+        "summary": summarize_segments(segments),
+        "note": note,
+        "fact_note": "这是事实记录",
+        "pool_count": len(items or []),
+        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
 
 
 def save_cycles(payload: dict, ruleset_id: str = "rules") -> None:

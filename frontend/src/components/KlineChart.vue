@@ -6,9 +6,13 @@
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import * as echarts from "echarts";
 
+const GOLD = "#e8c547";
+const DEA_RED = "#e53935";
+
 const props = defineProps({
   bars: { type: Array, default: () => [] },
   triggerDate: { type: String, default: "" },
+  segments: { type: Array, default: () => [] },
 });
 const emit = defineEmits(["pick"]);
 
@@ -58,11 +62,65 @@ function render() {
   const markLine = props.triggerDate
     ? {
         symbol: "none",
-        label: { formatter: "触发日", color: "#e0a35c" },
-        lineStyle: { color: "#e0a35c", type: "dashed" },
+        label: { formatter: "触发日", color: GOLD },
+        lineStyle: { color: GOLD, type: "dashed" },
         data: [{ xAxis: props.triggerDate }],
       }
     : undefined;
+  const segs = (props.segments || []).filter((s) => s && s.buy_date);
+  const markPointData = [];
+  const markAreaData = [];
+  for (const s of segs) {
+    if (s.buy_date && s.buy_price != null) {
+      markPointData.push({
+        name: "买",
+        coord: [s.buy_date, s.buy_price],
+        value: "买",
+        itemStyle: { color: GOLD },
+        label: { formatter: "买", color: "#1a1208", fontSize: 10 },
+      });
+    }
+    if (s.closed && s.sell_date && s.sell_price != null) {
+      markPointData.push({
+        name: "卖",
+        coord: [s.sell_date, s.sell_price],
+        value: "卖",
+        itemStyle: { color: DEA_RED },
+        label: { formatter: "卖", color: "#fff", fontSize: 10 },
+      });
+      markAreaData.push([{ xAxis: s.buy_date }, { xAxis: s.sell_date }]);
+    } else if (s.buy_date) {
+      const lastDate = dates.length ? dates[dates.length - 1] : s.buy_date;
+      markAreaData.push([{ xAxis: s.buy_date }, { xAxis: lastDate }]);
+    }
+  }
+  const markPoint = markPointData.length
+    ? { symbol: "pin", symbolSize: 28, data: markPointData }
+    : undefined;
+  const markArea = markAreaData.length
+    ? { itemStyle: { color: "rgba(232, 197, 71, 0.10)" }, data: markAreaData }
+    : undefined;
+  let zoomStart = 60;
+  let zoomEnd = 100;
+  if (segs.length && dates.length > 1) {
+    const idxs = [];
+    for (const s of segs) {
+      const a = dates.indexOf(s.buy_date);
+      const b = dates.indexOf(s.sell_date || dates[dates.length - 1]);
+      if (a >= 0) idxs.push(a);
+      if (b >= 0) idxs.push(b);
+    }
+    if (idxs.length) {
+      const lo = Math.max(0, Math.min(...idxs) - 10);
+      const hi = Math.min(dates.length - 1, Math.max(...idxs) + 6);
+      zoomStart = (lo / (dates.length - 1)) * 100;
+      zoomEnd = (hi / (dates.length - 1)) * 100;
+      if (zoomEnd - zoomStart < 15) {
+        zoomStart = Math.max(0, zoomStart - 8);
+        zoomEnd = Math.min(100, zoomEnd + 8);
+      }
+    }
+  }
 
   chart.setOption(
     {
@@ -114,18 +172,18 @@ function render() {
         { scale: true, gridIndex: 3, min: kdjMin, max: kdjMax, splitLine: { show: false }, axisLabel: { color: "#8aa0b2" }, name: "KDJ", nameTextStyle: { color: "#8aa0b2", fontSize: 10 } },
       ],
       dataZoom: [
-        { type: "inside", xAxisIndex: [0, 1, 2, 3], start: 60, end: 100 },
-        { type: "slider", xAxisIndex: [0, 1, 2, 3], start: 60, end: 100, height: 18, bottom: 4, borderColor: "#1e3a4c" },
+        { type: "inside", xAxisIndex: [0, 1, 2, 3], start: zoomStart, end: zoomEnd },
+        { type: "slider", xAxisIndex: [0, 1, 2, 3], start: zoomStart, end: zoomEnd, height: 18, bottom: 4, borderColor: "#1e3a4c" },
       ],
       series: [
-        { name: "日线", type: "candlestick", data: k, xAxisIndex: 0, yAxisIndex: 0, markLine, itemStyle: { color: "#e36a6a", color0: "#5ee0c5", borderColor: "#e36a6a", borderColor0: "#5ee0c5" } },
-        { name: "MA5", type: "line", data: ma5, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1.7, color: "rgba(0, 0, 0, 0.55)" } },
+        { name: "日线", type: "candlestick", data: k, xAxisIndex: 0, yAxisIndex: 0, markLine, markPoint, markArea, itemStyle: { color: "#e36a6a", color0: "#5ee0c5", borderColor: "#e36a6a", borderColor0: "#5ee0c5" } },
+        { name: "MA5", type: "line", data: ma5, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, itemStyle: { color: GOLD }, lineStyle: { width: 1.7, color: GOLD } },
         { name: "MA10", type: "line", data: ma10, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1, color: "#6ea8ff" } },
         { name: "MA20", type: "line", data: ma20, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1.3, color: "#e53935" } },
         { name: "成交量", type: "bar", data: vols, xAxisIndex: 1, yAxisIndex: 1, barMaxWidth: 8 },
         { name: "MACD柱", type: "bar", data: hist, xAxisIndex: 2, yAxisIndex: 2, barMaxWidth: 8 },
-        { name: "DIF", type: "line", data: dif, showSymbol: false, xAxisIndex: 2, yAxisIndex: 2, lineStyle: { width: 1, color: "#e0a35c" } },
-        { name: "DEA", type: "line", data: dea, showSymbol: false, xAxisIndex: 2, yAxisIndex: 2, lineStyle: { width: 1, color: "#6ea8ff" } },
+        { name: "DIF", type: "line", data: dif, showSymbol: false, xAxisIndex: 2, yAxisIndex: 2, itemStyle: { color: GOLD }, lineStyle: { width: 1.2, color: GOLD } },
+        { name: "DEA", type: "line", data: dea, showSymbol: false, xAxisIndex: 2, yAxisIndex: 2, itemStyle: { color: DEA_RED }, lineStyle: { width: 1.2, color: DEA_RED } },
         { name: "K", type: "line", data: kv, showSymbol: false, xAxisIndex: 3, yAxisIndex: 3, clip: false, lineStyle: { width: 1, color: "#e0a35c" } },
         { name: "D", type: "line", data: dv, showSymbol: false, xAxisIndex: 3, yAxisIndex: 3, clip: false, lineStyle: { width: 1, color: "#6ea8ff" } },
         { name: "J", type: "line", data: jv, showSymbol: false, xAxisIndex: 3, yAxisIndex: 3, clip: false, lineStyle: { width: 1, color: "#e36a6a" } },
@@ -154,6 +212,7 @@ function resize() {
 }
 watch(() => props.bars, render, { deep: true });
 watch(() => props.triggerDate, render);
+watch(() => props.segments, render, { deep: true });
 </script>
 
 <style scoped>

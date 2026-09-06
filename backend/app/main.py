@@ -25,7 +25,7 @@ from .config import (
     ensure_dirs,
 )
 from .engine.bars import attach_indicators, list_csv_files, load_bars, ts_code
-from .engine.cycles import cycles_page
+from .engine.cycles import cycles_for_pool, cycles_for_stock, cycles_page
 from .engine.history import backfill_all_ashare
 from .engine.live import pull_one, sync_live
 from .engine.rules_bind import parse_flags, refresh_bind
@@ -438,6 +438,32 @@ def scan_one(code: str, ruleset: str = Query("rules")):
     return _classify_for(code, ruleset)
 
 
+def _stamp_cycle_payload(payload: dict, rs: dict) -> dict:
+    rid = rs["id"]
+    eng = rs.get("engine")
+    kept = []
+    for seg in payload.get("segments") or []:
+        if not isinstance(seg, dict):
+            continue
+        if seg.get("ruleset") and seg["ruleset"] != rid:
+            continue
+        seg["ruleset"] = rid
+        seg["engine"] = eng
+        kept.append(seg)
+    payload["segments"] = kept
+    payload["rulesets"] = [public_ruleset(item) for item in list_rulesets()]
+    return payload
+
+
+def _pool_gate_set(gate: str) -> set[str] | None:
+    raw = (gate or "").strip()
+    if raw == "在池":
+        return {"观察", "买入"}
+    if raw in ("观察", "买入"):
+        return {raw}
+    return None
+
+
 @app.get("/api/cycles")
 def cycles(
     ruleset: str = Query("rules"),
@@ -447,10 +473,28 @@ def cycles(
     order: str = Query("desc"),
     page: int = Query(1),
     page_size: int = Query(40),
+    code: str = Query(""),
+    gate: str = Query(""),
 ):
     rs = get_ruleset(ruleset)
     if rs is None:
         raise HTTPException(404, "没有这个规则文件")
+    if (code or "").strip():
+        want = ts_code(code)
+        payload = cycles_for_stock(want, _name_of(want), rs)
+        return _stamp_cycle_payload(payload, rs)
+    wanted = _pool_gate_set(gate)
+    if wanted:
+        rows = _scan_rows(rs["id"])
+        items = [
+            row
+            for row in rows
+            if (row.get("status") or row.get("gate")) in wanted
+            and (not row.get("ruleset") or row.get("ruleset") == rs["id"])
+        ]
+        payload = cycles_for_pool(items, rs)
+        payload["gate"] = gate
+        return _stamp_cycle_payload(payload, rs)
     flags = parse_flags(rs["text"])
     payload = cycles_page(
         load_universe(),
@@ -463,14 +507,7 @@ def cycles(
         page=page,
         page_size=page_size,
     )
-    payload["rulesets"] = [public_ruleset(item) for item in list_rulesets()]
-    rid = rs["id"]
-    eng = rs.get("engine")
-    for seg in payload.get("segments") or []:
-        if isinstance(seg, dict):
-            seg["ruleset"] = rid
-            seg["engine"] = eng
-    return payload
+    return _stamp_cycle_payload(payload, rs)
 
 
 @app.get("/api/chart/{code}")

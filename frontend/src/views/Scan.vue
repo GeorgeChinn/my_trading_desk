@@ -48,7 +48,10 @@
 
     <div class="card overview" style="margin-bottom:14px">
       <div class="ov-block">
-        <div class="ov-title">买入池 <span>{{ buyNames.length }}</span></div>
+        <div class="ov-title">
+          <div>买入池 <span>{{ buyNames.length }}</span></div>
+          <button class="btn" :disabled="!buyNames.length" @click="runPoolBacktest('买入')">历史回测</button>
+        </div>
         <p class="sub" style="margin:0 0 8px">路径到达，不是成交指令</p>
         <div class="name-cloud" v-if="buyNames.length">
           <router-link class="name-chip 买入" v-for="s in buyNames" :key="'b'+s.code" :to="chartLink(s.code, '买入')">
@@ -59,7 +62,10 @@
         <div class="empty mini" v-else>空</div>
       </div>
       <div class="ov-block">
-        <div class="ov-title">观察池 <span>{{ watchNames.length }}</span></div>
+        <div class="ov-title">
+          <div>观察池 <span>{{ watchNames.length }}</span></div>
+          <button class="btn" :disabled="!watchNames.length" @click="runPoolBacktest('观察')">历史回测</button>
+        </div>
         <div class="name-cloud" v-if="watchNames.length">
           <router-link class="name-chip 观察" v-for="s in watchNames" :key="'w'+s.code" :to="chartLink(s.code, '观察')">
             {{ stockTitle(s) }}
@@ -68,6 +74,21 @@
         </div>
         <div class="empty mini" v-else>空</div>
       </div>
+    </div>
+    <div class="card" style="margin-bottom:14px" v-if="poolBacktest">
+      <div class="ov-title">
+        历史回测 · {{ poolBacktest.gate }}池
+        <span>{{ poolClosed }} 段已卖出 · {{ poolOpen }} 段进行中</span>
+      </div>
+      <BacktestTable
+        :rows="poolBacktest.segments"
+        :note="poolBacktest.note"
+        :empty-text="'当前' + poolBacktest.gate + '池股票，历史上没有买入到卖出的轨迹。'"
+        show-code
+        link-chart
+        :ruleset-id="rulesetId"
+        :pool="poolBacktest.gate"
+      />
     </div>
 
     <div class="row-btns" style="margin-bottom:14px">
@@ -125,6 +146,11 @@
         </p>
         <div class="row-btns" style="margin-top:10px">
           <router-link class="btn" :to="chartLink(row.code, row.status === '买入' || row.status === '观察' ? row.status : '')">查看日线与事实</router-link>
+          <router-link
+            class="btn"
+            v-if="row.status === '买入' || row.status === '观察'"
+            :to="backtestLink(row.code, row.status)"
+          >历史回测</router-link>
         </div>
       </div>
     </div>
@@ -137,6 +163,7 @@ import { useRoute, useRouter } from "vue-router";
 import { api, GATES } from "../api";
 import { setLoadingText, showLoading } from "../loading.js";
 import StatusBadge from "../components/StatusBadge.vue";
+import BacktestTable from "../components/BacktestTable.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -146,7 +173,10 @@ const cache = {};
 const filter = ref("观察");
 const q = ref("");
 const loading = ref(true);
+const poolBacktest = ref(null);
 const gates = GATES;
+const poolClosed = computed(() => ((poolBacktest.value && poolBacktest.value.segments) || []).filter((s) => s.closed).length);
+const poolOpen = computed(() => ((poolBacktest.value && poolBacktest.value.segments) || []).filter((s) => !s.closed).length);
 const rulesetId = computed(() => String(route.query.ruleset || "rules"));
 const rulesets = computed(() => (data.value.rulesets && data.value.rulesets.length ? data.value.rulesets : extraRulesets.value));
 const currentRuleset = computed(() => rulesets.value.find((r) => r.id === rulesetId.value) || data.value.ruleset || null);
@@ -235,6 +265,25 @@ function chartLink(code, pool) {
   if (pool) query.pool = pool;
   return { path: "/chart/" + code, query };
 }
+function backtestLink(code, pool) {
+  const query = { ruleset: rulesetId.value, backtest: "1" };
+  if (pool) query.pool = pool;
+  return { path: "/chart/" + code, query };
+}
+async function runPoolBacktest(gate) {
+  const want = rulesetId.value;
+  showLoading("正在按当前规则回放买入到卖出…");
+  setLoadingText("正在按当前规则回放买入到卖出…");
+  const payload = await api.cycles(want, { gate }).catch(() => null);
+  if (rulesetId.value !== want) return;
+  const rid = payload && payload.ruleset && payload.ruleset.id;
+  if (rid && rid !== want) return;
+  poolBacktest.value = {
+    gate,
+    segments: ((payload && payload.segments) || []).filter((s) => !s.ruleset || s.ruleset === want),
+    note: (payload && payload.note) || "一段轨迹 = 路径到达买入的确认收盘 → 卖出条件日。买入不是成交指令。",
+  };
+}
 function blankFor(id) {
   const list = extraRulesets.value.length ? extraRulesets.value : data.value.rulesets || [];
   return {
@@ -264,6 +313,7 @@ function payloadOf(id, payload) {
 }
 function switchRuleset(id) {
   filter.value = "观察";
+  poolBacktest.value = null;
   showLoading(id === "rules2" ? "正在切换到 RULES2…" : "正在切换规则…");
   applyCache(id);
   router.replace({ path: "/scan", query: { ruleset: id } });
