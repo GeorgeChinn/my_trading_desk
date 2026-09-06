@@ -9,7 +9,7 @@ import requests
 
 from ..config import POOL_AMOUNT_YI, POOL_FLOAT_MCAP_YI, POOL_MIN_PRICE
 from .bars import load_bars, save_bars_csv, suffix_for, ts_code
-from .clock import expected_close_date
+from .clock import asof_date, expected_close_date, is_weekend_date
 from .pool import is_st_name, passes_pool, sort_pool
 
 YI = 100_000_000.0
@@ -495,7 +495,7 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
         "pool": 0,
         "preferred": 0,
         "pe_ok": 0,
-        "trade_date": datetime.now().strftime("%Y-%m-%d"),
+        "trade_date": expected_close_date().isoformat(),
         "source": "sina+eastmoney",
         "rules": {
             "流通市值": f"≥ {POOL_FLOAT_MCAP_YI:.0f} 亿",
@@ -519,6 +519,10 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
         pe = _num(rec, "per", "pe", "pe_ttm")
         amount_yi = amount / YI if amount is not None else None
         float_mcap_yi = nmc / 10_000.0 if nmc is not None else None
+        if amount_yi is not None and amount_yi <= 0:
+            amount_yi = None
+        if float_mcap_yi is not None and float_mcap_yi <= 0:
+            float_mcap_yi = None
         if not st:
             funnel["non_st"] += 1
         if close is not None and close >= POOL_MIN_PRICE:
@@ -586,13 +590,12 @@ def pull_history(pool: list[dict], log=None, progress=None) -> dict:
             if progress:
                 progress(i, total)
             continue
+        rows = [r for r in rows if not is_weekend_date(r.get("date"))]
         if len(rows) < 40:
             fail += 1
             if progress:
                 progress(i, total)
             continue
-        if rows[-1].get("amount", 0) <= 0 and item.get("amount_yi"):
-            rows[-1]["amount"] = float(item["amount_yi"]) * YI
         save_bars_csv(code, rows, name=item.get("name"))
         last_dates.append(rows[-1]["date"])
         ok += 1
@@ -600,4 +603,5 @@ def pull_history(pool: list[dict], log=None, progress=None) -> dict:
             progress(i, total)
         if i % 25 == 0:
             talk(f"日线已写 {ok}，跳过 {skip}，失败 {fail} / {total}")
-    return {"ok": ok, "skip": skip, "fail": fail, "total": total, "last_bar": max(last_dates) if last_dates else ""}
+    last_bar = asof_date(max(last_dates) if last_dates else "")
+    return {"ok": ok, "skip": skip, "fail": fail, "total": total, "last_bar": last_bar}

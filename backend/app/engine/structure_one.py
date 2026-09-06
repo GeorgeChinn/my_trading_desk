@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from ..config import CSV_DIR, DATA_DIR, GATES, POOL_MIN_PRICE
 from ..store import load_universe, read_json
-from .bars import load_bars, peek_last_bar, ts_code
+from .bars import load_bars, parse_amount, peek_last_bar, ts_code
 from .indicators import sma
 from .pool import is_st_name
 from .scanner import FACT_NOTE, detect_limit_streak, dyn_pe_value
@@ -12,32 +12,34 @@ from .sector import load_sector_snap
 YI = 100_000_000.0
 MIN_FLOAT_YI = 80.0
 INDUSTRY_MAP_PATH = DATA_DIR / "industry_map.json"
+MISSING_NO_BUY = "缺数据，不升买入"
 
 
 def _vol(row: dict) -> float:
     return float(row.get("volume") or 0)
 
 
-def _amt(row: dict) -> float:
-    raw = float(row.get("amount") or 0)
-    if raw > 0:
-        return raw
-    return float(row.get("close") or 0) * _vol(row)
+def _amt(row: dict) -> float | None:
+    return parse_amount(row.get("amount") if row else None)
 
 
 def _float_mcap_yi(meta: dict, last: dict | None = None) -> float | None:
-    for key in ("float_mcap", "circ_mv", "流通市值", "mcap"):
-        raw = meta.get(key)
-        if raw is None:
+    blob = dict(meta or {})
+    if last:
+        blob.setdefault("float_mcap_yi", last.get("float_mcap_yi"))
+    for key in ("float_mcap_yi", "float_mcap", "circ_mv", "流通市值", "mcap"):
+        raw = blob.get(key)
+        if raw is None or raw == "":
             continue
         try:
             val = float(raw)
         except (TypeError, ValueError):
             continue
-        if val > 10000:
+        if val <= 0:
+            continue
+        if key != "float_mcap_yi" and val > 10000:
             return val / YI
-        if val > 0:
-            return val
+        return val
     return None
 
 
@@ -364,26 +366,40 @@ def classify_s1(
         base["missing_rules"].append(f"第3条 底池：股价 {close:.2f} < 5 元")
         return base
     amt = _amt(last)
-    if amt < YI:
-        base["missing_rules"].append(f"第3条 底池：成交额 {amt / YI:.2f} 亿 < 1 亿")
-        return base
-    industry = meta.get("industry")
-    if industry:
+    pe = dyn_pe_value(meta)
+    mcap = _float_mcap_yi(meta, last)
+    data_gap = []
+    if not structure_only:
+        if amt is None:
+            data_gap.append("成交额")
+        elif amt < YI:
+            base["missing_rules"].append(f"第3条 底池：成交额 {amt / YI:.2f} 亿 < 1 亿")
+            return base
+        else:
+            base["facts"]["amount_yi"] = round(amt / YI, 2)
+        industry = meta.get("industry")
+        if industry:
+            base["industry"] = industry
+            base["facts"]["industry"] = industry
+        if not industry:
+            base["missing_rules"].append("第3条 底池：无板块归属")
+            return base
+        if pe is not None and pe <= 0:
+            base["veto"] = [f"动态市盈 {pe:.2f} ≤ 0"]
+            return base
+        if pe is None:
+            data_gap.append("市盈")
+        if mcap is not None and mcap < MIN_FLOAT_YI:
+            base["veto"] = [f"小盘：流通市值 {mcap:.1f} 亿 < {MIN_FLOAT_YI:.0f} 亿"]
+            return base
+        if mcap is None:
+            data_gap.append("流通市值")
+        else:
+            base["facts"]["float_mcap_yi"] = round(mcap, 2)
+    else:
+        industry = meta.get("industry") or "结构回放"
         base["industry"] = industry
         base["facts"]["industry"] = industry
-    if not industry:
-        base["missing_rules"].append("第3条 底池：无板块归属")
-        return base
-    pe = dyn_pe_value(meta)
-    if pe is not None and pe <= 0:
-        base["veto"] = [f"动态市盈 {pe:.2f} ≤ 0"]
-        return base
-    if pe is None:
-        base["reminders"].append("动态市盈缺失：不升买入，最多观察")
-    mcap = _float_mcap_yi(meta, last)
-    if mcap is not None and mcap < MIN_FLOAT_YI:
-        base["veto"] = [f"小盘：流通市值 {mcap:.1f} 亿 < {MIN_FLOAT_YI:.0f} 亿"]
-        return base
     if detect_limit_streak(bars, code) >= 2:
         base["veto"] = ["连板"]
         return base
@@ -510,6 +526,8 @@ def classify_s1(
     base["status"] = "观察"
     base["gate"] = "观察"
     base["summary_bucket"] = "观察"
+    if data_gap and not structure_only:
+        base["missing_rules"].append(f"{MISSING_NO_BUY}（{'、'.join(data_gap)}）")
     base["hit_rules"].append(
         f"第3条 结构：先强 {st['gain_pct']:.1f}% 后缩量回调 {st['pb_len']} 日；{kind} 关键位 {key_px:.2f}，止损 {key_px:.2f}"
     )
@@ -531,12 +549,14 @@ def classify_s1(
         base["missing_rules"].append("第6条 需求转强未齐（" + why + "）")
         return base
     base["hit_rules"].append("第6条 需求转强：" + "；".join(demand))
-    base["path_ready"] = True
-    if pe is None and not structure_only:
+    base["path_ready"] = not bool(data_gap and not structure_only)
+    if data_gap and not structure_only:
         base["status"] = "观察"
         base["gate"] = "观察"
         base["summary_bucket"] = "观察"
-        base["missing_rules"].append("第6条 动态市盈缺失，不升买入")
+        note = f"{MISSING_NO_BUY}（{'、'.join(data_gap)}）"
+        if note not in base["missing_rules"]:
+            base["missing_rules"].append(note)
         return base
     base["status"] = "买入"
     base["gate"] = "买入"
@@ -680,7 +700,7 @@ def classify_one_s1(code: str, settings: dict, trades: list | None = None) -> di
 
 
 def list_s1_cycle_universe() -> list[dict]:
-    """轨迹回放底池：非 ST、股价≥5、最近成交额≥1亿。不挡板块（回放不看当日板块快照）。"""
+    """轨迹回放底池：非 ST、股价≥5。不挡 PE/成交额/市值/主线（回放只看历史上买过没有、卖了没有）。"""
     uni = {ts_code(str(x.get("code") or "")): x for x in load_universe()}
     out = []
     for path in CSV_DIR.glob("*.csv"):
@@ -692,8 +712,6 @@ def list_s1_cycle_universe() -> list[dict]:
         if is_st_name(name):
             continue
         if last["close"] < POOL_MIN_PRICE:
-            continue
-        if _amt(last) < YI:
             continue
         out.append({"code": code, "name": name})
     return out
@@ -714,7 +732,8 @@ def list_s1_pool() -> list[dict]:
             continue
         if last["close"] < POOL_MIN_PRICE:
             continue
-        if _amt(last) < YI:
+        amt = _amt(last)
+        if amt is not None and amt < YI:
             continue
         industry = imap.get(code) or (uni.get(code) or {}).get("industry")
         if not industry:

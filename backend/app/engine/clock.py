@@ -18,23 +18,59 @@ def parse_hhmm(text: str) -> tuple[int, int]:
     return int(hour), int(minute)
 
 
-def previous_weekday(day) -> datetime:
+def previous_weekday(day):
     cursor = day
     while cursor.weekday() >= 5:
         cursor -= timedelta(days=1)
     return cursor
 
 
+def parse_day(value):
+    if value is None or value == "":
+        return None
+    if hasattr(value, "hour"):
+        return value.date()
+    if hasattr(value, "weekday") and hasattr(value, "year") and not hasattr(value, "hour"):
+        return value
+    text = str(value).strip()[:10]
+    try:
+        return datetime.strptime(text, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def is_weekend_date(value) -> bool:
+    day = parse_day(value)
+    return bool(day is not None and day.weekday() >= 5)
+
+
 def expected_close_date(when: datetime | None = None):
-    """Last session whose daily bar should already be treated as confirmed."""
+    """Last session whose daily bar should already be treated as confirmed. Never Sat/Sun."""
     when = when or now_sh()
     day = when.date()
-    if when.weekday() >= 5:
-        return previous_weekday(day - timedelta(days=when.weekday() - 4))
+    if day.weekday() >= 5:
+        return previous_weekday(day)
     first_h, first_m = parse_hhmm(SYNC_TIMES[0])
     if (when.hour, when.minute) < (first_h, first_m):
         return previous_weekday(day - timedelta(days=1))
     return day
+
+
+def session_date(value=None):
+    """Weekday session on or before value. Clamped to expected_close_date(). Never Sat/Sun."""
+    expect = expected_close_date()
+    day = parse_day(value) if value not in (None, "") else expect
+    if day is None:
+        return expect
+    if day.weekday() >= 5:
+        day = previous_weekday(day)
+    if day > expect:
+        return expect
+    return day
+
+
+def asof_date(stored: str | None = None) -> str:
+    return session_date(stored).isoformat()
 
 
 def next_fire_time(when: datetime | None = None, times: tuple[str, ...] = SYNC_TIMES) -> datetime:

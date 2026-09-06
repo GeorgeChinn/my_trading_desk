@@ -6,7 +6,20 @@ from pathlib import Path
 from typing import Optional
 
 from ..config import CSV_DIR, ensure_dirs
+from .clock import is_weekend_date
 from .indicators import kdj, macd_7428, sma
+
+
+def parse_amount(raw) -> Optional[float]:
+    if raw is None or raw == "":
+        return None
+    try:
+        val = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if val <= 0:
+        return None
+    return val
 
 
 def ts_code(code: str) -> str:
@@ -40,7 +53,7 @@ def csv_path_for(code: str) -> Path:
 
 
 def peek_last_bar(code: str) -> dict | None:
-    """只读表头 + 最后一行，避免为筛池把整份 CSV 读进内存。"""
+    """只读表头 + 尾部几行，跳过周末，避免为筛池把整份 CSV 读进内存。"""
     path = csv_path_for(code)
     if not path.exists():
         return None
@@ -50,45 +63,45 @@ def peek_last_bar(code: str) -> dict | None:
         size = handle.tell()
         if size <= len(header_raw):
             return None
-        handle.seek(max(len(header_raw), size - 720))
+        handle.seek(max(len(header_raw), size - 1600))
         tail = handle.read().decode("utf-8", errors="ignore").strip().splitlines()
     header = header_raw.decode("utf-8-sig", errors="ignore").strip()
     if not tail:
         return None
-    last_line = tail[-1]
-    if last_line.strip() == header.strip():
-        return None
     try:
         fields = next(csv.reader([header]))
-        vals = next(csv.reader([last_line]))
     except Exception:
         return None
-    rec = {}
-    for i, name in enumerate(fields):
-        rec[(name or "").strip().lower()] = vals[i].strip() if i < len(vals) else ""
-    try:
-        date = parse_date(str(rec.get("date") or ""))
-        c = float(rec.get("close") or 0)
-    except (TypeError, ValueError):
-        return None
-    try:
-        volume = float(rec.get("volume") or 0)
-    except ValueError:
-        volume = 0.0
-    try:
-        amount = float(rec.get("amount") or 0)
-    except ValueError:
-        amount = 0.0
-    if amount <= 0:
-        amount = c * volume
-    return {
-        "code": ts_code(code),
-        "date": date,
-        "close": c,
-        "volume": volume,
-        "amount": amount,
-        "name": str(rec.get("name") or "").strip(),
-    }
+    for last_line in reversed(tail):
+        if last_line.strip() == header.strip() or not last_line.strip():
+            continue
+        try:
+            vals = next(csv.reader([last_line]))
+        except Exception:
+            continue
+        rec = {}
+        for i, name in enumerate(fields):
+            rec[(name or "").strip().lower()] = vals[i].strip() if i < len(vals) else ""
+        try:
+            date = parse_date(str(rec.get("date") or ""))
+            c = float(rec.get("close") or 0)
+        except (TypeError, ValueError):
+            continue
+        if is_weekend_date(date):
+            continue
+        try:
+            volume = float(rec.get("volume") or 0)
+        except ValueError:
+            volume = 0.0
+        return {
+            "code": ts_code(code),
+            "date": date,
+            "close": c,
+            "volume": volume,
+            "amount": parse_amount(rec.get("amount")),
+            "name": str(rec.get("name") or "").strip(),
+        }
+    return None
 
 
 def list_csv_files() -> list[dict]:
@@ -121,13 +134,10 @@ def _row_to_bar(code: str, fields: dict, row: dict) -> dict | None:
         except ValueError:
             volume = 0.0
     amount = None
-    if "amount" in fields and row.get(fields["amount"]) not in (None, ""):
-        try:
-            amount = float(row[fields["amount"]])
-        except ValueError:
-            amount = None
-    if amount is None:
-        amount = c * volume
+    if "amount" in fields:
+        amount = parse_amount(row.get(fields["amount"]))
+    if is_weekend_date(date):
+        return None
     stock_name = ""
     if "name" in fields and row.get(fields["name"]) not in (None, ""):
         stock_name = str(row[fields["name"]]).strip()
@@ -227,14 +237,11 @@ def load_bars(code: str, last_n: int | None = None) -> list[dict]:
                     volume = float(row[fields["volume"]])
                 except ValueError:
                     volume = 0.0
+            if is_weekend_date(date):
+                continue
             amount = None
-            if "amount" in fields and row.get(fields["amount"]) not in (None, ""):
-                try:
-                    amount = float(row[fields["amount"]])
-                except ValueError:
-                    amount = None
-            if amount is None:
-                amount = c * volume
+            if "amount" in fields:
+                amount = parse_amount(row.get(fields["amount"]))
             stock_name = ""
             if "name" in fields and row.get(fields["name"]) not in (None, ""):
                 stock_name = str(row[fields["name"]]).strip()
@@ -322,8 +329,12 @@ def save_bars_csv(code: str, rows: list[dict], name: str | None = None) -> Path:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         for row in rows:
+            if is_weekend_date(row.get("date")):
+                continue
             payload = {key: row.get(key, "") for key in fieldnames}
             payload["code"] = ts_code(code)
+            if payload.get("amount") in (None, "", 0, 0.0):
+                payload["amount"] = ""
             if name:
                 payload["name"] = name
             writer.writerow(payload)

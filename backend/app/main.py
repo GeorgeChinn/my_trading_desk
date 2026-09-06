@@ -25,6 +25,7 @@ from .config import (
     ensure_dirs,
 )
 from .engine.bars import attach_indicators, list_csv_files, load_bars, ts_code
+from .engine.clock import asof_date
 from .engine.cycles import cycles_for_pool, cycles_for_stock, cycles_page
 from .engine.history import backfill_all_ashare
 from .engine.live import pull_one, sync_live
@@ -200,8 +201,8 @@ def _scan_bundle(ruleset_id: str | None = None):
     bind = refresh_bind(rs["text"], rs["id"])
     settings = load_settings()
     trades = load_trades()
-    asof = settings.get("last_trade_date") or ""
-    token = f"{bind.get('rules_hash')}:{asof}:{rs.get('engine')}:{len(trades)}"
+    asof = asof_date(settings.get("last_trade_date") or "")
+    token = f"{bind.get('rules_hash')}:{asof}:{rs.get('engine')}:{len(trades)}:session"
     cache_path = _scan_cache_path(rs["id"])
     cached = read_json(cache_path, {}) if cache_path.exists() else {}
     if (
@@ -395,7 +396,7 @@ def scan(ruleset: str = Query("rules")):
         "rulesets": [public_ruleset(item) for item in list_rulesets()],
         "pool": {
             "count": pool_count,
-            "trade_date": snap.get("trade_date") or load_settings().get("last_trade_date"),
+            "trade_date": asof_date(snap.get("trade_date") or load_settings().get("last_trade_date")),
             "source": snap.get("source") or load_settings().get("data_source"),
             "preferred": snap.get("preferred"),
             "funnel": snap,

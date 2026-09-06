@@ -26,6 +26,10 @@ def pool_fail_reasons(
         fail.append("股价证据不足")
     elif close < POOL_MIN_PRICE:
         fail.append(f"股价 {close:.2f} < {POOL_MIN_PRICE:.0f} 元")
+    if float_mcap_yi is not None and float_mcap_yi <= 0:
+        float_mcap_yi = None
+    if amount_yi is not None and amount_yi <= 0:
+        amount_yi = None
     if float_mcap_yi is None:
         fail.append("流通市值证据不足")
     elif float_mcap_yi < POOL_FLOAT_MCAP_YI:

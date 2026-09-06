@@ -21,6 +21,7 @@ from ..store import (
     save_universe,
 )
 from .bars import csv_path_for, load_bars, save_bars_csv, suffix_for, ts_code
+from .clock import asof_date, expected_close_date
 from .pool import is_st_name, passes_pool, sort_pool
 
 YI = 100_000_000.0
@@ -175,6 +176,10 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
         amount = _f(rec.get("amount"))
         float_mcap_yi = circ / TUSHARE_MCAP_TO_YI if circ is not None else None
         amount_yi = amount / TUSHARE_AMOUNT_TO_YI if amount is not None else None
+        if float_mcap_yi is not None and float_mcap_yi <= 0:
+            float_mcap_yi = None
+        if amount_yi is not None and amount_yi <= 0:
+            amount_yi = None
         if not st:
             funnel["non_st"] += 1
         if close is not None and close >= POOL_MIN_PRICE:
@@ -201,8 +206,8 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
             "code": symbol,
             "ts_code": code_full,
             "name": name,
-            "float_mcap_yi": round(float_mcap_yi, 2),
-            "amount_yi": round(amount_yi, 2),
+            "float_mcap_yi": round(float_mcap_yi, 2) if float_mcap_yi is not None else None,
+            "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
             "close": close,
             "pe": round(pe, 3) if pe is not None else None,
             "is_st": False,
@@ -305,7 +310,7 @@ def build_pool_akshare(log: Callable[[str], None] | None = None) -> tuple[list[d
         "amount_ok": 0,
         "pool": 0,
         "preferred": 0,
-        "trade_date": datetime.now().strftime("%Y-%m-%d"),
+        "trade_date": expected_close_date().isoformat(),
         "source": "akshare",
         "rules": {
             "流通市值": f"≥ {POOL_FLOAT_MCAP_YI:.0f} 亿",
@@ -327,6 +332,10 @@ def build_pool_akshare(log: Callable[[str], None] | None = None) -> tuple[list[d
         amt = rec.get("成交额")
         float_mcap_yi = float(mcap) / YI if mcap == mcap else None
         amount_yi = float(amt) / YI if amt == amt else None
+        if float_mcap_yi is not None and float_mcap_yi <= 0:
+            float_mcap_yi = None
+        if amount_yi is not None and amount_yi <= 0:
+            amount_yi = None
         if not st:
             funnel["non_st"] += 1
         if close is not None and close >= POOL_MIN_PRICE:
@@ -560,7 +569,7 @@ def _sync_live(force_bars: bool = False) -> dict:
         source = source or "tencent/sina/eastmoney"
 
     if bars_stat.get("last_bar"):
-        funnel["trade_date"] = bars_stat["last_bar"]
+        funnel["trade_date"] = asof_date(bars_stat.get("last_bar"))
         for item in pool:
             item["trade_date"] = funnel["trade_date"]
         save_universe(pool)

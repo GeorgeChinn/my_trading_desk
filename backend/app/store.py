@@ -117,12 +117,24 @@ def load_settings() -> dict:
     merged = dict(DEFAULT_SETTINGS)
     if isinstance(data, dict):
         merged.update(data)
+    from .engine.clock import asof_date
+
+    coerced = asof_date(merged.get("last_trade_date") or "")
+    if (merged.get("last_trade_date") or "") != coerced:
+        merged["last_trade_date"] = coerced
+        write_json(SETTINGS_PATH, merged)
+    else:
+        merged["last_trade_date"] = coerced
     return merged
 
 
 def save_settings(payload: dict) -> dict:
     current = load_settings()
     current.update(payload)
+    if "last_trade_date" in current:
+        from .engine.clock import asof_date
+
+        current["last_trade_date"] = asof_date(current.get("last_trade_date") or "")
     write_json(SETTINGS_PATH, current)
     return current
 

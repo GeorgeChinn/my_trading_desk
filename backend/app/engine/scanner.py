@@ -11,7 +11,7 @@ from ..config import (
     POOL_MIN_PRICE,
     VETO_AMOUNT_YI,
 )
-from .bars import attach_indicators, load_bars, ts_code
+from .bars import attach_indicators, load_bars, parse_amount, ts_code
 from .indicators import last_number, sma
 
 YI = 100_000_000.0
@@ -19,6 +19,7 @@ PROFILE_BAN = ("打板", "连板", "高位接力", "隔夜情绪票")
 VETO_EXCLUDE = ("小盘题材", "连板妖股", "游资票", "亏损暴雷股")
 
 FACT_NOTE = "这是事实记录"
+MISSING_NO_BUY = "缺数据，不升买入"
 
 
 def funnel_reminders(settings: dict) -> list[str]:
@@ -347,17 +348,15 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         base["facts"]["prev_hist"] = prev.get("hist")
         base["facts"]["prev_ma5"] = prev.get("ma5")
 
-    amount = _num(last.get("amount")) or 0.0
-    amount_yi = amount / YI
-    if amount_yi <= 0:
-        snap_amt = _num(meta.get("amount_yi"))
-        if snap_amt is not None and snap_amt > 0:
-            amount_yi = snap_amt
-            base["facts"]["amount_from"] = "池子快照"
+    amount = parse_amount(last.get("amount"))
+    amount_yi = amount / YI if amount is not None else None
     close = float(last["close"])
     float_mcap = _num(meta.get("float_mcap_yi"))
+    if float_mcap is not None and float_mcap <= 0:
+        float_mcap = None
     is_st = bool(meta.get("is_st"))
     tags = list(meta.get("tags") or [])
+    data_gap = []
 
     # PROFILE 不做 → 禁止
     banned = [tag for tag in tags if tag in PROFILE_BAN]
@@ -376,7 +375,9 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
 
     # 第4 否决 → 排除
     veto_hits = [tag for tag in tags if tag in VETO_EXCLUDE]
-    if amount_yi < VETO_AMOUNT_YI:
+    if amount_yi is None:
+        data_gap.append("成交额")
+    elif amount_yi < VETO_AMOUNT_YI:
         veto_hits.append(f"日成交额 {amount_yi:.2f} 亿 < 1 亿")
     if is_st:
         veto_hits.append("ST / *ST")
@@ -389,13 +390,16 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     pool_fail = []
     pool_hit = []
     if float_mcap is None:
-        pool_fail.append("流通市值证据不足")
+        data_gap.append("流通市值")
     elif float_mcap < POOL_FLOAT_MCAP_YI:
         pool_fail.append(f"流通市值 {float_mcap:.0f} 亿 < 300 亿")
     else:
         pool_hit.append(f"流通市值 {float_mcap:.0f} 亿 ≥ 300 亿")
 
-    if amount_yi < POOL_AMOUNT_YI:
+    if amount_yi is None:
+        if "成交额" not in data_gap:
+            data_gap.append("成交额")
+    elif amount_yi < POOL_AMOUNT_YI:
         pool_fail.append(f"日成交额 {amount_yi:.2f} 亿 < 5 亿（1–5 亿不进池，一律排除）")
     else:
         pool_hit.append(f"日成交额 {amount_yi:.2f} 亿 ≥ 5 亿")
@@ -415,7 +419,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         base["facts"]["pe"] = pe
     if flags.get("pool_need_pe_positive", True):
         if pe is None:
-            base["missing_rules"].append("第3条 动态市盈证据不足（快照无此字段，本条不挡入池；有值且 ≤0 才排除）")
+            data_gap.append("市盈")
         elif pe <= 0:
             pool_fail.append(f"动态市盈 {pe:.2f} ≤ 0（亏损票排除）")
         else:
@@ -471,7 +475,9 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     base["status"] = "观察"
     base["gate"] = "观察"
     base["summary_bucket"] = "观察"
-    base["hit_rules"].append("第3条 池子：" + "；".join(pool_hit))
+    if data_gap:
+        base["missing_rules"].append(f"{MISSING_NO_BUY}（{'、'.join(dict.fromkeys(data_gap))}）")
+    base["hit_rules"].append("第3条 池子：" + "；".join(pool_hit or ["股价/非ST已见"]))
     if meta.get("index_member"):
         base["hit_rules"].append("优先样本：" + " / ".join(meta["index_member"]))
 
@@ -635,8 +641,12 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     path_ready = bool(
         buy_cross and buy_hist and near_low is True and zero_ok is True and px6 is True and s4_clear
     )
-    base["path_ready"] = path_ready
-    if path_ready:
+    if data_gap:
+        gap_note = f"{MISSING_NO_BUY}（{'、'.join(dict.fromkeys(data_gap))}）"
+        if gap_note not in base["missing_rules"]:
+            base["missing_rules"].append(gap_note)
+    base["path_ready"] = bool(path_ready and not data_gap)
+    if path_ready and not data_gap:
         base["status"] = "买入"
         base["gate"] = "买入"
         base["summary_bucket"] = "买入"
