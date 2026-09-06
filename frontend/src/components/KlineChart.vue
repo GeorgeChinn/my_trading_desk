@@ -96,7 +96,7 @@ function render() {
         lineStyle: { color: "rgba(224,163,92,0.45)", width: 1 },
       },
       grid: [
-        { left: 56, right: 18, top: 36, height: "36%" },
+        { left: 56, right: 18, top: 36, height: "36%", backgroundColor: "rgba(232, 238, 244, 0.16)" },
         { left: 56, right: 18, top: "46%", height: "10%" },
         { left: 56, right: 18, top: "59%", height: "14%" },
         { left: 56, right: 18, top: "76%", height: "14%" },
@@ -119,7 +119,7 @@ function render() {
       ],
       series: [
         { name: "日线", type: "candlestick", data: k, xAxisIndex: 0, yAxisIndex: 0, markLine, itemStyle: { color: "#e36a6a", color0: "#5ee0c5", borderColor: "#e36a6a", borderColor0: "#5ee0c5" } },
-        { name: "MA5", type: "line", data: ma5, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1.5, color: "#111111", shadowBlur: 1.2, shadowColor: "rgba(255,255,255,0.55)" } },
+        { name: "MA5", type: "line", data: ma5, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1.7, color: "rgba(0, 0, 0, 0.55)" } },
         { name: "MA10", type: "line", data: ma10, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1, color: "#6ea8ff" } },
         { name: "MA20", type: "line", data: ma20, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1.3, color: "#e53935" } },
         { name: "成交量", type: "bar", data: vols, xAxisIndex: 1, yAxisIndex: 1, barMaxWidth: 8 },

@@ -77,7 +77,7 @@
         <div class="ov-block">
           <div class="ov-title">买入池 <span>{{ buyNames.length }}</span></div>
           <div class="name-cloud" v-if="buyNames.length">
-            <router-link class="name-chip 买入" v-for="s in buyNames" :key="'hb'+s.code" :to="scanChart(s.code)">
+            <router-link class="name-chip 买入" v-for="s in buyNames" :key="'hb'+s.code" :to="scanChart(s.code, '买入')">
               {{ chipTitle(s) }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
             </router-link>
           </div>
@@ -86,7 +86,7 @@
         <div class="ov-block">
           <div class="ov-title">观察池 <span>{{ watchNames.length }}</span></div>
           <div class="name-cloud" v-if="watchNames.length">
-            <router-link class="name-chip 观察" v-for="s in watchNames" :key="'hw'+s.code" :to="scanChart(s.code)">
+            <router-link class="name-chip 观察" v-for="s in watchNames" :key="'hw'+s.code" :to="scanChart(s.code, '观察')">
               {{ chipTitle(s) }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
             </router-link>
           </div>
@@ -164,8 +164,10 @@ function chartLink(card) {
   const date = snap(card).date || "";
   return { name: "chart", params: { code: card.code }, query: { watch: card.id, trigger: date, ruleset: rulesetId.value } };
 }
-function scanChart(code) {
-  return { path: "/chart/" + code, query: { ruleset: rulesetId.value } };
+function scanChart(code, pool) {
+  const query = { ruleset: rulesetId.value };
+  if (pool) query.pool = pool;
+  return { path: "/chart/" + code, query };
 }
 function chipTitle(s) {
   const code = (s && s.code) || "";

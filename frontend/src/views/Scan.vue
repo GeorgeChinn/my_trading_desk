@@ -51,7 +51,7 @@
         <div class="ov-title">买入池 <span>{{ buyNames.length }}</span></div>
         <p class="sub" style="margin:0 0 8px">路径到达，不是成交指令</p>
         <div class="name-cloud" v-if="buyNames.length">
-          <router-link class="name-chip 买入" v-for="s in buyNames" :key="'b'+s.code" :to="chartLink(s.code)">
+          <router-link class="name-chip 买入" v-for="s in buyNames" :key="'b'+s.code" :to="chartLink(s.code, '买入')">
             {{ stockTitle(s) }}
             <em v-if="s.pe != null">PE {{ pe(s.pe) }}</em>
           </router-link>
@@ -61,7 +61,7 @@
       <div class="ov-block">
         <div class="ov-title">观察池 <span>{{ watchNames.length }}</span></div>
         <div class="name-cloud" v-if="watchNames.length">
-          <router-link class="name-chip 观察" v-for="s in watchNames" :key="'w'+s.code" :to="chartLink(s.code)">
+          <router-link class="name-chip 观察" v-for="s in watchNames" :key="'w'+s.code" :to="chartLink(s.code, '观察')">
             {{ stockTitle(s) }}
             <em v-if="s.pe != null">PE {{ pe(s.pe) }}</em>
           </router-link>
@@ -124,7 +124,7 @@
           <span v-if="row.key_kind"> · {{ row.key_kind }} 关键位 {{ money(row.key_price) }} 止损 {{ money(row.stop_price) }}</span>
         </p>
         <div class="row-btns" style="margin-top:10px">
-          <router-link class="btn" :to="chartLink(row.code)">查看日线与事实</router-link>
+          <router-link class="btn" :to="chartLink(row.code, row.status === '买入' || row.status === '观察' ? row.status : '')">查看日线与事实</router-link>
         </div>
       </div>
     </div>
@@ -226,8 +226,10 @@ function signed(v) {
   const sign = n > 0 ? "+" : "";
   return `${sign}${n.toFixed(2)}%`;
 }
-function chartLink(code) {
-  return { path: "/chart/" + code, query: { ruleset: rulesetId.value } };
+function chartLink(code, pool) {
+  const query = { ruleset: rulesetId.value };
+  if (pool) query.pool = pool;
+  return { path: "/chart/" + code, query };
 }
 function applyCache(id) {
   const hit = cache[id];

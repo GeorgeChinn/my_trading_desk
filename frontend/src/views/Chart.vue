@@ -2,6 +2,11 @@
   <div>
     <h1>{{ code }} {{ name }} · 日线与事实</h1>
     <p class="sub">{{ factNote }} · {{ rulesetTitle }} · 悬停看日期和收盘价，点击 K 线在下方看指标。买入不是成交指令。</p>
+    <div class="row-btns" style="margin:0 0 14px" v-if="poolList.length">
+      <button class="btn" :disabled="!prevStock" @click="goPool(prevStock)">上一只</button>
+      <span class="sub" style="margin:0;align-self:center">{{ poolLabel }} {{ poolIndex + 1 }} / {{ poolList.length }}</span>
+      <button class="btn primary" :disabled="!nextStock" @click="goPool(nextStock)">下一只</button>
+    </div>
     <div class="warn-banner" v-if="scan.position_block || scan.status">{{ scan.position_block || "总闸" }} · {{ scan.status }}</div>
     <p class="sub" v-if="scan.key_kind">{{ scan.key_kind }} 关键位 {{ n2(scan.key_price) }} · 止损 {{ n2(scan.stop_price) }}</p>
     <div class="card" style="margin-bottom:14px">
@@ -42,20 +47,41 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { api } from "../api";
 import KlineChart from "../components/KlineChart.vue";
 
 const route = useRoute();
+const router = useRouter();
 const code = ref("");
 const name = ref("");
 const bars = ref([]);
 const scan = ref({});
 const factNote = ref("这是事实记录");
 const picked = ref(null);
+const poolList = ref([]);
 const triggerDate = computed(() => route.query.trigger || "");
 const rulesetId = computed(() => String(route.query.ruleset || "rules"));
+const poolGate = computed(() => {
+  const g = String(route.query.pool || "");
+  return g === "买入" || g === "观察" ? g : "";
+});
 const rulesetTitle = ref("");
+const poolLabel = computed(() => (poolGate.value ? poolGate.value + "池" : ""));
+const poolIndex = computed(() => {
+  const cur = String(code.value || route.params.code || "");
+  return poolList.value.findIndex((s) => String(s.code) === cur);
+});
+const prevStock = computed(() => {
+  const i = poolIndex.value;
+  if (i < 0 || poolList.value.length < 2) return null;
+  return poolList.value[(i - 1 + poolList.value.length) % poolList.value.length];
+});
+const nextStock = computed(() => {
+  const i = poolIndex.value;
+  if (i < 0 || poolList.value.length < 2) return null;
+  return poolList.value[(i + 1) % poolList.value.length];
+});
 
 function n1(v) {
   return v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(1);
@@ -74,6 +100,13 @@ function vol(v) {
   return n.toFixed(0);
 }
 
+function goPool(item) {
+  if (!item || !item.code) return;
+  router.push({
+    path: "/chart/" + item.code,
+    query: { ruleset: rulesetId.value, pool: poolGate.value },
+  });
+}
 async function load() {
   code.value = route.params.code;
   const data = await api.chart(code.value, rulesetId.value);
@@ -83,10 +116,17 @@ async function load() {
   factNote.value = data.fact_note;
   rulesetTitle.value = (data.ruleset && data.ruleset.title) || rulesetId.value;
   picked.value = bars.value[bars.value.length - 1] || null;
+  if (poolGate.value) {
+    const scanData = await api.scan(rulesetId.value).catch(() => null);
+    const names = (scanData && scanData.names) || {};
+    poolList.value = names[poolGate.value] || [];
+  } else {
+    poolList.value = [];
+  }
   if (route.query.watch) {
     await api.viewWatch(route.query.watch).catch(() => {});
   }
 }
 onMounted(load);
-watch(() => [route.params.code, route.query.ruleset], load);
+watch(() => [route.params.code, route.query.ruleset, route.query.pool], load);
 </script>
