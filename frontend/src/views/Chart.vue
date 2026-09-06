@@ -17,7 +17,8 @@
       </div>
       <div class="fact-strip" v-if="picked">
         <div><small>MA5 / 10 / 20</small><b>{{ n2(picked.ma5) }} / {{ n2(picked.ma10) }} / {{ n2(picked.ma20) }}</b></div>
-        <div><small>DIF / DEA / 柱</small><b>{{ n3(picked.dif) }} / {{ n3(picked.dea) }} / {{ n3(picked.hist) }}</b></div>
+        <div><small>成交量</small><b>{{ vol(picked.volume) }}</b></div>
+        <div><small>MACD(7,28,4) DIF / DEA / 柱</small><b>{{ n3(picked.dif) }} / {{ n3(picked.dea) }} / {{ n3(picked.hist) }}</b></div>
         <div><small>K / D / J</small><b>{{ n1(picked.k) }} / {{ n1(picked.d) }} / {{ n1(picked.j) }}</b></div>
         <div><small>PE</small><b>{{ n1(scan.facts && scan.facts.pe) }}</b></div>
       </div>
@@ -64,6 +65,13 @@ function n2(v) {
 }
 function n3(v) {
   return v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(3);
+}
+function vol(v) {
+  if (v == null || Number.isNaN(Number(v))) return "—";
+  const n = Number(v);
+  if (n >= 1e8) return (n / 1e8).toFixed(2) + " 亿";
+  if (n >= 1e4) return (n / 1e4).toFixed(0) + " 万";
+  return n.toFixed(0);
 }
 
 async function load() {

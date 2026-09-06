@@ -29,6 +29,13 @@ function render() {
   const ma5 = bars.map((b) => b.ma5);
   const ma10 = bars.map((b) => b.ma10);
   const ma20 = bars.map((b) => b.ma20);
+  const vols = bars.map((b, i) => {
+    const up = Number(b.close) >= Number(b.open);
+    return {
+      value: b.volume == null ? 0 : Number(b.volume),
+      itemStyle: { color: up ? "#e36a6a" : "#5ee0c5" },
+    };
+  });
   const dif = bars.map((b) => b.dif);
   const dea = bars.map((b) => b.dea);
   const hist = bars.map((b) => ({
@@ -38,6 +45,16 @@ function render() {
   const kv = bars.map((b) => b.k);
   const dv = bars.map((b) => b.d);
   const jv = bars.map((b) => b.j);
+  const kdjVals = [...kv, ...dv, ...jv].filter((x) => x != null && !Number.isNaN(Number(x))).map(Number);
+  let kdjMin = 0;
+  let kdjMax = 100;
+  if (kdjVals.length) {
+    kdjMin = Math.min(0, ...kdjVals);
+    kdjMax = Math.max(100, ...kdjVals);
+    const pad = Math.max(4, (kdjMax - kdjMin) * 0.06);
+    kdjMin -= pad;
+    kdjMax += pad;
+  }
   const markLine = props.triggerDate
     ? {
         symbol: "none",
@@ -52,7 +69,8 @@ function render() {
       backgroundColor: "transparent",
       animation: false,
       legend: {
-        data: ["MA5", "MA10", "MA20", "DIF", "DEA", "K", "D", "J"],
+        data: ["MA5", "MA10", "MA20", "成交量", "MACD柱", "DIF", "DEA", "K", "D", "J"],
+        selected: { MA5: true, MA10: false, MA20: true },
         textStyle: { color: "#8aa0b2" },
         top: 0,
       },
@@ -78,35 +96,39 @@ function render() {
         lineStyle: { color: "rgba(224,163,92,0.45)", width: 1 },
       },
       grid: [
-        { left: 48, right: 18, top: 36, height: "48%" },
-        { left: 48, right: 18, top: "62%", height: "14%" },
-        { left: 48, right: 18, top: "80%", height: "14%" },
+        { left: 56, right: 18, top: 36, height: "36%" },
+        { left: 56, right: 18, top: "46%", height: "10%" },
+        { left: 56, right: 18, top: "59%", height: "14%" },
+        { left: 56, right: 18, top: "76%", height: "14%" },
       ],
       xAxis: [
         { type: "category", data: dates, gridIndex: 0, axisLabel: { show: false }, axisLine: { lineStyle: { color: "#1e3a4c" } } },
         { type: "category", data: dates, gridIndex: 1, axisLabel: { show: false }, axisLine: { lineStyle: { color: "#1e3a4c" } } },
-        { type: "category", data: dates, gridIndex: 2, axisLabel: { color: "#8aa0b2" }, axisLine: { lineStyle: { color: "#1e3a4c" } } },
+        { type: "category", data: dates, gridIndex: 2, axisLabel: { show: false }, axisLine: { lineStyle: { color: "#1e3a4c" } } },
+        { type: "category", data: dates, gridIndex: 3, axisLabel: { color: "#8aa0b2" }, axisLine: { lineStyle: { color: "#1e3a4c" } } },
       ],
       yAxis: [
         { scale: true, gridIndex: 0, splitLine: { lineStyle: { color: "#1e3a4c" } }, axisLabel: { color: "#8aa0b2" } },
-        { scale: true, gridIndex: 1, splitLine: { show: false }, axisLabel: { color: "#8aa0b2" } },
-        { scale: true, gridIndex: 2, min: 0, max: 100, splitLine: { show: false }, axisLabel: { color: "#8aa0b2" } },
+        { scale: true, gridIndex: 1, splitLine: { show: false }, axisLabel: { color: "#8aa0b2", fontSize: 10 }, name: "量", nameTextStyle: { color: "#8aa0b2", fontSize: 10 } },
+        { scale: true, gridIndex: 2, splitLine: { show: false }, axisLabel: { color: "#8aa0b2" }, name: "MACD(7,28,4)", nameTextStyle: { color: "#8aa0b2", fontSize: 10 } },
+        { scale: true, gridIndex: 3, min: kdjMin, max: kdjMax, splitLine: { show: false }, axisLabel: { color: "#8aa0b2" }, name: "KDJ", nameTextStyle: { color: "#8aa0b2", fontSize: 10 } },
       ],
       dataZoom: [
-        { type: "inside", xAxisIndex: [0, 1, 2], start: 60, end: 100 },
-        { type: "slider", xAxisIndex: [0, 1, 2], start: 60, end: 100, height: 18, bottom: 4, borderColor: "#1e3a4c" },
+        { type: "inside", xAxisIndex: [0, 1, 2, 3], start: 60, end: 100 },
+        { type: "slider", xAxisIndex: [0, 1, 2, 3], start: 60, end: 100, height: 18, bottom: 4, borderColor: "#1e3a4c" },
       ],
       series: [
         { name: "日线", type: "candlestick", data: k, xAxisIndex: 0, yAxisIndex: 0, markLine, itemStyle: { color: "#e36a6a", color0: "#5ee0c5", borderColor: "#e36a6a", borderColor0: "#5ee0c5" } },
-        { name: "MA5", type: "line", data: ma5, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1.2, color: "#e0a35c" } },
+        { name: "MA5", type: "line", data: ma5, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1.5, color: "#111111", shadowBlur: 1.2, shadowColor: "rgba(255,255,255,0.55)" } },
         { name: "MA10", type: "line", data: ma10, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1, color: "#6ea8ff" } },
-        { name: "MA20", type: "line", data: ma20, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1, color: "#d38bff" } },
-        { name: "MACD柱", type: "bar", data: hist, xAxisIndex: 1, yAxisIndex: 1 },
-        { name: "DIF", type: "line", data: dif, showSymbol: false, xAxisIndex: 1, yAxisIndex: 1, lineStyle: { width: 1, color: "#e0a35c" } },
-        { name: "DEA", type: "line", data: dea, showSymbol: false, xAxisIndex: 1, yAxisIndex: 1, lineStyle: { width: 1, color: "#6ea8ff" } },
-        { name: "K", type: "line", data: kv, showSymbol: false, xAxisIndex: 2, yAxisIndex: 2, lineStyle: { width: 1, color: "#e0a35c" } },
-        { name: "D", type: "line", data: dv, showSymbol: false, xAxisIndex: 2, yAxisIndex: 2, lineStyle: { width: 1, color: "#6ea8ff" } },
-        { name: "J", type: "line", data: jv, showSymbol: false, xAxisIndex: 2, yAxisIndex: 2, lineStyle: { width: 1, color: "#e36a6a" } },
+        { name: "MA20", type: "line", data: ma20, showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, lineStyle: { width: 1.3, color: "#e53935" } },
+        { name: "成交量", type: "bar", data: vols, xAxisIndex: 1, yAxisIndex: 1, barMaxWidth: 8 },
+        { name: "MACD柱", type: "bar", data: hist, xAxisIndex: 2, yAxisIndex: 2, barMaxWidth: 8 },
+        { name: "DIF", type: "line", data: dif, showSymbol: false, xAxisIndex: 2, yAxisIndex: 2, lineStyle: { width: 1, color: "#e0a35c" } },
+        { name: "DEA", type: "line", data: dea, showSymbol: false, xAxisIndex: 2, yAxisIndex: 2, lineStyle: { width: 1, color: "#6ea8ff" } },
+        { name: "K", type: "line", data: kv, showSymbol: false, xAxisIndex: 3, yAxisIndex: 3, clip: false, lineStyle: { width: 1, color: "#e0a35c" } },
+        { name: "D", type: "line", data: dv, showSymbol: false, xAxisIndex: 3, yAxisIndex: 3, clip: false, lineStyle: { width: 1, color: "#6ea8ff" } },
+        { name: "J", type: "line", data: jv, showSymbol: false, xAxisIndex: 3, yAxisIndex: 3, clip: false, lineStyle: { width: 1, color: "#e36a6a" } },
       ],
     },
     true
@@ -135,8 +157,8 @@ watch(() => props.triggerDate, render);
 </script>
 
 <style scoped>
-.chart-box { width: 100%; height: 640px; }
+.chart-box { width: 100%; height: 760px; }
 @media (max-width: 720px) {
-  .chart-box { height: 440px; }
+  .chart-box { height: 560px; }
 }
 </style>
