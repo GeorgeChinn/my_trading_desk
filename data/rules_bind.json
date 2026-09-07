@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-09-05 01:32:49",
+  "updated_at": "2026-09-07 16:32:49",
   "ruleset": "rules",
-  "rules_hash": "15c082fb6508f6e4",
+  "rules_hash": "ee2167eb1c702d66",
   "changed": false,
   "flags": {
     "wait_need_low_zone": true,
@@ -13,10 +13,9 @@
     "veto_kdj_overbought": true,
     "veto_pullback_60": true,
     "veto_ma30_down": true,
-    "wait_need_kdj_band": true
+    "wait_need_kdj_band": true,
+    "wait_need_sector_vs_market": true
   },
-  "unimplemented": [
-    "板块近3日相对大盘：扫描器尚未实现，不挡筛选"
-  ],
+  "unimplemented": [],
   "note": "改对应 RULES 文件后刷新扫描页即可（已支持的开关）。扫描器不会自己改 Python。"
 }
