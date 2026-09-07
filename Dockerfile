@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 
 COPY backend/ /app/backend/
 COPY --from=frontend /fe/dist /app/frontend/dist
-COPY RULES.md PROFILE.md AGENTS.md README.md /app/
+COPY RULES.md RULES2.MD RULES3.MD README.md /app/
 COPY journal/TEMPLATE.md /app/journal/TEMPLATE.md
 
 EXPOSE 8000

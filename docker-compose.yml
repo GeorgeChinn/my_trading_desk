@@ -17,7 +17,8 @@ services:
       - ./data:/app/data
       - ./journal:/app/journal
       - ./RULES.md:/app/RULES.md
-      - ./PROFILE.md:/app/PROFILE.md
+      - ./RULES2.MD:/app/RULES2.MD
+      - ./RULES3.MD:/app/RULES3.MD
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
       interval: 30s
