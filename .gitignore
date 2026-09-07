@@ -15,3 +15,13 @@ data/last_scan.json
 data/rules_bind.json
 *.tmp
 .DS_Store
+
+data/csv/
+data/cycle_cache/
+data/scan_cache/
+data/quotes.json
+data/universe.json
+data/sector_snap.json
+data/pool_snapshot.json
+data/sync_status.json
+data/industry_map.json
