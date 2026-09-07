@@ -18,6 +18,9 @@ jobs:
             cd /home/ubuntu/my_trading_desk
             git fetch origin
             git reset --hard origin/main
+            rm -rf data
+            mkdir -p /home/ubuntu/desk-data/csv
+            ln -sfn /home/ubuntu/desk-data data
             source .venv/bin/activate
             pip install -r backend/requirements.txt
             cd frontend
