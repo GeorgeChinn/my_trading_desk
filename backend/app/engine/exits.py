@@ -56,7 +56,7 @@ def this_and_prev_wave(hist: list, entry_idx: int) -> tuple[dict | None, dict | 
 
 
 def fail_broken_lows(bars: list[dict], entry_idx: int) -> tuple[bool, str]:
-    """最新价跌破买入日最新价，或连续 2 日最新价低于买入日最低价。"""
+    """最新价跌破买入日最新价×0.97（3%止损），或连续 2 日最新价低于买入日最低价。"""
     if entry_idx < 0 or entry_idx >= len(bars):
         return False, ""
     last = bars[-1]
@@ -66,8 +66,10 @@ def fail_broken_lows(bars: list[dict], entry_idx: int) -> tuple[bool, str]:
     entry = bars[entry_idx]
     entry_close = entry.get("close")
     entry_low = entry.get("low")
-    if entry_close is not None and close < entry_close:
-        return True, f"最新价 {close:.2f} 跌破买入日最新价 {entry_close:.2f}"
+    if entry_close is not None:
+        stop = entry_close * 0.97
+        if close < stop:
+            return True, f"最新价 {close:.2f} 跌破买入日最新价×0.97（{stop:.2f}，3%止损）"
     if entry_low is not None and len(bars) - 1 >= entry_idx + 2:
         c0 = bars[-2].get("close")
         if c0 is not None and c0 < entry_low and close < entry_low:

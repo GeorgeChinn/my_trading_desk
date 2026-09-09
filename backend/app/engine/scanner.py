@@ -15,8 +15,7 @@ from .bars import attach_indicators, bar_amount, load_bars, parse_amount, ts_cod
 from .indicators import last_number, sma
 
 YI = 100_000_000.0
-PROFILE_BAN = ("打板", "连板", "高位接力", "隔夜情绪票")
-VETO_EXCLUDE = ("小盘题材", "连板妖股", "游资票", "亏损暴雷股")
+PROFILE_BAN = ("打板", "连板", "高位接力")
 
 FACT_NOTE = "这是事实记录"
 MISSING_NO_BUY = "缺数据，不升买入"
@@ -356,9 +355,8 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         float_mcap = None
     is_st = bool(meta.get("is_st"))
     tags = list(meta.get("tags") or [])
-    data_gap = []
 
-    # PROFILE 不做 → 禁止
+    # 否决：打板、连板、高位接力
     banned = [tag for tag in tags if tag in PROFILE_BAN]
     streak = detect_limit_streak(bars, code)
     # 连板用最新一根往回核对。单日涨停不等于打板行为，不另发明否决。
@@ -369,25 +367,24 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         base["gate"] = "排除"
         base["summary_bucket"] = "排除"
         base["veto"] = banned
-        base["hit_rules"].append("PROFILE 不做 / RULES 否决：" + "、".join(banned))
-        base["risk"].append("打板、连板、高位接力、隔夜情绪票不在主路径")
+        base["hit_rules"].append("否决：" + "、".join(banned))
+        base["risk"].append("打板、连板、高位接力不得新开")
         return base
 
     # 池子（否则排除）
     pool_fail = []
     pool_hit = []
     if float_mcap is None:
-        data_gap.append("流通市值")
+        pool_fail.append("流通市值证据不足")
     elif float_mcap < POOL_FLOAT_MCAP_YI:
         pool_fail.append(f"流通市值 {float_mcap:.0f} 亿 < 300 亿")
     else:
         pool_hit.append(f"流通市值 {float_mcap:.0f} 亿 ≥ 300 亿")
 
     if amount_yi is None:
-        if "成交额" not in data_gap:
-            data_gap.append("成交额")
+        pool_fail.append("成交额证据不足")
     elif amount_yi < POOL_AMOUNT_YI:
-        pool_fail.append(f"日成交额 {amount_yi:.2f} 亿 < 5 亿（1–5 亿不进池，一律排除）")
+        pool_fail.append(f"日成交额 {amount_yi:.2f} 亿 < 5 亿")
     else:
         pool_hit.append(f"日成交额 {amount_yi:.2f} 亿 ≥ 5 亿")
 
@@ -404,13 +401,12 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     pe = dyn_pe_value(meta)
     if pe is not None:
         base["facts"]["pe"] = pe
-    if flags.get("pool_need_pe_positive", True):
-        if pe is None:
-            data_gap.append("市盈")
-        elif pe <= 0:
-            pool_fail.append(f"动态市盈 {pe:.2f} ≤ 0（亏损票排除）")
-        else:
-            pool_hit.append(f"动态市盈 {pe:.2f} > 0")
+    if pe is None:
+        pool_fail.append("动态市盈证据不足")
+    elif pe <= 0:
+        pool_fail.append(f"动态市盈 {pe:.2f} ≤ 0")
+    else:
+        pool_hit.append(f"动态市盈 {pe:.2f} > 0")
 
     if pool_fail:
         base["missing_rules"].extend(["池子未过：" + x for x in pool_fail])
@@ -462,17 +458,12 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     base["status"] = "观察"
     base["gate"] = "观察"
     base["summary_bucket"] = "观察"
-    if data_gap:
-        base["missing_rules"].append(f"{MISSING_NO_BUY}（{'、'.join(dict.fromkeys(data_gap))}）")
     base["hit_rules"].append("池子：" + "；".join(pool_hit or ["股价/非ST已见"]))
     if meta.get("index_member"):
         base["hit_rules"].append("优先样本：" + " / ".join(meta["index_member"]))
 
     if market_regime != "未设置":
         base["hit_rules"].append(f"大盘开关（人工定性，不参与筛选）：{market_regime}")
-
-    if not person_present:
-        base["risk"].append("人不在场：只输出观察，不升仓位档")
 
     if s4_unknown:
         base["missing_rules"].extend(["否决证据不足：" + x for x in s4_unknown])
@@ -520,12 +511,8 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     path_ready = bool(
         buy_cross and near_low is True and zero_ok is True and px6 is True and s4_clear
     )
-    if data_gap:
-        gap_note = f"{MISSING_NO_BUY}（{'、'.join(dict.fromkeys(data_gap))}）"
-        if gap_note not in base["missing_rules"]:
-            base["missing_rules"].append(gap_note)
-    base["path_ready"] = bool(path_ready and not data_gap)
-    if path_ready and not data_gap:
+    base["path_ready"] = path_ready
+    if path_ready:
         base["status"] = "买入"
         base["gate"] = "买入"
         base["summary_bucket"] = "买入"
@@ -571,13 +558,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
             base["status"] = "买入"
             base["gate"] = "买入"
             base["summary_bucket"] = "买入"
-            base["hit_rules"].append("第7条 对照未齐，持仓仍按买入闸记录：" + note)
-    elif not person_present:
-        base["risk"].append("人不在场：只输出观察，不升买入")
-        base["status"] = "观察"
-        base["gate"] = "观察"
-        base["summary_bucket"] = "观察"
-        return base
+            base["hit_rules"].append("卖出对照未齐，持仓仍按买入闸记录：" + note)
 
     return base
 

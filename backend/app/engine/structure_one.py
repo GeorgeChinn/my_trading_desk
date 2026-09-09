@@ -8,7 +8,7 @@ from ..store import load_quotes, load_universe, read_json
 from .bars import bar_amount, load_bars, peek_last_bar, ts_code
 from .indicators import sma
 from .pool import is_st_name
-from .scanner import FACT_NOTE, detect_limit_streak, dyn_pe_value
+from .scanner import FACT_NOTE, dyn_pe_value
 from .sector import load_sector_snap
 
 YI = 100_000_000.0
@@ -112,10 +112,8 @@ def find_structure(bars: list[dict]) -> dict | None:
     if n < 25:
         return None
     win0 = max(0, n - 20)
-    vols = [_vol(b) for b in bars[win0:]]
-    avg20 = sum(vols) / len(vols) if vols else 0.0
     best = None
-    # 回调段不含最后一根（候选买日），避免 8/20 放量把缩量洗没。
+    # 再调 4～8 日在先强之后；最后一根是观察/买入日，不计入回调段。
     for e in range(n - 6, win0 + 3, -1):
         pb_len = n - 2 - e
         if pb_len < 4 or pb_len > 8:
@@ -380,7 +378,7 @@ def classify_s1(
         base["veto"] = ["ST / *ST"]
         return base
     if close < POOL_MIN_PRICE:
-        base["missing_rules"].append(f"第3条 底池：股价 {close:.2f} < 5 元")
+        base["missing_rules"].append(f"池子：股价 {close:.2f} < 5 元")
         return base
     amt = _amt(last)
     pe = dyn_pe_value(meta)
@@ -415,15 +413,6 @@ def classify_s1(
             base["veto"] = [f"小盘：流通市值 {mcap:.1f} 亿 < {MIN_FLOAT_YI:.0f} 亿"]
             return base
         base["facts"]["float_mcap_yi"] = round(mcap, 2)
-    if detect_limit_streak(bars, code) >= 2:
-        base["veto"] = ["连板"]
-        return base
-    tags = meta.get("tags") or []
-    banned = [t for t in tags if t in ("打板", "连板", "高位接力", "隔夜情绪票", "小盘题材", "连板妖股", "游资票")]
-    if banned:
-        base["veto"] = banned
-        return base
-
     if _any_limit(bars, code, 3):
         base["veto"] = ["近3个交易日出现涨停"]
         return base
@@ -482,7 +471,7 @@ def classify_s1(
         base["veto"] = ["A1：20日线向下或收盘已在20日线下方"]
         return base
     if not kind or not key_px:
-        base["missing_rules"].append("第3条 关键位未写明")
+        base["missing_rules"].append("结构：20日线未写明")
         return base
     if zone.get("ma20") and close < zone["ma20"]:
         base["veto"] = ["收盘在20日线下方，不是回踩启动"]
@@ -499,8 +488,6 @@ def classify_s1(
     if vol_ok:
         demand.append("当日量 > 回调段日均量")
     demand_ready = bool(vol_ok and stand_ma20)
-    if _any_limit(bars, code, 3):
-        demand_ready = False
 
     if not stand_ma20:
         base["veto"] = ["收盘在20日线下方，不是回踩启动"]
@@ -533,9 +520,6 @@ def classify_s1(
     if st["shrink"]:
         base["hit_rules"].append("观察：靠近 20 日线、缩量，只够观察")
 
-    if _any_limit(bars, code, 3):
-        base["missing_rules"].append("买入：近3日有涨停，不得买入")
-        return base
     if not demand_ready:
         why = []
         if not stand_ma20:
@@ -553,13 +537,6 @@ def classify_s1(
     base["gate"] = "买入"
     base["summary_bucket"] = "买入"
     base["hit_rules"].append("路径到达买入。买入不是成交指令")
-
-    if not settings.get("person_present", True):
-        base["status"] = "观察"
-        base["gate"] = "观察"
-        base["summary_bucket"] = "观察"
-        base["risk"].append("人不在场：只输出观察，不升买入")
-        return base
 
     open_trade = None
     for trade in trades or []:
@@ -597,6 +574,7 @@ def _is_limit_up(bars: list[dict], i: int, code: str) -> bool:
 
 
 def _is_big_yang(bars: list[dict], i: int, code: str) -> bool:
+    """RULES2「大阳」未给数字：主板当日涨幅≥7%，创业板/科创≥12%，且收阳。"""
     if i < 1:
         return False
     row = bars[i]
