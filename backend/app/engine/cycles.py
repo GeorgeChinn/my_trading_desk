@@ -80,7 +80,7 @@ def is_buy_signal(s: dict, flags: dict) -> bool:
     if not buy_cross:
         return False
     near_low, _ = nearer_to_window_low(s["dif"], last.get("dif"), "DIF")
-    px_low, _ = nearer_to_window_low(s["c"], last.get("close"), "收盘")
+    px_low, _ = nearer_to_window_low(s["c"], last.get("close"), "最新价")
     zero_ok, _ = zero_axis_golden(s["dif"], s["dea"], cross_idx)
     return bool(near_low is True and px_low is True and zero_ok is True)
 
@@ -608,7 +608,7 @@ def cycles_page(
     engine = (ruleset or {}).get("engine") or ENGINE_LOW_GOLDEN
     ruleset_id = (ruleset or {}).get("id") or "rules"
     rules_hash = _rules_hash((ruleset or {}).get("text") or "")
-    note = "一段回测 = 路径到达买入的当日 → 卖出条件日。买入价/卖出价用当日收盘。与买入池同一套条件。这是事实记录，不是成交指令。"
+    note = "一段回测 = 路径到达买入的当日 → 卖出条件日。价格用「数据与设置」最新更新的实时价。与买入池同一套条件。这是事实记录，不是成交指令。"
     if engine not in ("low_golden", "pullback_restart"):
         payload = {
             "fact_note": "这是事实记录",
@@ -739,7 +739,7 @@ def cycles_for_stock(code: str, name: str, ruleset: dict | None) -> dict:
 
     pub = public_ruleset(ruleset) if ruleset else None
     engine = (ruleset or {}).get("engine") or "low_golden"
-    note = "一段轨迹 = 路径到达买入的确认收盘 → 卖出条件日。买入不是成交指令。"
+    note = "一段回测 = 路径到达买入的最新更新 → 卖出条件日。买入不是成交指令。"
     if engine not in ("low_golden", "pullback_restart"):
         return {
             "code": ts_code(code),

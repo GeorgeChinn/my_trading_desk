@@ -60,7 +60,7 @@ def _cross_up(fast: list, slow: list) -> bool:
 def recent_dif_golden_cross(
     dif: list, dea: list, within_two_days: bool = False
 ) -> tuple[bool, str, int | None]:
-    """§6 默认只认当日收盘金叉。within_two_days 仅当 第6 仍写「近一两日」时打开。"""
+    """只认最新一根相对上一根的 DIF 上穿 DEA。within_two_days 仅当正文仍写「近一两日」时打开。"""
     last = len(dif) - 1
     if last < 1:
         return False, "DIF/DEA 窗口不足", None
@@ -106,7 +106,7 @@ def kdj_overbought(k, j) -> tuple[bool | None, str]:
 
 
 def pullback_60_below_zero(highs: list, close, dif) -> tuple[bool | None, str, dict]:
-    """§4：收盘距近 60 日最高价回撤 ≥ 15%，且 DIF 仍在零轴下。"""
+    """否决：最新价距近 60 日最高价回撤 ≥ 15%，且 DIF 仍在零轴下。"""
     facts: dict = {"hhv60": None, "retrace_60_pct": None}
     window = _recent(highs, 60)
     if close is None or not window:
@@ -134,7 +134,7 @@ def pullback_60_below_zero(highs: list, close, dif) -> tuple[bool | None, str, d
 
 
 def ma30_down_veto(closes: list) -> tuple[bool | None, str, float | None]:
-    """§4：收盘 < MA30 且 MA30 向下。"""
+    """否决：最新价 < MA30 且 MA30 向下。"""
     ma = sma(closes, 30)
     if len(ma) < 2 or ma[-1] is None or ma[-2] is None or not closes or closes[-1] is None:
         return None, "MA30 窗口不足", None
@@ -143,12 +143,12 @@ def ma30_down_veto(closes: list) -> tuple[bool | None, str, float | None]:
     if close < last_ma and last_ma < prev_ma:
         return (
             True,
-            f"收盘 {close:.2f} < MA30 {last_ma:.2f} 且 MA30 向下（前值 {prev_ma:.2f}）",
+            f"最新价 {close:.2f} < MA30 {last_ma:.2f} 且 MA30 向下（前值 {prev_ma:.2f}）",
             last_ma,
         )
     return (
         False,
-        f"未同时满足收盘<MA30且MA30向下（收盘 {close:.2f} / MA30 {last_ma:.2f} / 前值 {prev_ma:.2f}）",
+        f"未同时满足最新价<MA30且MA30向下（最新 {close:.2f} / MA30 {last_ma:.2f} / 前值 {prev_ma:.2f}）",
         last_ma,
     )
 
@@ -341,7 +341,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
 
     base["data_ok"] = True
     base["facts"] = _snapshot(last)
-    base["facts"]["source"] = "本地 CSV 确认收盘"
+    base["facts"]["source"] = "数据与设置最新更新"
     if prev:
         base["facts"]["prev_date"] = prev["date"]
         base["facts"]["prev_close"] = prev["close"]
@@ -361,7 +361,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     # PROFILE 不做 → 禁止
     banned = [tag for tag in tags if tag in PROFILE_BAN]
     streak = detect_limit_streak(bars, code)
-    # 连板可从确认收盘核对。单日涨停不等于打板行为，不另发明否决。
+    # 连板用最新一根往回核对。单日涨停不等于打板行为，不另发明否决。
     if streak >= 2 and "连板" not in banned:
         banned.append("连板")
     if banned:
@@ -485,7 +485,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
 
     buy_cross, cross_detail, cross_idx = recent_dif_golden_cross(dif, dea, within_two_days=False)
     near_low, near_detail = nearer_to_window_low(dif, last.get("dif"), "DIF")
-    px6, px6_detail = nearer_to_window_low(c_line, last.get("close"), "收盘")
+    px6, px6_detail = nearer_to_window_low(c_line, last.get("close"), "最新价")
     zero_ok, zero_detail = zero_axis_golden(dif, dea, cross_idx)
     if last.get("dif") is not None and _recent(dif, DIF_LOOKBACK):
         base["facts"]["dif_20_min"] = min(_recent(dif, DIF_LOOKBACK))

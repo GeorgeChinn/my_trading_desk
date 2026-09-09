@@ -16,7 +16,7 @@
       </button>
     </div>
     <p class="sub" v-if="currentRuleset">{{ currentRuleset.file }} · {{ currentRuleset.title }}</p>
-    <div class="warn-banner">{{ data.note || "收盘未变则读缓存。" }}</div>
+    <div class="warn-banner">{{ data.note || "数据未变则读缓存。" }}</div>
     <div class="warn-banner" v-if="data.warming">
       RULES2 回测首次计算中 {{ data.warm_done || 0 }}/{{ data.warm_total || "…" }}，请稍候，页面会自动刷新。
     </div>

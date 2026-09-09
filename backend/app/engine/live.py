@@ -105,7 +105,7 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
     talk = log or (lambda _m: None)
     pro = _pro(token)
     trade_date = latest_open_day(token)
-    talk(f"确认收盘日 { _fmt_date(trade_date) }")
+    talk(f"最新数据日 { _fmt_date(trade_date) }")
 
     basic = pro.stock_basic(
         exchange="",
@@ -665,6 +665,6 @@ def pull_one(code: str) -> dict:
         if len(rows) < 40:
             return {"ok": False, "message": f"{used} 日线不足，证据不足"}
         path = save_bars_csv(code, rows)
-        return {"ok": True, "message": f"{code} 已用 {used} 写入 {path.name}，{len(rows)} 根确认收盘", "source": used, "bars": len(rows)}
+        return {"ok": True, "message": f"{code} 已用 {used} 写入 {path.name}，{len(rows)} 根最新数据", "source": used, "bars": len(rows)}
     except Exception as exc:
         return {"ok": False, "message": f"腾讯/新浪/东财均失败：{exc}"}

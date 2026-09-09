@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>{{ code }} {{ name }} · 日线与事实</h1>
-    <p class="sub">{{ factNote }} · {{ rulesetTitle }} · 悬停看日期和收盘价，点击 K 线在下方看指标。买入不是成交指令。</p>
+    <p class="sub">{{ factNote }} · {{ rulesetTitle }} · 悬停看日期和最新价，点击 K 线在下方看指标。买入不是成交指令。</p>
     <div class="row-btns" style="margin:0 0 14px" v-if="poolList.length || canBacktest">
       <button class="btn" v-if="poolList.length" :disabled="!prevStock" @click="goPool(prevStock)">上一只</button>
       <span class="sub" style="margin:0;align-self:center" v-if="poolList.length">{{ poolLabel }} {{ poolIndex + 1 }} / {{ poolList.length }}</span>
@@ -136,7 +136,7 @@ async function loadBacktest() {
   const rid = data && data.ruleset && data.ruleset.id;
   if (rid && rid !== want) return;
   segments.value = ((data && data.segments) || []).filter((s) => !s.ruleset || s.ruleset === want);
-  backtestNote.value = (data && data.note) || "一段轨迹 = 路径到达买入的确认收盘 → 卖出条件日。买入不是成交指令。";
+  backtestNote.value = (data && data.note) || "一段回测 = 路径到达买入的最新更新 → 卖出条件日。买入不是成交指令。";
   backtestOn.value = true;
 }
 async function toggleBacktest() {

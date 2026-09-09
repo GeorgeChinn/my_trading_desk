@@ -59,7 +59,7 @@
       <p class="sub">链：腾讯 → 新浪 → 东财。一个源失败自动换下一个。</p>
       <div class="row-btns" style="margin-bottom:12px">
         <button class="btn" @click="probe">探测后备源</button>
-        <button class="btn primary" :disabled="syncing" @click="sync(false)">现在更新确认收盘</button>
+        <button class="btn primary" :disabled="syncing" @click="sync(false)">现在更新实时数据</button>
         <button class="btn" :disabled="syncing" @click="sync(true)">强制重拉日线</button>
         <button class="btn" :disabled="syncing" @click="history">补全全A近3年日线</button>
       </div>

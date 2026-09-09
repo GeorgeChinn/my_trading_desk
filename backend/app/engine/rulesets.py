@@ -40,7 +40,7 @@ def _engine(text: str) -> str:
 
 def _engine_note(engine: str) -> str:
     if engine == ENGINE_LOW_GOLDEN:
-        return "扫描器已执行本结构（低位金叉波段）。买入不是成交指令。"
+        return "扫描器已执行本结构（低位金叉波段）。判定用数据与设置最新更新的实时价。买入不是成交指令。"
     if engine == ENGINE_PULLBACK:
         return "扫描器已执行本结构（回调后的重新启动）。买入不是成交指令。"
     return "本规则结构尚未写成扫描器。证据不足，不编造信号。"

@@ -625,7 +625,7 @@ def ensure_quotes(log=None, force: bool = False) -> dict:
     spot = fetch_spot(log=talk)
     payload = quotes_from_spot(spot)
     save_quotes(payload)
-    talk(f"行情快照 {len(payload.get('codes') or {})} 只 · 确认收盘 {payload.get('trade_date')}")
+    talk(f"行情快照 {len(payload.get('codes') or {})} 只 · 最新 {payload.get('trade_date')}")
     return payload.get("codes") or {}
 
 

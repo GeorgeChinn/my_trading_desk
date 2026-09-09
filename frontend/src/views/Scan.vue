@@ -140,7 +140,7 @@
           </div>
         </div>
         <p class="sub" style="margin:10px 0 0">
-          {{ row.facts && row.facts.date }} 收盘 {{ money(row.facts && row.facts.close) }}
+          {{ row.facts && row.facts.date }} 最新 {{ money(row.facts && row.facts.close) }}
           <span v-if="row.facts && row.facts.dif != null"> · DIF {{ fmt(row.facts.dif) }}</span>
           <span v-if="row.key_kind"> · {{ row.key_kind }} 关键位 {{ money(row.key_price) }} 止损 {{ money(row.stop_price) }}</span>
         </p>
@@ -281,7 +281,7 @@ async function runPoolBacktest(gate) {
   poolBacktest.value = {
     gate,
     segments: ((payload && payload.segments) || []).filter((s) => !s.ruleset || s.ruleset === want),
-    note: (payload && payload.note) || "一段轨迹 = 路径到达买入的确认收盘 → 卖出条件日。买入不是成交指令。",
+    note: (payload && payload.note) || "一段回测 = 路径到达买入的最新更新 → 卖出条件日。买入不是成交指令。",
   };
 }
 function blankFor(id) {
