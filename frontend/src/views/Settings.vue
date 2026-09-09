@@ -2,7 +2,7 @@
   <div>
     <h1>数据与设置</h1>
     <p class="sub">
-      数据源只用真实行情：日线腾讯 → 新浪 → 东财；筛池优先新浪全市场快照。不使用示例 CSV 当数据源。盘中不改写确认收盘。
+      数据源只用真实行情：日线腾讯 → 新浪 → 东财；筛池优先新浪全市场快照。不使用示例 CSV 当数据源。更新时间点在下面自选。
     </p>
     <div class="grid cols-2">
       <div class="card">
@@ -25,18 +25,33 @@
         </label>
       </div>
       <div class="card">
-        <h3>定时更新（确认收盘）</h3>
+        <h3>定时更新</h3>
         <p class="sub">{{ schedule.why }}</p>
         <label class="field">
           <span>交易日自动拉数</span>
           <select v-model="scheduleOn" @change="saveSchedule">
-            <option :value="true">开（15:40 / 16:30 北京时间）</option>
+            <option :value="true">开</option>
             <option :value="false">关</option>
           </select>
         </label>
         <p class="sub" style="margin-top:10px">下次：{{ schedule.next_run || "—" }} · 上次触发：{{ schedule.last_fired || "—" }}</p>
         <p class="sub">{{ dataLabel }} · 池子 {{ poolCount }} 只</p>
       </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3>更新时间点</h3>
+      <p class="sub">一天 24 小时，每隔半小时。可多选。工作日到点自动拉数并重扫。</p>
+      <div class="time-grid">
+        <button
+          type="button"
+          class="time-chip"
+          v-for="t in slots"
+          :key="'b'+t"
+          :class="{ on: picked.includes(t) }"
+          @click="toggleTime(t)"
+        >{{ t }}</button>
+      </div>
+      <p class="sub" style="margin-top:10px">已选 {{ pickedList }}</p>
     </div>
 
     <div class="card" style="margin-top:14px">
@@ -80,7 +95,7 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { api } from "../api";
 
 const person = ref(true);
@@ -95,7 +110,24 @@ const barsTotal = ref(0);
 const sources = ref([]);
 const schedule = ref({});
 const scheduleOn = ref(true);
+const picked = ref(["15:30", "16:30"]);
+const slots = computed(() => schedule.value.slots || defaultSlots());
+const pickedList = computed(() => [...picked.value].sort().join(" / ") || "（未选）");
 let timer = null;
+
+function defaultSlots() {
+  const out = [];
+  for (let h = 0; h < 24; h++) {
+    out.push(`${String(h).padStart(2, "0")}:00`);
+    out.push(`${String(h).padStart(2, "0")}:30`);
+  }
+  return out;
+}
+function toggleTime(t) {
+  const cur = picked.value;
+  picked.value = cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t].sort();
+  saveSchedule();
+}
 
 async function load() {
   const s = await api.settings();
@@ -106,6 +138,7 @@ async function load() {
   funnel.value = s.pool_snapshot || {};
   schedule.value = s.schedule || {};
   scheduleOn.value = schedule.value.enabled !== false;
+  picked.value = schedule.value.times && schedule.value.times.length ? [...schedule.value.times] : ["15:30", "16:30"];
   applySync(s.sync || {});
 }
 function applySync(st) {
@@ -141,8 +174,12 @@ async function save() {
   await api.saveSettings({ person_present: person.value, market_regime: regime.value });
 }
 async function saveSchedule() {
-  await api.saveSettings({ schedule_enabled: scheduleOn.value });
+  await api.saveSettings({
+    schedule_enabled: scheduleOn.value,
+    schedule_times: [...picked.value].sort(),
+  });
   schedule.value = await api.schedule();
+  picked.value = schedule.value.times && schedule.value.times.length ? [...schedule.value.times] : [...picked.value];
 }
 async function sync(force) {
   const r = await api.startSync(force);

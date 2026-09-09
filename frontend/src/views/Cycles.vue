@@ -1,8 +1,8 @@
 <template>
   <div>
-    <h1>规则轨迹</h1>
+    <h1>规则回测</h1>
     <p class="sub">
-      一段 = 买入条件日 → 卖出条件日。同一只票可多段。价格用确认收盘。买入不是成交指令。
+      一段 = 买入条件日 → 卖出条件日。与买入池同一套条件。同一只票可多段。买入不是成交指令。
     </p>
     <div class="tabs">
       <button
@@ -18,7 +18,7 @@
     <p class="sub" v-if="currentRuleset">{{ currentRuleset.file }} · {{ currentRuleset.title }}</p>
     <div class="warn-banner">{{ data.note || "收盘未变则读缓存。" }}</div>
     <div class="warn-banner" v-if="data.warming">
-      RULES2 轨迹首次回放中 {{ data.warm_done || 0 }}/{{ data.warm_total || "…" }}，请稍候，页面会自动刷新。
+      RULES2 回测首次计算中 {{ data.warm_done || 0 }}/{{ data.warm_total || "…" }}，请稍候，页面会自动刷新。
     </div>
 
     <div class="grid cols-4" style="margin-bottom:16px">
@@ -149,11 +149,11 @@ const segments = computed(() =>
 );
 const pages = computed(() => data.value.pages || 1);
 const emptyText = computed(() => {
-  if (data.value.warming) return "RULES2 轨迹首次回放中，完成后自动出现。";
+  if (data.value.warming) return "RULES2 回测首次计算中，完成后自动出现。";
   if (currentRuleset.value && !currentRuleset.value.engine_ok) {
-    return currentRuleset.value.engine_note || "本规则尚未写成扫描器，没有轨迹。";
+    return currentRuleset.value.engine_note || "本规则尚未写成扫描器，没有回测。";
   }
-  return "还没有买入到卖出的轨迹。";
+  return "还没有买入到卖出的回测段。";
 });
 
 function money(v) {
@@ -205,7 +205,7 @@ function payloadOf(id, payload) {
 }
 function switchRuleset(id) {
   page.value = 1;
-  showLoading(id === "rules2" ? "正在切换到 RULES2 轨迹…" : "正在切换规则轨迹…");
+  showLoading(id === "rules2" ? "正在切换到 RULES2 回测…" : "正在切换规则回测…");
   applyCache(id);
   router.replace({ path: "/cycles", query: { ruleset: id, tab: "all" } });
 }
@@ -231,7 +231,7 @@ async function load(silent = false) {
   const wantTab = tab.value;
   loading.value = !silent;
   if (!silent) {
-    setLoadingText(want === "rules2" ? "正在读取 RULES2 轨迹…" : "正在读取规则轨迹…");
+    setLoadingText(want === "rules2" ? "正在读取 RULES2 回测…" : "正在读取规则回测…");
   }
   try {
     const payload = await api.cycles(

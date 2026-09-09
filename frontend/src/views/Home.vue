@@ -6,8 +6,22 @@
       买入 = 路径到达，不是成交指令。
     </p>
 
-    <div class="warn-banner">{{ positionBlock }} · 人{{ personPresent ? "在场" : "不在场" }} · 大盘开关：{{ marketRegime }} · RULES 池子 {{ poolCount }} 只{{ poolDate ? "（确认收盘 " + poolDate + "）" : "" }}</div>
+    <div class="warn-banner">{{ positionBlock }} · 人{{ personPresent ? "在场" : "不在场" }} · 大盘开关：{{ marketRegime }} · RULES 池子 {{ poolCount }} 只{{ poolDate ? "（" + poolDate + "）" : "" }}</div>
     <div class="warn-banner" v-for="(r, i) in reminders" :key="i">{{ r }}</div>
+
+    <div class="card emo-hero" :class="emotion.tone" style="margin-bottom:16px" v-if="emotion.label">
+      <div class="emo-hero-left">
+        <div class="k" style="color:var(--muted)">大盘情绪（只过滤，不触发买卖）</div>
+        <div class="emo-label" style="margin-top:6px">{{ emotion.label }} · {{ Math.round(emotion.score || 0) }} 分</div>
+        <p class="sub" style="margin:8px 0 0">
+          上涨 {{ emotion.up_pct == null ? "—" : emotion.up_pct + "%" }}
+          · 涨停 {{ emotion.limit_ups ?? "—" }}
+          · 炸板率 {{ emotion.fail_pct == null ? "—" : emotion.fail_pct + "%" }}
+          · 连板高度 {{ emotion.height ?? "—" }}
+        </p>
+      </div>
+      <router-link class="btn" to="/emotions">打开情绪资金</router-link>
+    </div>
 
     <div class="card flash" style="margin-bottom:16px">
       <h2>你设置的 {{ triggeredCount }} 个观察条件已触发</h2>
@@ -151,6 +165,7 @@ const rulesets = ref([]);
 const rulesetId = ref("rules");
 const currentRuleset = computed(() => rulesets.value.find((r) => r.id === rulesetId.value) || null);
 const scanCache = {};
+const emotion = ref({});
 
 function snap(card) {
   return (card.trigger && card.trigger.snapshot) || {};
@@ -244,6 +259,9 @@ async function load() {
     rulesets.value = rs.items || [];
   }
   showScan("rules", { scan_summary: data.scan_summary, names: data.names });
+  api.emotions({}, true).then((emo) => {
+    emotion.value = (emo && emo.market) || {};
+  }).catch(() => {});
   if (want !== "rules" && rulesetId.value === want) {
     const payload = await api.scan(want).catch(() => null);
     const rid = payload && payload.ruleset && payload.ruleset.id;

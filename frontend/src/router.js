@@ -7,13 +7,15 @@ import Rules from "./views/Rules.vue";
 import Settings from "./views/Settings.vue";
 import Chart from "./views/Chart.vue";
 import Cycles from "./views/Cycles.vue";
+import Emotions from "./views/Emotions.vue";
 
 export default createRouter({
   history: createWebHistory(),
   routes: [
     { path: "/", name: "home", component: Home, meta: { title: "首页" } },
     { path: "/scan", name: "scan", component: Scan, meta: { title: "规则扫描" } },
-    { path: "/cycles", name: "cycles", component: Cycles, meta: { title: "规则轨迹" } },
+    { path: "/cycles", name: "cycles", component: Cycles, meta: { title: "规则回测" } },
+    { path: "/emotions", name: "emotions", component: Emotions, meta: { title: "情绪资金" } },
     { path: "/watch", name: "watch", component: Watch, meta: { title: "我的观察" } },
     { path: "/trades", name: "trades", component: Trades, meta: { title: "我的交易" } },
     { path: "/rules", name: "rules", component: Rules, meta: { title: "我的规则" } },

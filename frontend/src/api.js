@@ -65,6 +65,11 @@ export const api = {
   startHistory: () => request("/api/sync/history", { method: "POST" }),
   sources: () => request("/api/sources"),
   schedule: () => request("/api/schedule"),
+  emotions: (params = {}, silent = false) => {
+    const q = new URLSearchParams(params);
+    const suffix = q.toString() ? `?${q.toString()}` : "";
+    return request(`/api/emotions${suffix}`, { silent });
+  },
   ideas: () => request("/api/ideas"),
   addIdea: (body) => request("/api/ideas", { method: "POST", body }),
   seed: () => request("/api/seed", { method: "POST" }),
