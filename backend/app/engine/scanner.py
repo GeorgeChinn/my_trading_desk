@@ -312,7 +312,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         "fact_note": FACT_NOTE,
         "person_present": person_present,
         "market_regime": market_regime,
-        "position_block": "总闸「买入」只表示 RULES 第6条路径到达，不是成交指令",
+        "position_block": "总闸「买入」只表示路径到达，不是成交指令",
         "can_upgrade_position": False,
         "path_ready": False,
         "data_ok": False,
@@ -422,7 +422,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     h_line = [row.get("high") for row in bars]
     c_line = [row.get("close") for row in bars]
 
-    # 第4 技术否决 → 排除（硬闸）
+    # 否决 → 排除（硬闸）
     veto_tech: list[str] = []
     s4_unknown: list[str] = []
     if flags.get("veto_kdj_overbought", True):
@@ -451,7 +451,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         m30 = False
     if veto_tech:
         base["veto"] = veto_tech
-        base["hit_rules"].append("第4条 否决：" + "；".join(veto_tech))
+        base["hit_rules"].append("否决：" + "；".join(veto_tech))
         return base
 
     # 过池、未否决 → 观察。买入另核当日金叉 + 零轴 + 低位。
@@ -553,7 +553,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
             base["status"] = "卖出"
             base["gate"] = "卖出"
             base["summary_bucket"] = "卖出"
-            base["hit_rules"].append(f"第{section}条 卖出已见：{note}；{detail}")
+            base["hit_rules"].append(f"卖出已见（{section}）：{note}；{detail}")
         else:
             base["status"] = "买入"
             base["gate"] = "买入"

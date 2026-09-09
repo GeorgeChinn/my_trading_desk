@@ -768,7 +768,7 @@ def sync_start(force: bool = Query(False)):
 
     _sync_thread = threading.Thread(target=run, daemon=True)
     _sync_thread.start()
-    return {"ok": True, "started": True, "message": "已开始：按第3条筛全部入池股并拉取最新实时数据"}
+    return {"ok": True, "started": True, "message": "已开始：按池子筛全部入池股并拉取最新数据"}
 
 
 @app.post("/api/sync/history")

@@ -1,27 +1,5 @@
-"""RULES.md 第7条离场。7.1 失败离场优先于 7.2 波段卖出。
-
-本波 = 买入日之后（含买入当日已在红柱里）这一截由绿转红的红柱。
-前一波 = 本波开始之前最近一座已结束的红柱。不要拿更早另一轮来比。
-"""
+"""RULES.md 卖出：止损/失败优先于获利。本波 = 这次绿转红后的这一截红柱。"""
 from __future__ import annotations
-
-from ..config import HHV_LOOKBACK, KDJ_HIGH
-
-
-def _recent(series: list, n: int, skip_last: int = 0):
-    end = len(series) - skip_last
-    start = max(0, end - n)
-    return [item for item in series[start:end] if item is not None]
-
-
-def _cross_down(fast: list, slow: list) -> bool:
-    if len(fast) < 2 or len(slow) < 2:
-        return False
-    a0, a1 = fast[-2], fast[-1]
-    b0, b1 = slow[-2], slow[-1]
-    if None in (a0, a1, b0, b1):
-        return False
-    return a0 >= b0 and a1 < b1
 
 
 def red_wave_spans(hist: list) -> list[dict]:
@@ -68,12 +46,12 @@ def fail_broken_lows(bars: list[dict], entry_idx: int) -> tuple[bool, str]:
     entry_low = entry.get("low")
     if entry_close is not None:
         stop = entry_close * 0.97
-        if close < stop:
-            return True, f"最新价 {close:.2f} 跌破买入日最新价×0.97（{stop:.2f}，3%止损）"
+        if close <= stop:
+            return True, f"止损：最新价 {close:.2f} ≤ 买入价×0.97（{stop:.2f}）"
     if entry_low is not None and len(bars) - 1 >= entry_idx + 2:
         c0 = bars[-2].get("close")
         if c0 is not None and c0 < entry_low and close < entry_low:
-            return True, f"连续 2 日最新价低于买入日最低价 {entry_low:.2f}"
+            return True, f"失败：连续 2 个更新日最新价低于买入日最低价 {entry_low:.2f}"
     return False, ""
 
 
@@ -92,33 +70,44 @@ def fail_hist_5d(hist: list, entry_idx: int) -> tuple[bool, str]:
     return False, ""
 
 
-def section72_wave(hist: list, entry_idx: int) -> tuple[bool, str]:
-    this, prev = this_and_prev_wave(hist, entry_idx)
-    if this is None or prev is None:
-        return False, "本波或前一波红柱不足，不拿更早另一轮比"
-    if this["peak"] < prev["peak"]:
-        return True, f"本波红柱 {this['peak']:.4f} < 前一波 {prev['peak']:.4f}"
-    return False, f"本波红柱 {this['peak']:.4f} 尚未小于前一波 {prev['peak']:.4f}"
-
-
-def section72_kdj(s: dict) -> tuple[bool, str]:
-    k_line, d_line, j_line = s["k"], s["d"], s["j"]
-    kd_dead = _cross_down(k_line, d_line)
-    k0, d0 = k_line[-1], d_line[-1]
-    kd_high = k0 is not None and d0 is not None and min(k0, d0) >= KDJ_HIGH
-    j_prev = _recent(j_line, 20, skip_last=1)
-    kdj_not_new_high = bool(j_prev) and j_line[-1] is not None and j_line[-1] < max(j_prev)
-    if kd_dead and kd_high:
-        return True, f"K/D 在 {KDJ_HIGH:.0f} 以上死叉"
-    if kdj_not_new_high:
-        return True, "KDJ 不创新高"
-    return False, "KDJ 未见高位死叉，也未见不创新高"
+def take_profit(s: dict, entry_idx: int) -> tuple[bool, str]:
+    """获利：已浮盈、本波已转红，且相邻两拍红柱从陡缩短到平（|s1|≤0.4|s0|）。"""
+    bars = s.get("bars") or []
+    hist = s.get("hist") or []
+    last = s.get("last") or (bars[-1] if bars else None)
+    if not bars or not last or entry_idx is None or entry_idx < 0 or entry_idx >= len(bars):
+        return False, ""
+    entry_close = bars[entry_idx].get("close")
+    close = last.get("close")
+    if entry_close is None or close is None or close <= entry_close:
+        return False, ""
+    if len(hist) < 3:
+        return False, ""
+    hm2, hm1, h1 = hist[-3], hist[-2], hist[-1]
+    if None in (hm2, hm1, h1) or h1 <= 0:
+        return False, ""
+    this, _ = this_and_prev_wave(hist, entry_idx)
+    if this is None:
+        return False, ""
+    s0 = hm1 - hm2
+    s1 = h1 - hm1
+    if not (s0 < 0 and s1 < 0):
+        return False, ""
+    if abs(s1) > 0.4 * abs(s0) + 1e-12:
+        return False, ""
+    return (
+        True,
+        (
+            f"获利·平缓见顶：最新价 {close:.2f} > 买入价 {entry_close:.2f}；"
+            f"本波红柱 H={h1:.4f}；s0={s0:.4f}、s1={s1:.4f}（|s1|≤0.4|s0|）"
+        ),
+    )
 
 
 def evaluate_exit(s: dict, entry_idx: int) -> tuple[bool, str, str]:
-    """Return (hit, section, detail). section is 7.1 / 7.2 / ''."""
+    """Return (hit, kind, detail). kind: 止损 / 失败 / 获利。止损、失败优先于获利。"""
     bars = s.get("bars") or []
-    last, prev = s.get("last"), s.get("prev")
+    last = s.get("last")
     if not bars or not last or entry_idx is None or entry_idx < 0:
         return False, "", ""
     if len(bars) - 1 <= entry_idx:
@@ -126,8 +115,12 @@ def evaluate_exit(s: dict, entry_idx: int) -> tuple[bool, str, str]:
 
     broken, why = fail_broken_lows(bars, entry_idx)
     if broken:
-        return True, "7.1", why
+        kind = "止损" if "止损" in why else "失败"
+        return True, kind, why
     hist_fail, why = fail_hist_5d(s["hist"], entry_idx)
     if hist_fail:
-        return True, "7.1", why
+        return True, "失败", why
+    profit, why = take_profit(s, entry_idx)
+    if profit:
+        return True, "获利", why
     return False, "", ""

@@ -181,12 +181,16 @@ def _cycle_stats(
     pnl_ps = round(exit_px - entry_px, 4)
     if closed:
         result = "盈利" if ret > 0 else ("亏损" if ret < 0 else "持平")
-        if exit_section == "7.1":
-            result = f"{result} · 第7条 失败离场"
-        elif exit_section == "7.2":
-            result = f"{result} · 第7条 高潮离场"
-        elif exit_section == "7.3":
-            result = f"{result} · 第7条 备用离场"
+        exit_label = {
+            "止损": "止损",
+            "失败": "失败离场",
+            "获利": "获利卖",
+            "7.1": "止损",
+            "7.1b": "连续跌破均线",
+            "7.2": "高潮卖",
+        }.get(exit_section)
+        if exit_label:
+            result = f"{result} · {exit_label}"
         status = "已结束"
     else:
         result = "浮动"

@@ -552,7 +552,7 @@ def classify_s1(
             base["status"] = "卖出"
             base["gate"] = "卖出"
             base["summary_bucket"] = "卖出"
-            base["hit_rules"].append(f"第{section}条 卖出已见：{detail}")
+            base["hit_rules"].append(f"卖出已见（{section}）：{detail}")
     return base
 
 
