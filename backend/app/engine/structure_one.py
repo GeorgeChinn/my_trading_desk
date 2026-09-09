@@ -1,6 +1,8 @@
 """RULES2 回调后的重新启动. Independent of RULES.md low-golden engine."""
 from __future__ import annotations
 
+import re
+
 from ..config import CSV_DIR, DATA_DIR, GATES, POOL_MIN_PRICE
 from ..store import load_quotes, load_universe, read_json
 from .bars import bar_amount, load_bars, peek_last_bar, ts_code
@@ -13,6 +15,27 @@ YI = 100_000_000.0
 MIN_FLOAT_YI = 80.0
 INDUSTRY_MAP_PATH = DATA_DIR / "industry_map.json"
 MISSING_NO_BUY = "缺数据，不升买入"
+_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+
+
+def _strip_html_comments(text: str) -> str:
+    return _HTML_COMMENT.sub("", text or "")
+
+
+def need_mainline(text: str | None = None) -> bool:
+    """RULES2 正文里若把「## 主线」整段注释掉，主线不作闸。"""
+    raw = text
+    if raw is None:
+        from .rulesets import get_ruleset
+
+        rs = get_ruleset("rules2")
+        raw = (rs or {}).get("text") or ""
+    body = _strip_html_comments(raw)
+    for line in body.splitlines():
+        s = line.strip()
+        if s.startswith("## ") and "主线" in s:
+            return True
+    return False
 
 
 def _vol(row: dict) -> float:
@@ -314,6 +337,7 @@ def classify_s1(
     market_3d: float | None,
     structure_only: bool = False,
     board_daily: dict | None = None,
+    require_mainline: bool | None = None,
 ) -> dict:
     code = ts_code(str(meta.get("code") or ""))
     name = meta.get("name") or code
@@ -378,9 +402,6 @@ def classify_s1(
             base["missing_rules"].append(f"池子：成交额 {amt / YI:.2f} 亿 < 1 亿")
             return base
         base["facts"]["amount_yi"] = round(amt / YI, 2)
-        if not industry:
-            base["missing_rules"].append("主线：无申万二级/一级归属")
-            return base
         if pe is None:
             base["missing_rules"].append("池子：市盈证据不足")
             return base
@@ -426,9 +447,14 @@ def classify_s1(
         base["veto"] = ["回踩不缩量（回调日均量未≤先强×0.7）"]
         return base
 
-    if not structure_only:
+    if require_mainline is None:
+        require_mainline = need_mainline()
+    if not structure_only and require_mainline:
         from .boards import board_snapshot, load_board_daily, mainline_check
 
+        if not industry:
+            base["missing_rules"].append("主线：无申万二级/一级归属")
+            return base
         daily = board_daily if board_daily and board_daily.get("boards") else load_board_daily()
         asof = str(last.get("date") or "")
         snap = board_snapshot(daily, industry, asof) if daily else {}
@@ -636,7 +662,7 @@ def evaluate_exit_s1(bars: list[dict], open_trade: dict | None, zone: dict | Non
 
 
 def is_buy_s1(bars: list[dict], ctx: dict | None = None) -> bool:
-    """与规则扫描同一套买入：池子 + 主线 + 结构 + 量转强。回测不得比买入池更松。"""
+    """与规则扫描同一套买入：池子 + 结构 + 量转强（主线仅当 RULES2 正文启用时才闸）。"""
     if not bars:
         return False
     ctx = ctx or {}
@@ -655,6 +681,9 @@ def is_buy_s1(bars: list[dict], ctx: dict | None = None) -> bool:
         "pe": ctx.get("pe"),
         "float_mcap_yi": ctx.get("float_mcap_yi"),
     }
+    want_ml = ctx.get("require_mainline")
+    if want_ml is None:
+        want_ml = need_mainline()
     row = classify_s1(
         meta,
         {"person_present": True},
@@ -663,6 +692,7 @@ def is_buy_s1(bars: list[dict], ctx: dict | None = None) -> bool:
         ctx.get("market_3d"),
         structure_only=False,
         board_daily=ctx.get("board_daily"),
+        require_mainline=bool(want_ml),
     )
     return row.get("status") == "买入"
 
@@ -688,12 +718,18 @@ def classify_one_s1(code: str, settings: dict, trades: list | None = None) -> di
     industry = imap.get(code) or (uni.get(code) or {}).get("industry")
     meta = dict(uni.get(code) or {})
     meta.update({"code": code, "name": name, "bars": bars, "industry": industry})
-    from .boards import build_board_daily, hs300_ret_nd
+    want_ml = need_mainline()
+    daily = None
+    market_3d = None
+    if want_ml:
+        from .boards import build_board_daily, hs300_ret_nd
 
-    daily = build_board_daily()
-    asof = str((bars[-1] or {}).get("date") or daily.get("asof") or "")
-    market_3d = hs300_ret_nd(daily, asof, 3) if asof else None
-    return classify_s1(meta, settings, trades, {}, market_3d, board_daily=daily)
+        daily = build_board_daily()
+        asof = str((bars[-1] or {}).get("date") or daily.get("asof") or "")
+        market_3d = hs300_ret_nd(daily, asof, 3) if asof else None
+    return classify_s1(
+        meta, settings, trades, {}, market_3d, board_daily=daily, require_mainline=want_ml
+    )
 
 
 def list_s1_cycle_universe() -> list[dict]:
@@ -737,8 +773,6 @@ def list_s1_pool() -> list[dict]:
         if amt is not None and amt < YI:
             continue
         industry = imap.get(code) or (uni.get(code) or {}).get("industry")
-        if not industry:
-            continue
         bars = load_bars(code, last_n=80)
         if len(bars) < 25:
             continue
@@ -798,23 +832,33 @@ def board_funnel(industry_stats: dict, market_3d: float | None) -> list[dict]:
 
 
 def scan_structure_one(settings: dict, trades: list | None = None) -> list[dict]:
-    from .boards import board_funnel_today, build_board_daily, hs300_ret_nd
     from .eastmoney import ensure_quotes
 
     ensure_quotes()
+    want_ml = need_mainline()
     cands = list_s1_pool()
-    daily = build_board_daily()
-    asof = str(daily.get("asof") or "")
-    market_3d = hs300_ret_nd(daily, asof, 3) if asof else None
-    funnel = board_funnel_today(daily, asof)
+    daily = None
+    market_3d = None
+    funnel: list[dict] = []
+    if want_ml:
+        from .boards import board_funnel_today, build_board_daily, hs300_ret_nd
+
+        daily = build_board_daily()
+        asof = str(daily.get("asof") or "")
+        market_3d = hs300_ret_nd(daily, asof, 3) if asof else None
+        funnel = board_funnel_today(daily, asof)
     scan_structure_one.funnel = funnel
+    scan_structure_one.mainline = want_ml
     scan_structure_one.market = {
         "name": "沪深300",
         "ret_3d_pct": None if market_3d is None else round(market_3d, 2),
     }
     scan_structure_one.board_daily = daily
     rows = [
-        classify_s1(item, settings, trades, {}, market_3d, board_daily=daily) for item in cands
+        classify_s1(
+            item, settings, trades, {}, market_3d, board_daily=daily, require_mainline=want_ml
+        )
+        for item in cands
     ]
     order = {name: i for i, name in enumerate(GATES)}
     rows.sort(key=lambda item: (order.get(item["status"], 9), item.get("industry") or "", item["code"]))

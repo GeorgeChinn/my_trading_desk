@@ -372,26 +372,28 @@ def scan(ruleset: str = Query("rules")):
     reminders = funnel_reminders(load_settings()) + list(bind.get("unimplemented") or [])
     if not rs.get("engine_ok"):
         reminders = [rs["engine_note"]] + reminders
-    if rs.get("engine") == "pullback_restart":
-        from .engine.structure_one import _load_industry_map
-
-        if len(_load_industry_map()) < 100:
-            reminders.append("第3条 底池：板块归属表为空或过少。请到数据与设置刷新板块后再扫 RULES2。")
-    buy_n = (tallied.get("by_gate") or {}).get("买入") or 0
     pullback = rs.get("engine") == "pullback_restart"
+    from .engine.structure_one import need_mainline
+
+    want_ml = bool(pullback and need_mainline(rs.get("text") or ""))
+    buy_n = (tallied.get("by_gate") or {}).get("买入") or 0
     if buy_n > 1 and pullback:
-        reminders.append(f"第6条 / 第8条：买入池 {buy_n} 只。开几只由人定，扫描不把其余票打回观察。买入不是成交指令。")
+        reminders.append(f"买入池 {buy_n} 只。开几只由人定，扫描不把其余票打回观察。买入不是成交指令。")
     elif buy_n > 1 and not pullback:
-        reminders.append(f"第6条 / 第8条：买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
+        reminders.append(f"买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
     pool_count = len(rows) if pullback else len(load_universe())
     pool_note = (
-        "RULES2：先主线（申万二级 vs 沪深300 + 涨停），再在过关板块里挑个股。"
-        if pullback
-        else "PROFILE 同时跟踪 100 只。下列按当前规则全量列出，不截断。"
+        "RULES2：池子 + 结构。主线已注释，不参与筛选。"
+        if pullback and not want_ml
+        else (
+            "RULES2：先主线（申万二级 vs 沪深300 + 涨停），再在过关板块里挑个股。"
+            if pullback
+            else "PROFILE 同时跟踪 100 只。下列按当前规则全量列出，不截断。"
+        )
     )
     boards = []
     market = None
-    if pullback:
+    if pullback and want_ml:
         from .engine.structure_one import scan_structure_one as s1_scan
 
         boards = list(getattr(s1_scan, "funnel", None) or [])
@@ -403,6 +405,7 @@ def scan(ruleset: str = Query("rules")):
         **tallied,
         "grouped": grouped,
         "boards": boards,
+        "mainline": want_ml,
         "market": market,
         "position_block": "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令。",
         "reminders": reminders,

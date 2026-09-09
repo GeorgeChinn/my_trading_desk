@@ -28,7 +28,7 @@
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:14px" v-if="isPullback">
+    <div class="card" style="margin-bottom:14px" v-if="isPullback && data.mainline">
       <div class="ov-title">
         主线
         <span>过关 {{ passedBoards.length }} / {{ boards.length }} · 沪深300 近3日 {{ pct(marketRet) }}</span>

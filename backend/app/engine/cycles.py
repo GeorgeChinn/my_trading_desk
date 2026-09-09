@@ -93,8 +93,10 @@ def is_exit_signal(s: dict, entry_idx: int | None = None) -> bool:
 
 
 def walk_cycles_s1(bars: list[dict], ctx: dict | None = None) -> tuple[list[dict], dict | None]:
-    from .structure_one import _choose_kind, _key_zone, evaluate_exit_s1, find_structure, is_buy_s1
+    from .structure_one import _choose_kind, _key_zone, evaluate_exit_s1, find_structure, is_buy_s1, need_mainline
 
+    ctx = dict(ctx or {})
+    ctx.setdefault("require_mainline", need_mainline())
     if len(bars) < 30:
         return [], None
     n = len(bars)
@@ -497,14 +499,18 @@ def _cycles_page_s1(
     page_size: int,
     warm: bool,
 ) -> dict:
-    from .boards import build_board_daily
-    from .structure_one import _load_industry_map, list_s1_cycle_universe
+    from .structure_one import _load_industry_map, list_s1_cycle_universe, need_mainline
     from ..store import load_quotes
 
-    daily = build_board_daily()
+    want_ml = need_mainline()
+    daily = None
+    if want_ml:
+        from .boards import build_board_daily
+
+        daily = build_board_daily()
     quotes = load_quotes()
     imap = _load_industry_map()
-    warm_ctx = {"board_daily": daily}
+    warm_ctx = {"board_daily": daily, "require_mainline": want_ml}
 
     path = _cache_path(ruleset_id)
     store = read_json(path, {}) if path.exists() else {}
@@ -748,12 +754,20 @@ def cycles_for_stock(code: str, name: str, ruleset: dict | None) -> dict:
     last_n = 0 if engine == "pullback_restart" else None
     ctx = None
     if engine == "pullback_restart":
-        from .boards import build_board_daily, industry_of
+        from .structure_one import need_mainline
+        from .boards import industry_of
         from ..store import load_quotes
 
+        want_ml = need_mainline((ruleset or {}).get("text"))
+        daily = None
+        if want_ml:
+            from .boards import build_board_daily
+
+            daily = build_board_daily()
         q = (load_quotes() or {}).get(ts_code(code)) or {}
         ctx = {
-            "board_daily": build_board_daily(),
+            "board_daily": daily,
+            "require_mainline": want_ml,
             "industry": industry_of(code),
             "pe": q.get("pe"),
             "float_mcap_yi": q.get("float_mcap_yi"),
@@ -793,11 +807,18 @@ def cycles_for_pool(items: list[dict], ruleset: dict | None) -> dict:
     last_n = 0 if engine == "pullback_restart" else None
     ctx_base = None
     if engine == "pullback_restart":
-        from .boards import build_board_daily, industry_of
+        from .structure_one import need_mainline
+        from .boards import industry_of
         from ..store import load_quotes
 
+        want_ml = need_mainline((ruleset or {}).get("text"))
+        daily = None
+        if want_ml:
+            from .boards import build_board_daily
+
+            daily = build_board_daily()
         quotes = load_quotes() or {}
-        ctx_base = {"board_daily": build_board_daily()}
+        ctx_base = {"board_daily": daily, "require_mainline": want_ml}
     segments: list[dict] = []
     for item in items or []:
         code = ts_code(str((item or {}).get("code") or ""))
