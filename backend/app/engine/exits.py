@@ -76,10 +76,7 @@ def fail_broken_lows(bars: list[dict], entry_idx: int) -> tuple[bool, str]:
 
 
 def fail_hist_5d(hist: list, entry_idx: int) -> tuple[bool, str]:
-    """第7.1条：金叉后 5 日内从未转红，或转红后本波红柱峰值未超过转红前最后一根绿柱绝对值。
-
-    两个子句都在金叉后满 5 个交易日再判。未满 5 日不因首根小红柱提前失败。
-    """
+    """金叉后 5 日内从未转红 → 当天走。"""
     last = len(hist) - 1
     if last <= entry_idx:
         return False, ""
@@ -90,25 +87,6 @@ def fail_hist_5d(hist: list, entry_idx: int) -> tuple[bool, str]:
     reds = [h for h in after if h is not None and h > 0]
     if not reds:
         return True, "金叉后 5 个交易日内从未转红"
-    first_red_i = None
-    for i, h in enumerate(after):
-        if h is not None and h > 0:
-            first_red_i = entry_idx + i
-            break
-    if first_red_i is None:
-        return True, "金叉后 5 个交易日内从未转红"
-    last_green = None
-    for j in range(first_red_i - 1, -1, -1):
-        h = hist[j]
-        if h is not None and h < 0:
-            last_green = abs(h)
-            break
-    if last_green is None:
-        return False, ""
-    this, _ = this_and_prev_wave(hist, first_red_i)
-    peak = this["peak"] if this else max(reds)
-    if peak <= last_green + 1e-12:
-        return True, f"转红后本波红柱峰值 {peak:.4f} 未超过转红前绿柱 {last_green:.4f}"
     return False, ""
 
 
@@ -150,23 +128,4 @@ def evaluate_exit(s: dict, entry_idx: int) -> tuple[bool, str, str]:
     hist_fail, why = fail_hist_5d(s["hist"], entry_idx)
     if hist_fail:
         return True, "7.1", why
-
-    if not prev or last.get("dif") is None or prev.get("dif") is None:
-        return False, "", ""
-    wave_ok, wave_detail = section72_wave(s["hist"], entry_idx)
-    dif_down = last["dif"] < prev["dif"]
-    hhv_win = _recent(s["h"], HHV_LOOKBACK) or [last.get("high")]
-    hhv = max(hhv_win)
-    new_high = last.get("high") is not None and last["high"] >= hhv
-    kdj_ok, kdj_detail = section72_kdj(s)
-    if wave_ok and dif_down and new_high and kdj_ok:
-        detail = "；".join(
-            [
-                wave_detail,
-                f"DIF 下行 {last['dif']:.4f} < {prev['dif']:.4f}",
-                f"股价创近{HHV_LOOKBACK}日新高",
-                kdj_detail,
-            ]
-        )
-        return True, "7.2", detail
     return False, "", ""

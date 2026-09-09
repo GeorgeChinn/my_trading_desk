@@ -25,7 +25,7 @@ from .config import (
     ensure_dirs,
 )
 from .engine.bars import attach_indicators, list_csv_files, load_bars, ts_code
-from .engine.clock import asof_date
+from .engine.clock import asof_date, half_hour_slots, normalize_times
 from .engine.cycles import cycles_for_pool, cycles_for_stock, cycles_page
 from .engine.history import backfill_all_ashare
 from .engine.live import pull_one, sync_live
@@ -131,6 +131,7 @@ class SettingsIn(BaseModel):
     market_regime: str | None = None
     tushare_token: str | None = None
     schedule_enabled: bool | None = None
+    schedule_times: list[str] | None = None
 
 
 class PullIn(BaseModel):
@@ -158,6 +159,18 @@ def _refreshed_watches() -> list[dict]:
     out = [refresh_watch(item, uni, settings) for item in items]
     save_watches(out)
     return out
+
+
+def _engine_token() -> str:
+    import hashlib
+
+    here = Path(__file__).resolve().parent / "engine"
+    parts = []
+    for name in ("scanner.py", "structure_one.py", "exits.py", "boards.py", "cycles.py"):
+        path = here / name
+        if path.exists():
+            parts.append(path.read_bytes())
+    return hashlib.sha256(b"".join(parts)).hexdigest()[:12]
 
 
 def _scan_cache_path(ruleset_id: str):
@@ -202,7 +215,7 @@ def _scan_bundle(ruleset_id: str | None = None):
     settings = load_settings()
     trades = load_trades()
     asof = asof_date(settings.get("last_trade_date") or "")
-    token = f"{bind.get('rules_hash')}:{asof}:{rs.get('engine')}:{len(trades)}:session"
+    token = f"{bind.get('rules_hash')}:{asof}:{rs.get('engine')}:{len(trades)}:session:{_engine_token()}"
     cache_path = _scan_cache_path(rs["id"])
     cached = read_json(cache_path, {}) if cache_path.exists() else {}
     if (
@@ -372,7 +385,7 @@ def scan(ruleset: str = Query("rules")):
         reminders.append(f"第6条 / 第8条：买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
     pool_count = len(rows) if pullback else len(load_universe())
     pool_note = (
-        "RULES2：先第3.2条筛板块（近3日≥沪深300且非最弱），再在过关板块里挑个股。"
+        "RULES2：先主线（申万二级 vs 沪深300 + 涨停），再在过关板块里挑个股。"
         if pullback
         else "PROFILE 同时跟踪 100 只。下列按当前规则全量列出，不截断。"
     )
@@ -384,7 +397,7 @@ def scan(ruleset: str = Query("rules")):
         boards = list(getattr(s1_scan, "funnel", None) or [])
         market = getattr(s1_scan, "market", None)
         passed_n = sum(1 for b in boards if b.get("pass"))
-        reminders.append(f"第3.2条 主线：过关 {passed_n} / {len(boards)} 个申万一级。不弱即可；转弱则整组出池。")
+        reminders.append(f"主线：过关 {passed_n} / {len(boards)} 个申万二级（缺则一级）。先强段内相对沪深300+3pct且累计涨停≥6；买入日近3日≥沪深300且至少1只涨停。")
     return {
         "rows": rows,
         **tallied,
@@ -690,6 +703,8 @@ def settings_put(payload: SettingsIn):
     patch = {k: v for k, v in payload.model_dump().items() if v is not None}
     if patch.get("market_regime") not in (None, "多", "空", "震荡", "未设置"):
         raise HTTPException(400, "市况只接受：多 / 空 / 震荡 / 未设置")
+    if "schedule_times" in patch and patch["schedule_times"] is not None:
+        patch["schedule_times"] = list(normalize_times(patch["schedule_times"]))
     saved = save_settings(patch)
     return settings_get() if saved else settings_get()
 
@@ -803,7 +818,25 @@ def sources_probe():
 
 @app.get("/api/schedule")
 def schedule_get():
-    return schedule_snapshot()
+    snap = schedule_snapshot()
+    snap["slots"] = half_hour_slots()
+    return snap
+
+
+@app.get("/api/emotions")
+def emotions_get(code: str = Query(""), refresh: bool = Query(False)):
+    from .engine.emotions import build_emotions, load_emotions, stock_emotion
+
+    if refresh:
+        payload = build_emotions(force=True)
+    else:
+        payload = load_emotions()
+        if not payload.get("market"):
+            payload = build_emotions(force=False)
+    if (code or "").strip():
+        payload = dict(payload)
+        payload["stock"] = stock_emotion(code)
+    return payload
 
 
 @app.post("/api/seed")

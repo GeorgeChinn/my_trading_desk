@@ -278,7 +278,7 @@ def fetch_industry_boards() -> list[dict]:
                         "invt": 2,
                         "fid": "f3",
                         "fs": "m:90+t:2",
-                        "fields": "f12,f14,f3,f127",
+                        "fields": "f12,f14,f3,f104,f105,f127",
                     },
                     timeout=15,
                 )
@@ -294,7 +294,31 @@ def fetch_industry_boards() -> list[dict]:
                         ret_f = float(ret) if ret not in (None, "-", "") else None
                     except (TypeError, ValueError):
                         ret_f = None
-                    out.append({"code": str(rec.get("f12") or ""), "name": name, "ret_3d_pct": ret_f})
+                    up = rec.get("f104")
+                    down = rec.get("f105")
+                    chg = rec.get("f3")
+                    try:
+                        up_n = int(up) if up not in (None, "-", "") else None
+                    except (TypeError, ValueError):
+                        up_n = None
+                    try:
+                        down_n = int(down) if down not in (None, "-", "") else None
+                    except (TypeError, ValueError):
+                        down_n = None
+                    try:
+                        chg_f = float(chg) if chg not in (None, "-", "") else None
+                    except (TypeError, ValueError):
+                        chg_f = None
+                    out.append(
+                        {
+                            "code": str(rec.get("f12") or ""),
+                            "name": name,
+                            "ret_3d_pct": ret_f,
+                            "ret_1d_pct": chg_f,
+                            "up_n": up_n,
+                            "down_n": down_n,
+                        }
+                    )
                 if len(chunk) < 40:
                     break
                 page += 1
@@ -307,14 +331,15 @@ def fetch_industry_boards() -> list[dict]:
     return out
 
 
-def fetch_sina_industry_map() -> dict[str, str]:
-    """code -> 申万一级（优先）/ 申万二级 / 新浪行业. RULES2 底池认申万归属。"""
+def fetch_sina_industry_map() -> dict:
+    """code -> 申万二级优先，否则一级 / 新浪行业。返回 {codes, sw1, sw2}。"""
     sess = _session()
     try:
         payload = _get_json(sess, "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodes", {}, timeout=20)
     except Exception:
         return {}
     sw1: list[tuple[str, str]] = []
+    sw2: list[tuple[str, str]] = []
     sina: list[tuple[str, str]] = []
 
     def walk(node, path):
@@ -327,6 +352,7 @@ def fetch_sina_industry_map() -> dict[str, str]:
                 sw1.append((node[0], nid))
                 return
             if nid.startswith("sw2_") and parent == "申万二级":
+                sw2.append((node[0], nid))
                 return
             if nid.startswith("new_") and parent == "新浪行业":
                 sina.append((node[0], nid))
@@ -338,8 +364,10 @@ def fetch_sina_industry_map() -> dict[str, str]:
 
     walk(payload, [])
     mapping: dict[str, str] = {}
+    map_sw1: dict[str, str] = {}
+    map_sw2: dict[str, str] = {}
 
-    def fill(nodes: list[tuple[str, str]], overwrite: bool = False) -> None:
+    def fill(nodes: list[tuple[str, str]], target: dict[str, str], overwrite: bool = False) -> None:
         for name, node_id in nodes:
             try:
                 rows = fetch_node(sess, node_id, page_size=80)
@@ -347,13 +375,18 @@ def fetch_sina_industry_map() -> dict[str, str]:
                 continue
             for rec in rows:
                 code = ts_code(str(rec.get("code") or rec.get("symbol") or ""))
-                if code and (overwrite or code not in mapping):
-                    mapping[code] = name
+                if code and (overwrite or code not in target):
+                    target[code] = name
             time.sleep(0.04)
 
-    fill(sw1, overwrite=True)
-    fill(sina, overwrite=False)
-    return mapping
+    fill(sw1, map_sw1, overwrite=True)
+    fill(sw2, map_sw2, overwrite=True)
+    fill(sina, mapping, overwrite=False)
+    for code, name in map_sw1.items():
+        mapping.setdefault(code, name)
+    for code, name in map_sw2.items():
+        mapping[code] = name
+    return {"codes": mapping, "sw1": map_sw1, "sw2": map_sw2}
 
 
 def fetch_stock_industry(code: str) -> str | None:
@@ -374,6 +407,54 @@ def fetch_stock_industry(code: str) -> str | None:
     if isinstance(name, str) and name and name not in ("-", "None"):
         return name
     return None
+
+
+def _em_pool(url: str, date: str) -> list[dict]:
+    sess = _session()
+    sess.headers["Referer"] = "https://quote.eastmoney.com/"
+    ymd = str(date or "").replace("-", "")[:8]
+    try:
+        payload = _get_json(
+            sess,
+            url,
+            {
+                "ut": "7eea3edcaed734bea9cbfc24409ed989",
+                "dpt": "wz.ztzt",
+                "Pageindex": 0,
+                "pagesize": 200,
+                "sort": "fbt:asc",
+                "date": ymd,
+            },
+            timeout=15,
+        )
+    except Exception:
+        return []
+    rows = ((payload or {}).get("data") or {}).get("pool") or []
+    out = []
+    for rec in rows:
+        if not isinstance(rec, dict):
+            continue
+        code = ts_code(str(rec.get("c") or rec.get("code") or ""))
+        if not code:
+            continue
+        out.append(
+            {
+                "code": code,
+                "name": str(rec.get("n") or rec.get("name") or code),
+                "lbc": rec.get("lbc") or rec.get("height") or 0,
+                "zbc": rec.get("zbc") or rec.get("zbtimes") or 0,
+                "industry": rec.get("hybk") or rec.get("industry") or "",
+            }
+        )
+    return out
+
+
+def fetch_limit_pool(date: str) -> list[dict]:
+    return _em_pool("https://push2ex.eastmoney.com/getTopicZTPool", date)
+
+
+def fetch_fail_pool(date: str) -> list[dict]:
+    return _em_pool("https://push2ex.eastmoney.com/getTopicZBPool", date)
 
 
 KLINE_CHAIN = (
@@ -493,13 +574,31 @@ def quotes_from_spot(spot: list[dict]) -> dict:
         float_mcap_yi = nmc / 10_000.0 if nmc is not None and nmc > 0 else None
         if pe is not None and pe != pe:
             pe = None
+        close = _num(rec, "trade")
+        preclose = _num(rec, "settlement", "pretrade", "preclose")
+        high = _num(rec, "high")
+        low = _num(rec, "low")
+        open_px = _num(rec, "open")
+        pct = _num(rec, "changepercent", "pct")
+        turnover = _num(rec, "turnoverratio", "turnover")
+        amp = None
+        if high is not None and low is not None and preclose:
+            amp = (high - low) / preclose * 100.0
         codes[code] = {
+            "code": code,
             "name": str(rec.get("name") or code),
             "pe": _round_or_none(pe),
             "amount": amount if amount is not None and amount > 0 else None,
             "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
             "float_mcap_yi": round(float_mcap_yi, 2) if float_mcap_yi is not None else None,
-            "close": _num(rec, "trade"),
+            "close": close,
+            "open": open_px,
+            "high": high,
+            "low": low,
+            "preclose": preclose,
+            "pct": _round_or_none(pct, 3),
+            "turnover": _round_or_none(turnover, 3),
+            "amplitude": _round_or_none(amp, 3),
             "trade_date": asof,
         }
     return {"trade_date": asof, "source": "sina", "codes": codes}
@@ -628,15 +727,17 @@ def pull_history(pool: list[dict], log=None, progress=None) -> dict:
         code = item["code"]
         existing = load_bars(code)
         expect = expected_close_date().isoformat()
-        if existing and len(existing) >= 40 and existing[-1]["date"] >= expect:
+        last_date = existing[-1]["date"] if existing else ""
+        if existing and len(existing) >= 40 and last_date > expect:
             skip += 1
             if progress:
                 progress(i, total)
             continue
+        refresh_only = bool(existing and len(existing) >= 40 and last_date >= expect)
         try:
-            rows, used = fetch_kline_with_source(code, limit=180)
+            rows, used = fetch_kline_with_source(code, limit=8 if refresh_only else 180)
             item["bar_source"] = used
-            time.sleep(0.05)
+            time.sleep(0.04)
         except Exception as exc:
             fail += 1
             talk(f"{code} 日线失败：{exc}")
@@ -644,6 +745,24 @@ def pull_history(pool: list[dict], log=None, progress=None) -> dict:
                 progress(i, total)
             continue
         rows = [r for r in rows if not is_weekend_date(r.get("date"))]
+        if not rows:
+            fail += 1
+            if progress:
+                progress(i, total)
+            continue
+        if refresh_only:
+            by_date = {str(r.get("date"))[:10]: dict(r) for r in existing}
+            for row in rows:
+                d = str(row.get("date") or "")[:10]
+                if d:
+                    by_date[d] = dict(row)
+            merged = [by_date[k] for k in sorted(by_date)]
+            save_bars_csv(code, merged, name=item.get("name"))
+            last_dates.append(merged[-1]["date"])
+            ok += 1
+            if progress:
+                progress(i, total)
+            continue
         if len(rows) < 40:
             fail += 1
             if progress:

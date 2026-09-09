@@ -28,7 +28,7 @@ DEFAULT_SETTINGS = {
     "data_source": "",
     "last_trade_date": "",
     "schedule_enabled": True,
-    "schedule_times": ["15:40", "16:30"],
+    "schedule_times": ["15:30", "16:30"],
     "schedule_last_fired": "",
 }
 

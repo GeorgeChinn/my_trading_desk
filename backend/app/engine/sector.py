@@ -70,14 +70,29 @@ def refresh_sector_snap(pool: list[dict], log=None) -> dict:
     boards = fetch_industry_boards()
     talk(f"行业板块 {len(boards)} 条")
 
-    industry_map = fetch_sina_industry_map()
-    talk(f"新浪行业归属 {len(industry_map)} 只")
-    write_json(DATA_DIR / "industry_map.json", {"codes": industry_map, "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+    blob = fetch_sina_industry_map()
+    if isinstance(blob, dict) and "codes" in blob:
+        industry_map = blob.get("codes") or {}
+        sw1 = blob.get("sw1") or {}
+        sw2 = blob.get("sw2") or {}
+    else:
+        industry_map = blob if isinstance(blob, dict) else {}
+        sw1, sw2 = {}, {}
+    talk(f"新浪行业归属 {len(industry_map)} 只 · 申万一级 {len(sw1)} · 申万二级 {len(sw2)}")
+    write_json(
+        DATA_DIR / "industry_map.json",
+        {
+            "codes": industry_map,
+            "sw1": sw1,
+            "sw2": sw2,
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        },
+    )
     for item in pool:
         code = ts_code(str(item.get("code") or ""))
         if not code:
             continue
-        item["industry"] = industry_map.get(code) or item.get("industry")
+        item["industry"] = sw2.get(code) or industry_map.get(code) or item.get("industry")
 
     stocks: dict[str, dict] = {}
     for item in pool:

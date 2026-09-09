@@ -22,6 +22,23 @@ def parse_amount(raw) -> Optional[float]:
     return val
 
 
+def bar_amount(row: dict | None) -> Optional[float]:
+    """成交额。CSV 缺额时用 量×收盘 补，不编造 K 线。"""
+    if not row:
+        return None
+    amt = parse_amount(row.get("amount"))
+    if amt:
+        return amt
+    try:
+        vol = float(row.get("volume") or 0)
+        close = float(row.get("close") or 0)
+    except (TypeError, ValueError):
+        return None
+    if vol > 0 and close > 0:
+        return vol * close
+    return None
+
+
 def ts_code(code: str) -> str:
     raw = code.strip().upper().replace(".SH", "").replace(".SZ", "").replace(".BJ", "")
     if raw.startswith("SH") or raw.startswith("SZ"):

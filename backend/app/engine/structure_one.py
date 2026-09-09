@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from ..config import CSV_DIR, DATA_DIR, GATES, POOL_MIN_PRICE
 from ..store import load_quotes, load_universe, read_json
-from .bars import load_bars, parse_amount, peek_last_bar, ts_code
+from .bars import bar_amount, load_bars, peek_last_bar, ts_code
 from .indicators import sma
 from .pool import is_st_name
 from .scanner import FACT_NOTE, detect_limit_streak, dyn_pe_value
@@ -20,7 +20,7 @@ def _vol(row: dict) -> float:
 
 
 def _amt(row: dict) -> float | None:
-    return parse_amount(row.get("amount") if row else None)
+    return bar_amount(row)
 
 
 def _float_mcap_yi(meta: dict, last: dict | None = None) -> float | None:
@@ -62,12 +62,15 @@ def _any_limit(bars: list[dict], code: str, n: int) -> bool:
 
 
 def _load_industry_map() -> dict[str, str]:
-    """只读本地缓存。扫描路径不联网拉板块，避免把规则页卡死。"""
-    data = read_json(INDUSTRY_MAP_PATH, {})
-    if isinstance(data, dict) and data.get("codes"):
-        return {str(k): str(v) for k, v in data["codes"].items() if v}
+    """申万二级优先，否则一级。只读本地缓存。"""
+    from .boards import sw_maps
+
+    sw1, sw2 = sw_maps()
+    out = dict(sw1)
+    out.update(sw2)
+    if out:
+        return out
     snap = load_sector_snap()
-    out = {}
     for code, rec in (snap.get("stocks") or {}).items():
         if rec.get("industry"):
             out[ts_code(code)] = str(rec["industry"])
@@ -107,18 +110,6 @@ def find_structure(bars: list[dict]) -> dict | None:
                 continue
             if bars[e]["close"] < run_close_high * 0.97:
                 continue
-            if avg20 and not any(_vol(x) >= avg20 for x in seg):
-                continue
-            yang = [x for x in seg if x["close"] > x["open"]]
-            yin = [x for x in seg if x["close"] < x["open"]]
-            if yin:
-                y_avg = (sum(_vol(x) for x in yang) / len(yang)) if yang else 0.0
-                n_avg = sum(_vol(x) for x in yin) / len(yin)
-                y_sum = sum(_vol(x) for x in yang)
-                n_sum = sum(_vol(x) for x in yin)
-                # 收阳日均量 ≥ 收阴日均量。一根洗盘阴把日均量抬高时，仍要求阳量合计不低于阴量合计。
-                if y_avg < n_avg and y_sum < n_sum:
-                    continue
             pb = bars[e + 1 : n - 1]
             if not pb:
                 continue
@@ -322,6 +313,7 @@ def classify_s1(
     industry_stats: dict,
     market_3d: float | None,
     structure_only: bool = False,
+    board_daily: dict | None = None,
 ) -> dict:
     code = ts_code(str(meta.get("code") or ""))
     name = meta.get("name") or code
@@ -370,37 +362,38 @@ def classify_s1(
     pe = dyn_pe_value(meta)
     mcap = _float_mcap_yi(meta, last)
     data_gap = []
-    if not structure_only:
-        if amt is None:
-            data_gap.append("成交额")
-        elif amt < YI:
-            base["missing_rules"].append(f"第3条 底池：成交额 {amt / YI:.2f} 亿 < 1 亿")
-            return base
-        else:
-            base["facts"]["amount_yi"] = round(amt / YI, 2)
-        industry = meta.get("industry")
-        if industry:
-            base["industry"] = industry
-            base["facts"]["industry"] = industry
-        if not industry:
-            base["missing_rules"].append("第3条 底池：无板块归属")
-            return base
-        if pe is not None and pe <= 0:
-            base["veto"] = [f"动态市盈 {pe:.2f} ≤ 0"]
-            return base
-        if pe is None:
-            data_gap.append("市盈")
-        if mcap is not None and mcap < MIN_FLOAT_YI:
-            base["veto"] = [f"小盘：流通市值 {mcap:.1f} 亿 < {MIN_FLOAT_YI:.0f} 亿"]
-            return base
-        if mcap is None:
-            data_gap.append("流通市值")
-        else:
-            base["facts"]["float_mcap_yi"] = round(mcap, 2)
-    else:
-        industry = meta.get("industry") or "结构回放"
+    industry = meta.get("industry")
+    if not industry:
+        from .boards import industry_of
+
+        industry = industry_of(code)
+    if industry:
         base["industry"] = industry
         base["facts"]["industry"] = industry
+    if not structure_only:
+        if amt is None:
+            base["missing_rules"].append("池子：成交额证据不足")
+            return base
+        if amt < YI:
+            base["missing_rules"].append(f"池子：成交额 {amt / YI:.2f} 亿 < 1 亿")
+            return base
+        base["facts"]["amount_yi"] = round(amt / YI, 2)
+        if not industry:
+            base["missing_rules"].append("主线：无申万二级/一级归属")
+            return base
+        if pe is None:
+            base["missing_rules"].append("池子：市盈证据不足")
+            return base
+        if pe <= 0:
+            base["veto"] = [f"动态市盈 {pe:.2f} ≤ 0"]
+            return base
+        if mcap is None:
+            base["missing_rules"].append("池子：流通市值证据不足")
+            return base
+        if mcap < MIN_FLOAT_YI:
+            base["veto"] = [f"小盘：流通市值 {mcap:.1f} 亿 < {MIN_FLOAT_YI:.0f} 亿"]
+            return base
+        base["facts"]["float_mcap_yi"] = round(mcap, 2)
     if detect_limit_streak(bars, code) >= 2:
         base["veto"] = ["连板"]
         return base
@@ -410,40 +403,6 @@ def classify_s1(
         base["veto"] = banned
         return base
 
-    ind = industry_stats.get(industry) or {}
-    if ind.get("ret_3d") is not None:
-        base["facts"]["board_ret_3d"] = round(ind["ret_3d"], 2)
-    if market_3d is not None:
-        base["facts"]["market_ret_3d"] = round(market_3d, 2)
-        if ind.get("ret_3d") is not None:
-            base["facts"]["vs_market"] = round(ind["ret_3d"] - market_3d, 2)
-    if not structure_only:
-        if ind.get("ret_3d") is None:
-            base["missing_rules"].append(f"第3条 主线：{industry} 近3日涨幅证据不足，出池")
-            return base
-        if market_3d is not None and ind.get("ret_3d") is not None:
-            if ind["ret_3d"] < market_3d:
-                base["missing_rules"].append(
-                    f"第3条 主线：{industry} 近3日 {ind['ret_3d']:.2f}% < 沪深300 {market_3d:.2f}%，整组出池"
-                )
-                return base
-            base["hit_rules"].append(
-                f"第3条 主线：{industry} 近3日 {ind['ret_3d']:.2f}% ≥ 沪深300 {market_3d:.2f}%（不弱即可，不要求领涨）"
-            )
-        elif market_3d is None:
-            base["reminders"].append("第3条 主线：沪深300近3日未知，相对大盘未核，不挡筛选")
-        rets = [v["ret_3d"] for v in industry_stats.values() if v.get("ret_3d") is not None and v.get("n", 0) >= 2]
-        if len(rets) >= 2 and ind.get("ret_3d") is not None and ind["ret_3d"] <= min(rets) + 1e-12:
-            base["missing_rules"].append(f"第3条 主线：{industry} 近3日为最弱一档，整组出池")
-            return base
-        if not _stock_vs_board(bars, ind):
-            base["missing_rules"].append(f"第3条 个股近20日相对 {industry} 偏弱，出池")
-            return base
-        base["hit_rules"].append(f"第3条 个股近20日相对 {industry} 不弱")
-        if ind.get("hot_code") == code and (ind.get("n") or 0) >= 2:
-            base["veto"] = [f"第3条 主线内最热（近5日 {ind.get('hot_r5')}%），排除"]
-            return base
-
     if _any_limit(bars, code, 3):
         base["veto"] = ["近3个交易日出现涨停"]
         return base
@@ -452,28 +411,44 @@ def classify_s1(
         if r5 is not None and r5 >= 20:
             base["veto"] = [f"近5日涨幅 {r5:.1f}% ≥ 20%"]
             return base
-    vols = [_vol(b) for b in bars[-20:]]
-    avg20 = sum(vols) / len(vols) if vols else 0
-    if avg20 and _vol(last) >= avg20 * 2 and _shadow_ge_body(last):
-        base["veto"] = ["放量上影（当日量≥20日均量×2 且上影≥实体）"]
-        return base
     closes = [b["close"] for b in bars]
     ma20_line = sma(closes, 20)
     m20 = ma20_line[-1]
     if m20 and (close - m20) / m20 > 0.08:
-        base["veto"] = [f"收盘距20日线 {(close - m20) / m20 * 100:.1f}% > 8%，沿5日加速"]
+        base["veto"] = [f"收盘距20日线 {(close - m20) / m20 * 100:.1f}% > 8%"]
         return base
 
     st = find_structure(bars)
     if not st:
-        base["missing_rules"].append("第3条 结构预筛：未见近20日先强（收盘≥12%、5～12日）后 4～8 日缩量回调")
+        base["missing_rules"].append("结构：未见近20日先强（收盘≥12%、5～12日）后 4～8 日缩量回调")
         return base
     if not st["shrink"]:
         base["veto"] = ["回踩不缩量（回调日均量未≤先强×0.7）"]
         return base
-    if st["pb_low"] < st["rally_low"] * 0.98:
-        base["veto"] = [f"最新低 {st['pb_low']:.2f} < 前低 {st['rally_low']:.2f} × 0.98"]
-        return base
+
+    if not structure_only:
+        from .boards import board_snapshot, load_board_daily, mainline_check
+
+        daily = board_daily if board_daily and board_daily.get("boards") else load_board_daily()
+        asof = str(last.get("date") or "")
+        snap = board_snapshot(daily, industry, asof) if daily else {}
+        if snap.get("ret_3d") is not None:
+            base["facts"]["board_ret_3d"] = round(snap["ret_3d"], 2)
+        if snap.get("market_3d") is not None:
+            base["facts"]["market_ret_3d"] = round(snap["market_3d"], 2)
+            if snap.get("ret_3d") is not None:
+                base["facts"]["vs_market"] = round(snap["ret_3d"] - snap["market_3d"], 2)
+        if snap.get("limit_3d") is not None:
+            base["facts"]["board_limit_3d"] = snap["limit_3d"]
+        ml_ok, ml_detail = mainline_check(daily, industry, bars, st["strong_start"], st["strong_end"])
+        if ml_ok is True:
+            base["hit_rules"].append(ml_detail)
+        elif ml_ok is False:
+            base["missing_rules"].append(ml_detail)
+            return base
+        else:
+            base["missing_rules"].append(ml_detail or "主线证据不足")
+            return base
 
     zone = _key_zone(bars, st)
     kind, key_px, ma_n = _choose_kind(zone)
@@ -487,19 +462,7 @@ def classify_s1(
         base["veto"] = ["收盘在20日线下方，不是回踩启动"]
         return base
 
-    at_key = bool(zone.get("at_key"))
     last = bars[-1]
-    decay = []
-    if st["shrink"]:
-        decay.append("回调段日均量 ≤ 先强段 × 0.7")
-    if _small_or_hammer(last):
-        decay.append("触关键位收小阳/十字/长下影")
-    prev_low = bars[-2]["low"] if len(bars) > 1 else None
-    if prev_low and last["low"] < prev_low and last["close"] >= prev_low:
-        decay.append("盘中击穿当日收回")
-    if last["low"] >= st["pb_low"] - 1e-9:
-        decay.append("不创新低")
-
     pb_vols = [_vol(x) for x in bars[st["strong_end"] + 1 : -1]]
     vol_dn_ex = (sum(pb_vols) / len(pb_vols)) if pb_vols else st["vol_dn"]
     vol_ok = _vol(last) > vol_dn_ex
@@ -537,20 +500,15 @@ def classify_s1(
     base["status"] = "观察"
     base["gate"] = "观察"
     base["summary_bucket"] = "观察"
-    if data_gap and not structure_only:
-        base["missing_rules"].append(f"{MISSING_NO_BUY}（{'、'.join(data_gap)}）")
     stop_txt = f"{stop_px:.2f}" if stop_px else "未写"
     base["hit_rules"].append(
-        f"第3条 结构：先强 {st['gain_pct']:.1f}% 后缩量回调 {st['pb_len']} 日；关键位=20日线 {ma20_px:.2f}，止损 {stop_txt}（买入日20日线×0.95）"
+        f"结构：先强 {st['gain_pct']:.1f}% 后缩量回调 {st['pb_len']} 日；关键位=20日线 {ma20_px:.2f}，止损 {stop_txt}（买入日20日线×0.95）"
     )
-
-    if not decay:
-        base["missing_rules"].append("第5条 卖压衰减未见到")
-        return base
-    base["hit_rules"].append("第5条 卖压衰减：" + "；".join(decay))
+    if st["shrink"]:
+        base["hit_rules"].append("观察：靠近 20 日线、缩量，只够观察")
 
     if _any_limit(bars, code, 3):
-        base["missing_rules"].append("第6条 近3日有涨停，不得买入")
+        base["missing_rules"].append("买入：近3日有涨停，不得买入")
         return base
     if not demand_ready:
         why = []
@@ -558,25 +516,17 @@ def classify_s1(
             why.append("收盘未站上当日20日线")
         if not vol_ok:
             why.append("当日量未大于回调段日均量")
-        base["missing_rules"].append("第6条 未齐（" + "、".join(why or ["无"]) + "）")
+        base["missing_rules"].append("买入未齐（" + "、".join(why or ["当天还没量转强"]) + "）")
         return base
     if stop_px is None:
-        base["missing_rules"].append("第6条 止损价未写明，先写后买")
+        base["missing_rules"].append("买入：止损价未写明，先写后买")
         return base
-    base["hit_rules"].append("第6条：" + "；".join(demand) + f"；止损 {stop_txt}")
-    base["path_ready"] = not bool(data_gap and not structure_only)
-    if data_gap and not structure_only:
-        base["status"] = "观察"
-        base["gate"] = "观察"
-        base["summary_bucket"] = "观察"
-        note = f"{MISSING_NO_BUY}（{'、'.join(data_gap)}）"
-        if note not in base["missing_rules"]:
-            base["missing_rules"].append(note)
-        return base
+    base["hit_rules"].append("买入：" + "；".join(demand) + f"；止损 {stop_txt}")
+    base["path_ready"] = True
     base["status"] = "买入"
     base["gate"] = "买入"
     base["summary_bucket"] = "买入"
-    base["hit_rules"].append("第6条 路径到达买入。买入不是成交指令")
+    base["hit_rules"].append("路径到达买入。买入不是成交指令")
 
     if not settings.get("person_present", True):
         base["status"] = "观察"
@@ -664,13 +614,6 @@ def evaluate_exit_s1(bars: list[dict], open_trade: dict | None, zone: dict | Non
 
     if hard_stop and last["close"] < hard_stop:
         return True, "7.1", f"收盘低于买入日20日线×0.95（{hard_stop:.2f}）"
-    vols5 = [_vol(b) for b in bars[-5:]]
-    avg5 = sum(vols5) / len(vols5) if vols5 else 0
-    prev_closes = [x["close"] for x in bars[entry_idx : len(bars) - 1]]
-    if prev_closes and last["close"] < min(prev_closes) and avg5 and _vol(last) >= avg5:
-        return True, "7.1", "收盘再创新低且当日量 ≥ 近5日均量"
-    if elapsed >= 15 and run_high and last["close"] < run_high:
-        return True, "7.1", "买入后15个交易日仍未收盘站上观察日后区间高点"
 
     if buy_ma20 and last["close"] < buy_ma20 and len(bars) >= 2 and bars[-2]["close"] < buy_ma20:
         return True, "7.1b", f"连续2日收盘低于买入日20日线 {buy_ma20:.2f}"
@@ -679,43 +622,48 @@ def evaluate_exit_s1(bars: list[dict], open_trade: dict | None, zone: dict | Non
     had_accel = _had_accel(bars, entry_idx, code)
     hold = bars[entry_idx:]
     m20_today = _ma20_at(bars, len(bars) - 1)
-    if had_accel and elapsed >= 3 and not today_limit:
+    if had_accel and not today_limit:
         prior_closes = [x["close"] for x in bars[entry_idx : len(bars) - 1]]
         new_close_high = bool(prior_closes) and last["close"] > max(prior_closes)
         hold_vols = [_vol(x) for x in hold]
-        avg_hold = sum(hold_vols) / len(hold_vols) if hold_vols else 0
         order = sorted(range(len(hold_vols)), key=lambda j: hold_vols[j], reverse=True)
         last_rank = order.index(len(hold) - 1) if hold_vols else 99
         is_top2 = last_rank <= 1
-        vol_boom = bool(avg_hold and _vol(last) >= avg_hold * 2)
         left_zone = bool(m20_today and last["close"] > m20_today * 1.12)
-        if new_close_high and (is_top2 or vol_boom) and left_zone:
-            return True, "7.2", "高潮离场：收盘新高、未涨停、量能居前、高于当天20日线12%"
-
-    prior_closes = [x["close"] for x in bars[entry_idx : len(bars) - 1]]
-    prior_hi = max(prior_closes) if prior_closes else last["close"]
-    if len(bars) >= 5:
-        r3y = _ret(bars[-5]["close"], bars[-2]["close"])
-        if r3y is not None and r3y >= 25 and last["close"] <= prior_hi:
-            return True, "7.3", "近3日累计涨幅≥25%，下一交易日收盘不再创新高"
-    if len(bars) >= 2:
-        a, b = bars[-2], bars[-1]
-        if a["close"] < a["open"] and b["close"] < b["open"]:
-            if _vol(a) >= _vol(entry) and _vol(b) >= _vol(entry):
-                return True, "7.3", "连续2日收阴且两日量都 ≥ 买入日量"
+        if new_close_high and is_top2 and left_zone:
+            return True, "7.2", "高潮离场：收盘新高、未涨停、量列买入以来前2、高于当天20日线12%"
     return False, "", ""
 
 
-def is_buy_s1(bars: list[dict]) -> bool:
+def is_buy_s1(bars: list[dict], ctx: dict | None = None) -> bool:
+    """与规则扫描同一套买入：池子 + 主线 + 结构 + 量转强。回测不得比买入池更松。"""
     if not bars:
         return False
+    ctx = ctx or {}
+    code = ts_code(str(bars[-1].get("code") or ctx.get("code") or ""))
+    name = bars[-1].get("name") or ctx.get("name") or code
+    industry = ctx.get("industry")
+    if not industry:
+        from .boards import industry_of
+
+        industry = industry_of(code)
     meta = {
-        "code": bars[-1].get("code") or "",
-        "name": bars[-1].get("name") or "",
+        "code": code,
+        "name": name,
         "bars": bars,
-        "industry": "结构回放",
+        "industry": industry,
+        "pe": ctx.get("pe"),
+        "float_mcap_yi": ctx.get("float_mcap_yi"),
     }
-    row = classify_s1(meta, {"person_present": True}, None, {}, None, structure_only=True)
+    row = classify_s1(
+        meta,
+        {"person_present": True},
+        None,
+        ctx.get("industry_stats") or {},
+        ctx.get("market_3d"),
+        structure_only=False,
+        board_daily=ctx.get("board_daily"),
+    )
     return row.get("status") == "买入"
 
 
@@ -740,10 +688,12 @@ def classify_one_s1(code: str, settings: dict, trades: list | None = None) -> di
     industry = imap.get(code) or (uni.get(code) or {}).get("industry")
     meta = dict(uni.get(code) or {})
     meta.update({"code": code, "name": name, "bars": bars, "industry": industry})
-    snap = load_sector_snap()
-    market_3d = (snap.get("market") or {}).get("ret_3d_pct")
-    stats = _industry_stats(list_s1_pool())
-    return classify_s1(meta, settings, trades, stats, market_3d)
+    from .boards import build_board_daily, hs300_ret_nd
+
+    daily = build_board_daily()
+    asof = str((bars[-1] or {}).get("date") or daily.get("asof") or "")
+    market_3d = hs300_ret_nd(daily, asof, 3) if asof else None
+    return classify_s1(meta, settings, trades, {}, market_3d, board_daily=daily)
 
 
 def list_s1_cycle_universe() -> list[dict]:
@@ -848,20 +798,24 @@ def board_funnel(industry_stats: dict, market_3d: float | None) -> list[dict]:
 
 
 def scan_structure_one(settings: dict, trades: list | None = None) -> list[dict]:
+    from .boards import board_funnel_today, build_board_daily, hs300_ret_nd
     from .eastmoney import ensure_quotes
 
     ensure_quotes()
     cands = list_s1_pool()
-    snap = load_sector_snap()
-    market_3d = (snap.get("market") or {}).get("ret_3d_pct")
-    stats = _industry_stats(cands)
-    funnel = board_funnel(stats, market_3d)
+    daily = build_board_daily()
+    asof = str(daily.get("asof") or "")
+    market_3d = hs300_ret_nd(daily, asof, 3) if asof else None
+    funnel = board_funnel_today(daily, asof)
     scan_structure_one.funnel = funnel
     scan_structure_one.market = {
-        "name": (snap.get("market") or {}).get("name") or "沪深300",
-        "ret_3d_pct": market_3d,
+        "name": "沪深300",
+        "ret_3d_pct": None if market_3d is None else round(market_3d, 2),
     }
-    rows = [classify_s1(item, settings, trades, stats, market_3d) for item in cands]
+    scan_structure_one.board_daily = daily
+    rows = [
+        classify_s1(item, settings, trades, {}, market_3d, board_daily=daily) for item in cands
+    ]
     order = {name: i for i, name in enumerate(GATES)}
     rows.sort(key=lambda item: (order.get(item["status"], 9), item.get("industry") or "", item["code"]))
     return rows

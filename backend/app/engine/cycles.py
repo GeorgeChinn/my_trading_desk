@@ -5,9 +5,9 @@ import hashlib
 import threading
 from datetime import datetime
 
-from ..config import CYCLE_CACHE_DIR, CYCLES_PATH, KDJ_LOW, ensure_dirs
+from ..config import CYCLE_CACHE_DIR, CYCLES_PATH, POOL_AMOUNT_YI, POOL_MIN_PRICE, ensure_dirs
 from ..store import read_json, write_json
-from .bars import attach_indicators, csv_path_for, load_bars, ts_code
+from .bars import attach_indicators, bar_amount, csv_path_for, load_bars, ts_code
 from .rules_bind import parse_flags
 from .exits import evaluate_exit
 from .scanner import (
@@ -50,8 +50,19 @@ def red_wave_peaks(hist: list) -> list[float]:
 
 
 def is_buy_signal(s: dict, flags: dict) -> bool:
+    """与规则扫描同一套买入：池子外的否决 + 当日金叉 + 零轴 + 低位。不含观察用的绿柱/KDJ附加项。"""
     last = s["last"]
     if last.get("dif") is None or last.get("hist") is None or last.get("k") is None:
+        return False
+    close = last.get("close")
+    if close is None or close < POOL_MIN_PRICE:
+        return False
+    amt = bar_amount(last)
+    if amt is None or amt < POOL_AMOUNT_YI * 100_000_000.0:
+        return False
+    from .scanner import detect_limit_streak
+
+    if detect_limit_streak(s.get("bars") or [], last.get("code") or "") >= 2:
         return False
     if flags.get("veto_kdj_overbought", True):
         ob, _ = kdj_overbought(last.get("k"), last.get("j"))
@@ -65,50 +76,13 @@ def is_buy_signal(s: dict, flags: dict) -> bool:
         m30, _, _ = ma30_down_veto(s["c"])
         if m30 is True:
             return False
-    macd_ok, _ = macd_section5(s["hist"])
-    kd_cross = _cross_up(s["k"], s["d"])
-    k0, d0 = s["k"][-1], s["d"][-1]
-    kd_le_20 = k0 is not None and d0 is not None and max(k0, d0) <= KDJ_LOW
-    j_prev = _recent(s["j"], 20, skip_last=1)
-    kdj_ok = bool((kd_cross and kd_le_20) or (j_prev and s["j"][-1] is not None and s["j"][-1] > min(j_prev)))
-    if flags.get("wait_need_kdj_band", True):
-        k_last, j_last = last.get("k"), last.get("j")
-        if k_last is None or j_last is None or not (j_last < 80 and k_last <= 50):
-            return False
-    if flags.get("wait_need_low_zone", True):
-        dif_low, _ = nearer_to_window_low(s["dif"], last.get("dif"), "DIF")
-        px_low, _ = nearer_to_window_low(s["c"], last.get("close"), "收盘")
-        low_ok = dif_low is True and px_low is True
-    else:
-        low_ok = True
-    if not (macd_ok and kdj_ok and low_ok):
+    buy_cross, _, cross_idx = recent_dif_golden_cross(s["dif"], s["dea"], within_two_days=False)
+    if not buy_cross:
         return False
-    buy_cross, _, cross_idx = recent_dif_golden_cross(
-        s["dif"], s["dea"], within_two_days=bool(flags.get("cross_within_two_days", False))
-    )
-    h0, h1 = (s["hist"][-2], s["hist"][-1]) if len(s["hist"]) > 1 else (None, s["hist"][-1])
-    hist_green_to_red = _just_red(s["hist"], len(s["hist"]) - 1) or _just_red(s["hist"], len(s["hist"]) - 2)
-    already_gold = last.get("dif") is not None and last.get("dea") is not None and last["dif"] > last["dea"]
-    cont = False
-    hist = s["hist"]
-    if len(hist) >= 3 and all(hist[i] is not None and hist[i] < 0 for i in (-3, -2, -1)):
-        cont = abs(hist[-1]) < abs(hist[-2]) < abs(hist[-3])
-    near_zero = h1 is not None and h1 < 0 and h0 is not None and abs(h1) < abs(h0)
-    still_green_ok = _green_shrink_not_new_low(hist, len(hist) - 1)
-    buy_hist = bool(cont and near_zero and still_green_ok) or hist_green_to_red or (buy_cross and already_gold)
-    near_low = True
-    if flags.get("buy_need_dif_near_min", True):
-        near_low, _ = nearer_to_window_low(s["dif"], last.get("dif"), "DIF")
-        near_low = near_low is True
-    zero_ok = True
-    if flags.get("buy_need_zero_axis", True):
-        z, _ = zero_axis_golden(s["dif"], s["dea"], cross_idx)
-        zero_ok = z is True
-    px6 = True
-    if flags.get("buy_need_price_low", True):
-        p, _ = nearer_to_window_low(s["c"], last.get("close"), "收盘")
-        px6 = p is True
-    return bool(buy_cross and buy_hist and near_low and zero_ok and px6)
+    near_low, _ = nearer_to_window_low(s["dif"], last.get("dif"), "DIF")
+    px_low, _ = nearer_to_window_low(s["c"], last.get("close"), "收盘")
+    zero_ok, _ = zero_axis_golden(s["dif"], s["dea"], cross_idx)
+    return bool(near_low is True and px_low is True and zero_ok is True)
 
 
 def is_exit_signal(s: dict, entry_idx: int | None = None) -> bool:
@@ -118,7 +92,7 @@ def is_exit_signal(s: dict, entry_idx: int | None = None) -> bool:
     return hit
 
 
-def walk_cycles_s1(bars: list[dict]) -> tuple[list[dict], dict | None]:
+def walk_cycles_s1(bars: list[dict], ctx: dict | None = None) -> tuple[list[dict], dict | None]:
     from .structure_one import _choose_kind, _key_zone, evaluate_exit_s1, find_structure, is_buy_s1
 
     if len(bars) < 30:
@@ -130,7 +104,7 @@ def walk_cycles_s1(bars: list[dict]) -> tuple[list[dict], dict | None]:
     for i in range(25, n):
         sl = bars[: i + 1]
         if open_i is None:
-            if is_buy_s1(sl):
+            if is_buy_s1(sl, ctx):
                 open_i = i
                 st = find_structure(sl)
                 zone = _key_zone(sl, st) if st else {}
@@ -150,9 +124,14 @@ def walk_cycles_s1(bars: list[dict]) -> tuple[list[dict], dict | None]:
     return cycles, live
 
 
-def walk_cycles(bars: list[dict], flags: dict | None = None, engine: str = "low_golden") -> tuple[list[dict], dict | None]:
+def walk_cycles(
+    bars: list[dict],
+    flags: dict | None = None,
+    engine: str = "low_golden",
+    ctx: dict | None = None,
+) -> tuple[list[dict], dict | None]:
     if engine == "pullback_restart":
-        return walk_cycles_s1(bars)
+        return walk_cycles_s1(bars, ctx)
     flags = flags or parse_flags()
     if len(bars) < 50:
         return [], None
@@ -267,14 +246,18 @@ def walk_stock_segments(
     flags: dict,
     engine: str = "low_golden",
     last_n: int | None = None,
+    ctx: dict | None = None,
 ) -> list[dict]:
+    ctx = dict(ctx or {})
+    ctx.setdefault("code", ts_code(code))
+    ctx.setdefault("name", name)
     if engine == "pullback_restart":
         n = 160 if last_n is None else last_n
         bars = load_bars(code) if n <= 0 else load_bars(code, last_n=n)
-        closed, live = walk_cycles_s1(bars)
+        closed, live = walk_cycles_s1(bars, ctx)
     else:
         bars = attach_indicators(load_bars(code))
-        closed, live = walk_cycles(bars, flags, engine=engine)
+        closed, live = walk_cycles(bars, flags, engine=engine, ctx=ctx)
     out = []
     for i, item in enumerate(closed, start=1):
         out.append(_segment_row(code, name, item, i))
@@ -294,7 +277,7 @@ def _engine_fingerprint() -> str:
 
     here = Path(__file__).resolve().parent
     parts = []
-    for name in ("cycles.py", "structure_one.py"):
+    for name in ("cycles.py", "structure_one.py", "scanner.py", "exits.py", "boards.py"):
         path = here / name
         if path.exists():
             parts.append(path.read_bytes())
@@ -447,7 +430,7 @@ def _paginate(segments: list[dict], tab: str, q: str, sort: str, order: str, pag
     return page_rows, total, size, (1 if warm else cur), (1 if warm else pages)
 
 
-def _warm_cycles(scan_uni: list[dict], flags: dict, engine: str, rules_hash: str, ruleset_id: str) -> None:
+def _warm_cycles(scan_uni: list[dict], flags: dict, engine: str, rules_hash: str, ruleset_id: str, ctx: dict | None = None) -> None:
     path = _cache_path(ruleset_id)
     store = read_json(path, {}) if path.exists() else {}
     codes = store.get("codes") if isinstance(store.get("codes"), dict) else {}
@@ -455,12 +438,22 @@ def _warm_cycles(scan_uni: list[dict], flags: dict, engine: str, rules_hash: str
         codes = {}
     asof = _asof()
     total = len(scan_uni)
+    base_ctx = dict(ctx or {})
     for i, meta in enumerate(scan_uni, start=1):
         code = ts_code(str(meta.get("code") or ""))
         name = meta.get("name") or code
         if not code:
             continue
-        segs = walk_stock_segments(code, name, flags, engine=engine)
+        item_ctx = dict(base_ctx)
+        item_ctx["code"] = code
+        item_ctx["name"] = name
+        if meta.get("industry"):
+            item_ctx["industry"] = meta.get("industry")
+        if meta.get("pe") is not None:
+            item_ctx["pe"] = meta.get("pe")
+        if meta.get("float_mcap_yi") is not None:
+            item_ctx["float_mcap_yi"] = meta.get("float_mcap_yi")
+        segs = walk_stock_segments(code, name, flags, engine=engine, ctx=item_ctx)
         codes[code] = {"last_date": _last_date(code), "segments": segs}
         if i == 1 or i % 20 == 0 or i == total:
             write_json(
@@ -504,7 +497,14 @@ def _cycles_page_s1(
     page_size: int,
     warm: bool,
 ) -> dict:
-    from .structure_one import list_s1_cycle_universe
+    from .boards import build_board_daily
+    from .structure_one import _load_industry_map, list_s1_cycle_universe
+    from ..store import load_quotes
+
+    daily = build_board_daily()
+    quotes = load_quotes()
+    imap = _load_industry_map()
+    warm_ctx = {"board_daily": daily}
 
     path = _cache_path(ruleset_id)
     store = read_json(path, {}) if path.exists() else {}
@@ -519,9 +519,21 @@ def _cycles_page_s1(
     warming = bool(store.get("warming")) or in_flight
     complete = bool(hash_ok and asof_ok and codes and not warming)
 
+    def _uni():
+        rows = list_s1_cycle_universe()
+        for item in rows:
+            code = ts_code(str(item.get("code") or ""))
+            q = quotes.get(code) or {}
+            item["industry"] = item.get("industry") or imap.get(code)
+            if item.get("pe") is None:
+                item["pe"] = q.get("pe")
+            if item.get("float_mcap_yi") is None:
+                item["float_mcap_yi"] = q.get("float_mcap_yi")
+        return rows
+
     if warm and not complete:
-        uni = list_s1_cycle_universe()
-        _warm_cycles(uni, flags, "pullback_restart", rules_hash, ruleset_id)
+        uni = _uni()
+        _warm_cycles(uni, flags, "pullback_restart", rules_hash, ruleset_id, ctx=warm_ctx)
         store = read_json(path, {}) if path.exists() else {}
         codes = store.get("codes") if isinstance(store.get("codes"), dict) else {}
         complete = True
@@ -530,8 +542,8 @@ def _cycles_page_s1(
     if not complete and not in_flight:
         def boot():
             try:
-                uni = list_s1_cycle_universe()
-                _warm_cycles(uni, flags, "pullback_restart", rules_hash, ruleset_id)
+                uni = _uni()
+                _warm_cycles(uni, flags, "pullback_restart", rules_hash, ruleset_id, ctx=warm_ctx)
             finally:
                 with _warm_lock:
                     _warming.discard(ruleset_id)
@@ -549,7 +561,7 @@ def _cycles_page_s1(
     payload = {
         "fact_note": "这是事实记录",
         "note": (
-            f"RULES2 轨迹回放中 {done}/{all_n or '?'}，完成后自动刷新。买入不是成交指令。"
+            f"RULES2 规则回测中 {done}/{all_n or '?'}，完成后自动刷新。买入不是成交指令。"
             if warming
             else note
         ),
@@ -590,7 +602,7 @@ def cycles_page(
     engine = (ruleset or {}).get("engine") or ENGINE_LOW_GOLDEN
     ruleset_id = (ruleset or {}).get("id") or "rules"
     rules_hash = _rules_hash((ruleset or {}).get("text") or "")
-    note = "一段轨迹 = 路径到达买入的确认收盘 → 卖出条件日。买入价/卖出价用当日收盘。这是事实记录，不是成交指令。"
+    note = "一段回测 = 路径到达买入的当日 → 卖出条件日。买入价/卖出价用当日收盘。与买入池同一套条件。这是事实记录，不是成交指令。"
     if engine not in ("low_golden", "pullback_restart"):
         payload = {
             "fact_note": "这是事实记录",
@@ -734,8 +746,20 @@ def cycles_for_stock(code: str, name: str, ruleset: dict | None) -> dict:
         }
     flags = parse_flags((ruleset or {}).get("text") or "")
     last_n = 0 if engine == "pullback_restart" else None
+    ctx = None
+    if engine == "pullback_restart":
+        from .boards import build_board_daily, industry_of
+        from ..store import load_quotes
+
+        q = (load_quotes() or {}).get(ts_code(code)) or {}
+        ctx = {
+            "board_daily": build_board_daily(),
+            "industry": industry_of(code),
+            "pe": q.get("pe"),
+            "float_mcap_yi": q.get("float_mcap_yi"),
+        }
     segs = _stamp_segments(
-        walk_stock_segments(code, name, flags, engine=engine, last_n=last_n),
+        walk_stock_segments(code, name, flags, engine=engine, last_n=last_n, ctx=ctx),
         ruleset or {},
     )
     return {
@@ -767,13 +791,31 @@ def cycles_for_pool(items: list[dict], ruleset: dict | None) -> dict:
         }
     flags = parse_flags((ruleset or {}).get("text") or "")
     last_n = 0 if engine == "pullback_restart" else None
+    ctx_base = None
+    if engine == "pullback_restart":
+        from .boards import build_board_daily, industry_of
+        from ..store import load_quotes
+
+        quotes = load_quotes() or {}
+        ctx_base = {"board_daily": build_board_daily()}
     segments: list[dict] = []
     for item in items or []:
         code = ts_code(str((item or {}).get("code") or ""))
         if not code:
             continue
         name = (item or {}).get("name") or code
-        segs = walk_stock_segments(code, name, flags, engine=engine, last_n=last_n)
+        ctx = None
+        if ctx_base is not None:
+            q = quotes.get(code) or {}
+            ctx = {
+                **ctx_base,
+                "industry": (item or {}).get("industry") or industry_of(code),
+                "pe": (item or {}).get("pe") if (item or {}).get("pe") is not None else q.get("pe"),
+                "float_mcap_yi": (item or {}).get("float_mcap_yi")
+                if (item or {}).get("float_mcap_yi") is not None
+                else q.get("float_mcap_yi"),
+            }
+        segs = walk_stock_segments(code, name, flags, engine=engine, last_n=last_n, ctx=ctx)
         segments.extend(_stamp_segments(segs, ruleset or {}))
     closed = [s for s in segments if s.get("closed")]
     opened = [s for s in segments if not s.get("closed")]

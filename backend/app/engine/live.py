@@ -575,7 +575,27 @@ def _sync_live(force_bars: bool = False) -> dict:
         save_universe(pool)
         save_pool_snapshot(funnel)
 
-    label = f"真实行情已连接 · {source} 确认收盘 {funnel.get('trade_date')}"
+    try:
+        from .boards import build_board_daily, refresh_hs300
+        from .emotions import build_emotions
+
+        log("补沪深300 / 申万二级日统计 / 情绪资金")
+        try:
+            refresh_hs300()
+        except Exception as exc:
+            log(f"沪深300 日线失败：{exc}")
+        try:
+            build_board_daily(asof=funnel.get("trade_date") or "", force=True)
+        except Exception as exc:
+            log(f"板块日统计失败：{exc}")
+        try:
+            build_emotions(force=True)
+        except Exception as exc:
+            log(f"情绪模块失败：{exc}")
+    except Exception as exc:
+        log(f"大盘/板块/情绪补数失败：{exc}")
+
+    label = f"真实行情已连接 · {source} {funnel.get('trade_date')}"
     save_settings(
         {
             "data_source": source,
