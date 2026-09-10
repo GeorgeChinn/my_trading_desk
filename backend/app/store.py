@@ -144,8 +144,19 @@ def save_quotes(payload: dict) -> None:
             return
         return
     out["trade_date"] = asof_date(out.get("trade_date") or "")
+    if not out.get("updated_at"):
+        from datetime import datetime
+
+        out["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     write_json(QUOTES_PATH, out)
     _quotes_mem = codes
+
+
+def load_quotes_meta() -> dict:
+    data = read_json(QUOTES_PATH, {})
+    if not isinstance(data, dict):
+        return {"trade_date": "", "source": "", "updated_at": "", "codes": {}}
+    return data
 
 
 def load_sync_status() -> dict:

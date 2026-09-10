@@ -6,7 +6,7 @@
       买入 = 路径到达，不是成交指令。
     </p>
 
-    <div class="warn-banner">{{ positionBlock }} · 人{{ personPresent ? "在场" : "不在场" }} · 大盘开关：{{ marketRegime }} · RULES 池子 {{ poolCount }} 只{{ poolDate ? "（" + poolDate + "）" : "" }}</div>
+    <div class="warn-banner">{{ positionBlock }} · 全股池 {{ poolCount }} 只{{ poolDate ? "（数据日 " + poolDate + "）" : "" }}</div>
     <div class="warn-banner" v-for="(r, i) in reminders" :key="i">{{ r }}</div>
 
     <div class="card emo-hero" :class="emotion.tone" style="margin-bottom:16px" v-if="emotion.label">
@@ -150,8 +150,7 @@ const scan = ref({});
 const names = ref({});
 const path = ref("波段持有");
 const positionBlock = ref("");
-const marketRegime = ref("未设置");
-const personPresent = ref(true);
+
 const poolCount = ref(0);
 const poolDate = ref("");
 const reminders = ref([]);
@@ -248,8 +247,6 @@ async function load() {
   queues.value = data.queues || {};
   path.value = data.path;
   positionBlock.value = data.position_block;
-  marketRegime.value = data.market_regime;
-  personPresent.value = data.person_present;
   poolCount.value = data.pool_count || 0;
   poolDate.value = data.pool_trade_date || "";
   reminders.value = data.reminders || [];

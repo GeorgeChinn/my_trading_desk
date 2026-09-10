@@ -46,7 +46,49 @@ def sw_maps() -> tuple[dict[str, str], dict[str, str]]:
 def industry_of(code: str) -> str | None:
     sw1, sw2 = sw_maps()
     c = ts_code(code)
-    return sw2.get(c) or sw1.get(c)
+    blob = load_industry_blob()
+    codes = blob.get("codes") if isinstance(blob.get("codes"), dict) else {}
+    return sw2.get(c) or sw1.get(c) or (codes.get(c) if codes else None)
+
+
+def ensure_industry_map(quotes: dict | None = None) -> dict:
+    """行业归属空时，用东财快照的板块名补全，不空写覆盖。"""
+    blob = load_industry_blob()
+    sw1, sw2 = sw_maps()
+    codes = blob.get("codes") if isinstance(blob.get("codes"), dict) else {}
+    if len(sw2) >= 200 or len(codes) >= 200:
+        return blob
+    from ..store import load_quotes
+
+    quotes = quotes if quotes is not None else load_quotes()
+    em = {}
+    for code, rec in (quotes or {}).items():
+        ind = str((rec or {}).get("industry") or "").strip()
+        if ind:
+            em[ts_code(code)] = ind
+    if len(em) < 200:
+        try:
+            from .eastmoney import ensure_quotes
+
+            quotes = ensure_quotes(force=True)
+            em = {}
+            for code, rec in (quotes or {}).items():
+                ind = str((rec or {}).get("industry") or "").strip()
+                if ind:
+                    em[ts_code(code)] = ind
+        except Exception:
+            pass
+    if len(em) < 50:
+        return blob
+    payload = {
+        "codes": em,
+        "sw1": sw1 or em,
+        "sw2": sw2 or em,
+        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "source": "eastmoney-clist",
+    }
+    write_json(INDUSTRY_MAP_PATH, payload)
+    return payload
 
 
 def load_hs300() -> dict[str, float]:
@@ -115,11 +157,15 @@ def build_board_daily(asof: str | None = None, last_n: int = 80, force: bool = F
 
     asof = asof or asof_date()
     cached = load_board_daily()
+    sample = next(iter((cached.get("boards") or {}).values()), {}) if isinstance(cached, dict) else {}
+    last_d = (sample.get("dates") or [None])[-1] if isinstance(sample, dict) else None
+    sample_row = (sample.get("by_date") or {}).get(last_d) or {} if last_d else {}
     if (
         not force
         and cached.get("asof") == asof
         and isinstance(cached.get("boards"), dict)
         and len(cached.get("boards") or {}) >= 10
+        and "next_n" in sample_row
     ):
         return cached
 
@@ -155,7 +201,15 @@ def build_board_daily(asof: str | None = None, last_n: int = 80, force: bool = F
                 continue
             rec = bucket.get(d)
             if rec is None:
-                rec = {"n": 0, "up": 0, "down": 0, "limit_ups": 0, "ret_sum": 0.0}
+                rec = {
+                    "n": 0,
+                    "up": 0,
+                    "down": 0,
+                    "limit_ups": 0,
+                    "ret_sum": 0.0,
+                    "next_n": 0,
+                    "next_win": 0,
+                }
                 bucket[d] = rec
             ret = (cc / pc - 1.0) * 100.0
             rec["n"] += 1
@@ -166,6 +220,12 @@ def build_board_daily(asof: str | None = None, last_n: int = 80, force: bool = F
                 rec["down"] += 1
             if is_limit_up(pc, cc, code):
                 rec["limit_ups"] += 1
+            if i + 1 < len(bars):
+                nxt = bars[i + 1].get("close")
+                if nxt:
+                    rec["next_n"] += 1
+                    if nxt > cc:
+                        rec["next_win"] += 1
 
     out_boards = {}
     for name, by_date in boards.items():
@@ -174,6 +234,8 @@ def build_board_daily(asof: str | None = None, last_n: int = 80, force: bool = F
         for d in dates:
             rec = by_date[d]
             n = rec["n"] or 1
+            next_n = int(rec.get("next_n") or 0)
+            next_win = int(rec.get("next_win") or 0)
             series.append(
                 {
                     "date": d,
@@ -183,6 +245,9 @@ def build_board_daily(asof: str | None = None, last_n: int = 80, force: bool = F
                     "up_pct": round(rec["up"] / n * 100.0, 2),
                     "ret_1d": round(rec["ret_sum"] / n, 3),
                     "limit_ups": rec["limit_ups"],
+                    "next_n": next_n,
+                    "next_win": next_win,
+                    "next_win_pct": round(next_win / next_n * 100.0, 1) if next_n else None,
                 }
             )
         out_boards[name] = {"dates": dates, "by_date": {row["date"]: row for row in series}}

@@ -78,16 +78,31 @@ def refresh_sector_snap(pool: list[dict], log=None) -> dict:
     else:
         industry_map = blob if isinstance(blob, dict) else {}
         sw1, sw2 = {}, {}
-    talk(f"新浪行业归属 {len(industry_map)} 只 · 申万一级 {len(sw1)} · 申万二级 {len(sw2)}")
-    write_json(
-        DATA_DIR / "industry_map.json",
-        {
-            "codes": industry_map,
-            "sw1": sw1,
-            "sw2": sw2,
-            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        },
-    )
+    if len(industry_map) < 200:
+        from .eastmoney import ensure_quotes
+
+        quotes = ensure_quotes()
+        em_map = {}
+        for code, rec in (quotes or {}).items():
+            ind = str((rec or {}).get("industry") or "").strip()
+            if ind:
+                em_map[code] = ind
+        if len(em_map) > len(industry_map):
+            industry_map = em_map
+            talk(f"东财行业归属 {len(em_map)} 只（新浪节点空）")
+    talk(f"行业归属 {len(industry_map)} 只 · 申万一级 {len(sw1)} · 申万二级 {len(sw2)}")
+    if len(industry_map) >= 50:
+        write_json(
+            DATA_DIR / "industry_map.json",
+            {
+                "codes": industry_map,
+                "sw1": sw1 or industry_map,
+                "sw2": sw2 or industry_map,
+                "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            },
+        )
+    else:
+        talk("行业归属不足，保留原 industry_map，不空写")
     for item in pool:
         code = ts_code(str(item.get("code") or ""))
         if not code:

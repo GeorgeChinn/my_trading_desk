@@ -5,7 +5,7 @@ import re
 
 from ..config import CSV_DIR, DATA_DIR, GATES, POOL_MIN_PRICE
 from ..store import load_quotes, load_universe, read_json
-from .bars import bar_amount, load_bars, peek_last_bar, ts_code
+from .bars import bar_amount, load_bars, overlay_quote_bar, peek_last_bar, ts_code
 from .indicators import sma
 from .pool import is_st_name
 from .scanner import FACT_NOTE, dyn_pe_value
@@ -336,10 +336,14 @@ def classify_s1(
     structure_only: bool = False,
     board_daily: dict | None = None,
     require_mainline: bool | None = None,
+    quotes: dict | None = None,
+    apply_quote: bool = True,
 ) -> dict:
     code = ts_code(str(meta.get("code") or ""))
     name = meta.get("name") or code
     bars = meta.get("bars") or load_bars(code, last_n=80)
+    if apply_quote:
+        bars = overlay_quote_bar(bars, code, quotes)
     base = {
         "code": code,
         "name": name,
@@ -354,8 +358,6 @@ def classify_s1(
         "risk": [],
         "facts": {},
         "fact_note": FACT_NOTE,
-        "person_present": bool(settings.get("person_present", True)),
-        "market_regime": settings.get("market_regime") or "未设置",
         "path_ready": False,
         "data_ok": False,
         "index_member": meta.get("index_member") or [],
@@ -683,6 +685,7 @@ def is_buy_s1(bars: list[dict], ctx: dict | None = None) -> bool:
         structure_only=False,
         board_daily=ctx.get("board_daily"),
         require_mainline=bool(want_ml),
+        apply_quote=False,
     )
     return row.get("status") == "买入"
 
@@ -825,9 +828,17 @@ def scan_structure_one(settings: dict, trades: list | None = None) -> list[dict]
         "ret_3d_pct": None if market_3d is None else round(market_3d, 2),
     }
     scan_structure_one.board_daily = daily
+    quotes = load_quotes()
     rows = [
         classify_s1(
-            item, settings, trades, {}, market_3d, board_daily=daily, require_mainline=want_ml
+            item,
+            settings,
+            trades,
+            {},
+            market_3d,
+            board_daily=daily,
+            require_mainline=want_ml,
+            quotes=quotes,
         )
         for item in cands
     ]

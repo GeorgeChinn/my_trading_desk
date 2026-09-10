@@ -398,6 +398,12 @@ h1 { font-size: 22px; letter-spacing: 0.01em; }
   margin-bottom: 4px;
 }
 .scan-head-left { min-width: 0; flex: 1; }
+.stamp {
+  margin: 8px 0 0;
+  color: var(--cyan);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
 .buy-log-card {
   width: min(540px, 100%);
   flex: none;

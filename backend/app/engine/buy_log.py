@@ -30,7 +30,14 @@ def load_buy_log(ruleset_id: str) -> dict:
 def save_buy_log(ruleset_id: str, payload: dict) -> None:
     payload = dict(payload or {})
     payload["ruleset"] = ruleset_id
-    payload["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    prev = load_buy_log(ruleset_id) if _path(ruleset_id).exists() else {}
+    started = payload.get("started_at") or prev.get("started_at")
+    if not started:
+        logged = [x.get("logged_at") for x in (payload.get("items") or []) if x.get("logged_at")]
+        started = min(logged) if logged else now
+    payload["started_at"] = started
+    payload["updated_at"] = now
     write_json(_path(ruleset_id), payload)
 
 
@@ -185,6 +192,10 @@ def public_buy_log(ruleset_id: str) -> dict:
     )
     open_n = sum(1 for x in items if not x.get("closed"))
     closed_n = sum(1 for x in items if x.get("closed"))
+    started = store.get("started_at") or ""
+    if not started:
+        logged = [x.get("logged_at") for x in items if x.get("logged_at")]
+        started = min(logged) if logged else store.get("updated_at") or ""
     return {
         "ruleset": ruleset_id,
         "items": items,
@@ -192,6 +203,7 @@ def public_buy_log(ruleset_id: str) -> dict:
         "closed": closed_n,
         "total": len(items),
         "updated_at": store.get("updated_at"),
+        "started_at": started,
         "note": "只有规则扫描买入池列入的票才开这段。卖出按该规则止损/失败/获利核。",
     }
 

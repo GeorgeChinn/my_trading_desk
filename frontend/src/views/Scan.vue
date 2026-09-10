@@ -6,13 +6,24 @@
         <p class="sub">
           总闸：排除 → 观察 → 买入 → 卖出。买入 = 路径到达，不是成交指令。列入买入池后才开这段回测。
         </p>
+        <p class="stamp" v-if="stamp.asof || stamp.scanned_at">
+          数据日 {{ stamp.asof || "—" }}
+          · 扫描 {{ stamp.scanned_at || "—" }}
+          · 行情快照 {{ stamp.quotes_at || stamp.quotes_date || "—" }}
+          <span v-if="stamp.quotes_source">（{{ stamp.quotes_source }} {{ stamp.quotes_n || 0 }} 只）</span>
+          · 全股池 {{ stamp.pool_n || data.pool && data.pool.count || 0 }} 只
+        </p>
       </div>
       <div class="card buy-log-card">
         <div class="ov-title">
           买入池记录
           <span>进行中 {{ buyLog.open || 0 }} · 已结束 {{ buyLog.closed || 0 }}</span>
         </div>
-        <p class="sub" style="margin:0 0 8px">从本次更新起：只有进过买入池的票才记账，再按该规则核卖出。</p>
+        <p class="sub" style="margin:0 0 8px">
+          本次更新 {{ buyLog.updated_at || stamp.scanned_at || "—" }}
+          · 记录从 {{ buyLog.started_at || "本次更新" }} 起
+        </p>
+        <p class="sub" style="margin:0 0 8px">只有进过买入池的票才记账，再按该规则核卖出。</p>
         <div v-if="!(buyLog.items || []).length" class="empty mini">还没有记录。扫描出现买入后会写在这里。</div>
         <div v-else class="table-wrap buy-log-table">
           <table class="table">
@@ -58,7 +69,7 @@
     </div>
     <p class="sub" v-if="currentRuleset && data.pool">
       {{ currentRuleset.file }} · {{ currentRuleset.title }}
-      · 底池 {{ data.pool.count }} 只 · {{ data.pool.source }} {{ data.pool.trade_date }}
+      · 全股池 {{ data.pool.count }} 只 · {{ data.pool.source }} {{ data.pool.trade_date }}
     </p>
     <div class="warn-banner" v-for="(r, i) in (data.reminders || [])" :key="'rm'+i">{{ r }}</div>
 
@@ -241,6 +252,7 @@ function ownRow(row) {
 const buyNames = computed(() => ((data.value.names && data.value.names.买入) || []).filter(ownRow));
 const watchNames = computed(() => ((data.value.names && data.value.names.观察) || []).filter(ownRow));
 const buyLog = computed(() => data.value.buy_log || { items: [], open: 0, closed: 0 });
+const stamp = computed(() => data.value.stamp || {});
 function signedPct(v) {
   if (v == null || Number.isNaN(Number(v))) return "—";
   const n = Number(v);
@@ -376,6 +388,7 @@ function blankFor(id) {
     reminders: [],
     ruleset: list.find((r) => r.id === id) || null,
     buy_log: { items: [], open: 0, closed: 0 },
+    stamp: {},
   };
 }
 function applyCache(id) {

@@ -258,6 +258,7 @@ def fetch_industry_boards() -> list[dict]:
     sess = _session()
     sess.headers["Referer"] = "https://quote.eastmoney.com/"
     hosts = (
+        "https://push2delay.eastmoney.com/api/qt/clist/get",
         "https://push2.eastmoney.com/api/qt/clist/get",
         "https://82.push2.eastmoney.com/api/qt/clist/get",
     )
@@ -591,7 +592,7 @@ def fetch_em_clist(log=None) -> list[dict]:
                         "invt": 2,
                         "fid": "f12",
                         "fs": EM_CLIST_FS,
-                        "fields": "f12,f14,f2,f3,f9,f20,f21,f6,f15,f16,f17,f18",
+                        "fields": "f12,f14,f2,f3,f9,f20,f21,f6,f15,f16,f17,f18,f100,f127",
                     },
                     timeout=20,
                 )
@@ -653,9 +654,17 @@ def quotes_from_em_clist(rows: list[dict]) -> dict:
             "low": _fnum(rec.get("f16")),
             "preclose": _fnum(rec.get("f18")),
             "pct": _round_or_none(_fnum(rec.get("f3")), 3),
+            "industry": str(rec.get("f100") or rec.get("f127") or "").strip() or None,
             "trade_date": asof,
         }
-    return {"trade_date": asof, "source": "eastmoney-clist", "codes": codes}
+    from datetime import datetime as _dt
+
+    return {
+        "trade_date": asof,
+        "source": "eastmoney-clist",
+        "updated_at": _dt.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "codes": codes,
+    }
 
 
 def quotes_from_spot(spot: list[dict]) -> dict:
@@ -899,6 +908,14 @@ def ensure_quotes(log=None, force: bool = False) -> dict:
         and isinstance(cached, dict)
         and len(cached) >= 200
     ):
+        if not store.get("updated_at"):
+            store = dict(store)
+            try:
+                store["updated_at"] = datetime.fromtimestamp(QUOTES_PATH.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+            except OSError:
+                store["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            store["codes"] = cached
+            save_quotes(store)
         return cached
     talk("正在补全市盈 / 成交额 / 流通市值（东财列表 / Tushare / 新浪）…")
     payload = {"trade_date": "", "source": "", "codes": {}}

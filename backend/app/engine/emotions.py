@@ -195,58 +195,151 @@ def market_from_quotes(quotes: dict, zt: list[dict], zb: list[dict]) -> dict:
     }
 
 
-def _board_kind(limit_n: int, n: int) -> str:
-    if limit_n <= 0:
-        return "无涨停"
-    if limit_n == 1:
-        return "孤狼"
-    if limit_n >= 10:
-        return "共振"
-    if n >= 8 and limit_n >= 3:
-        return "共振"
-    return "偏散"
-
-
-def boards_from_daily(payload: dict, asof: str) -> list[dict]:
-    out = []
-    for name, rec in (payload.get("boards") or {}).items():
-        dates = [d for d in rec.get("dates") or [] if d <= asof]
-        if not dates:
+def _hist_next_win_pct(rec: dict, asof: str, lookback: int = 20) -> float | None:
+    dates = [d for d in (rec.get("dates") or []) if d <= asof]
+    rates = []
+    for d in reversed(dates):
+        row = (rec.get("by_date") or {}).get(d) or {}
+        n = int(row.get("next_n") or 0)
+        w = int(row.get("next_win") or 0)
+        if n <= 0:
             continue
-        last = (rec.get("by_date") or {}).get(dates[-1]) or {}
-        n = int(last.get("n") or 0)
-        up_pct = last.get("up_pct")
-        limit_n = int(last.get("limit_ups") or 0)
-        ret = last.get("ret_1d")
-        kind = _board_kind(limit_n, n)
+        rates.append(w / n * 100.0)
+        if len(rates) >= lookback:
+            break
+    if not rates:
+        return None
+    return round(sum(rates) / len(rates), 1)
+
+
+def _board_kind(limit_rows: list[dict], members: list[dict]) -> tuple[str, str]:
+    """涨停数：中军+多只小票联动＝共振；只有孤零零一只涨停＝孤狼。"""
+    limit_n = len(limit_rows)
+    if limit_n <= 0:
+        return "无涨停", "板块内没有涨停"
+    if limit_n == 1:
+        one = limit_rows[0]
+        return "孤狼", f"只有孤零零一只涨停：{one.get('name') or one.get('code')}"
+    mcaps = [m.get("mcap") for m in members if m.get("mcap")]
+    median = sorted(mcaps)[len(mcaps) // 2] if mcaps else None
+    leader = None
+    if members:
+        leader = max(members, key=lambda x: x.get("mcap") or 0)
+    def is_zhongjun(row: dict) -> bool:
+        mcap = row.get("mcap")
+        if not mcap:
+            return False
+        if leader and row.get("code") == leader.get("code"):
+            return True
+        if median and mcap >= median * 2:
+            return True
+        return False
+    zhong = [x for x in limit_rows if is_zhongjun(x)]
+    small = [x for x in limit_rows if not is_zhongjun(x)]
+    if zhong and len(small) >= 2:
+        zname = "、".join((x.get("name") or x.get("code") or "") for x in zhong[:2])
+        return "共振", f"中军 {zname} + {len(small)} 只小票涨停联动"
+    if zhong and len(small) == 1:
+        return "多票", f"中军已涨停，但小票只有 1 只，还不够多只联动"
+    return "多票无中军", f"{limit_n} 只涨停，未见中军带小票"
+
+
+def boards_live(quotes: dict, daily: dict, asof: str) -> list[dict]:
+    """当日板块：家数、收红、涨停、共振/孤狼、近20日次日赚钱概率。"""
+    from .boards import industry_of, is_limit_up, sw_maps
+
+    sw1, sw2 = sw_maps()
+    uni = {ts_code(str(x.get("code") or "")): x for x in load_universe()}
+    groups: dict[str, list[dict]] = {}
+    codes = set(uni) | set(quotes or {})
+    for code in codes:
+        q = (quotes or {}).get(code) or {}
+        meta = uni.get(code) or {}
+        name = str(q.get("name") or meta.get("name") or code)
+        if is_st_name(name):
+            continue
+        industry = (
+            sw2.get(code)
+            or sw1.get(code)
+            or industry_of(code)
+            or str(q.get("industry") or meta.get("industry") or "").strip()
+            or None
+        )
+        if not industry:
+            continue
+        pct = _num(q.get("pct"))
+        close = _num(q.get("close") or meta.get("close"))
+        pre = _num(q.get("preclose"))
+        if pct is None and close and pre:
+            pct = (close / pre - 1.0) * 100.0
+        if pct is None:
+            bars = load_bars(code, last_n=4)
+            if len(bars) >= 2 and bars[-1].get("close") and bars[-2].get("close"):
+                close = bars[-1]["close"]
+                pre = bars[-2]["close"]
+                pct = (close / pre - 1.0) * 100.0
+        limit = False
+        if close and pre:
+            limit = is_limit_up(pre, close, code)
+        elif pct is not None:
+            limit = pct >= (_limit_pct(code) * 100.0 - 0.5)
+        mcap = _num(q.get("float_mcap_yi") or meta.get("float_mcap_yi"))
+        groups.setdefault(industry, []).append(
+            {
+                "code": code,
+                "name": name,
+                "pct": pct,
+                "mcap": mcap,
+                "limit": limit,
+                "red": bool(pct is not None and pct > 0),
+            }
+        )
+
+    hist = daily.get("boards") or {}
+    out = []
+    for name, members in groups.items():
+        n = len(members)
+        if n < 2:
+            continue
+        up = sum(1 for m in members if m.get("red"))
+        up_pct = round(up / n * 100.0, 1) if n else None
+        limit_rows = [m for m in members if m.get("limit")]
+        limit_n = len(limit_rows)
+        kind, kind_detail = _board_kind(limit_rows, members)
+        next_pct = _hist_next_win_pct(hist.get(name) or {}, asof)
         up_score = _up_share_score(up_pct)[0]
-        if limit_n >= 10:
-            limit_score = 100.0
-            next_p = "涨停≥10，次日买入赚钱概率偏高"
-        elif limit_n >= 3:
-            limit_score = 55.0 + limit_n * 4
-            next_p = "中军+多只小票，算共振苗头"
-        elif limit_n == 1:
+        if kind == "共振":
+            limit_score = 90.0 + min(10.0, limit_n)
+        elif kind == "孤狼":
             limit_score = 28.0
-            next_p = "单只涨停=孤狼"
+        elif limit_n >= 2:
+            limit_score = 50.0 + limit_n * 3
         else:
             limit_score = 10.0
-            next_p = "无涨停"
-        score = _clip(up_score * 0.45 + min(100.0, limit_score) * 0.55)
+        score = _clip(up_score * 0.4 + min(100.0, limit_score) * 0.35 + (next_pct or 40) * 0.25)
+        leader = max(members, key=lambda x: x.get("mcap") or 0) if members else None
         out.append(
             {
                 "name": name,
                 "n": n,
+                "up": up,
                 "up_pct": up_pct,
-                "ret_1d": ret,
                 "limit_ups": limit_n,
+                "limit_names": [x.get("name") or x.get("code") for x in limit_rows[:8]],
+                "zhongjun": (leader.get("name") if leader and (leader.get("mcap") or 0) > 0 else None),
                 "kind": kind,
+                "kind_detail": kind_detail,
                 "score": score,
                 "tone": _tone(score),
-                "next_day": next_p,
+                "next_day_win_pct": next_pct,
+                "next_day": (
+                    f"近20日板块内个股次日买入赚钱 {next_pct:.1f}%"
+                    if next_pct is not None
+                    else "次日赚钱概率证据不足（还缺下一根日线）"
+                ),
             }
         )
-    out.sort(key=lambda x: (-(x["score"] or 0), -(x["limit_ups"] or 0)))
+    out.sort(key=lambda x: (0 if x["kind"] == "共振" else 1 if x["kind"] == "孤狼" else 2, -(x["limit_ups"] or 0), -(x["score"] or 0)))
     return out
 
 
@@ -513,22 +606,26 @@ def build_emotions(force: bool = False) -> dict:
         zb = fetch_fail_pool(asof)
     except Exception:
         zb = []
+    from .boards import ensure_industry_map
+
+    ensure_industry_map(quotes)
     daily = load_board_daily()
-    if daily.get("asof") != asof or not daily.get("boards"):
+    if daily.get("asof") != asof or not daily.get("boards") or not daily.get("board_count"):
         try:
-            daily = build_board_daily(asof)
+            daily = build_board_daily(asof, force=True)
         except Exception:
             daily = daily or {}
     market = market_from_quotes(quotes, zt, zb)
-    boards = boards_from_daily(daily, asof)
+    boards = boards_live(quotes, daily, asof)
     build, probe = _scan_flow(quotes)
     payload = {
         "asof": asof,
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "fact_note": "这是事实记录。情绪只过滤，不触发买卖。",
         "market": market,
-        "boards": boards[:40],
+        "boards": boards,
         "board_total": len(boards),
+        "board_note": "上涨占比=板块家数里收红只数。涨停数：中军+多只小票联动＝共振；只有孤零零一只涨停＝孤狼。赚钱效应=近20日板块内个股次日收盘上涨的比例。",
         "flow": {
             "build": build,
             "probe": probe,

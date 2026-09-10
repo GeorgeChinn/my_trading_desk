@@ -39,6 +39,7 @@ from .engine.watch import queue_counts, refresh_watch
 from .store import (
     load_ideas,
     load_pool_snapshot,
+    load_quotes_meta,
     load_settings,
     load_sync_status,
     load_trades,
@@ -179,6 +180,28 @@ def _scan_cache_path(ruleset_id: str):
     return SCAN_CACHE_DIR / f"{ruleset_id}.json"
 
 
+def _scan_stamp(ruleset_id: str) -> dict:
+    cached = read_json(_scan_cache_path(ruleset_id), {}) if _scan_cache_path(ruleset_id).exists() else {}
+    qmeta = load_quotes_meta()
+    settings = load_settings()
+    sync = load_sync_status()
+    snap = load_pool_snapshot()
+    csv_n = sum(1 for _ in CSV_DIR.glob("*.csv"))
+    asof = asof_date(settings.get("last_trade_date") or qmeta.get("trade_date") or snap.get("trade_date") or "")
+    return {
+        "asof": asof,
+        "scanned_at": cached.get("updated_at") or "",
+        "quotes_at": qmeta.get("updated_at") or "",
+        "quotes_date": qmeta.get("trade_date") or asof,
+        "quotes_source": qmeta.get("source") or snap.get("source") or settings.get("data_source") or "",
+        "quotes_n": len(qmeta.get("codes") or {}),
+        "pool_n": len(load_universe()),
+        "csv_n": csv_n,
+        "sync_at": sync.get("finished_at") or "",
+        "note": "扫描用数据与设置最新一次更新的全 A 底池与日线，不编造。",
+    }
+
+
 def _stamp_rows(rows: list, rs: dict) -> list[dict]:
     rid = rs.get("id") or "rules"
     eng = rs.get("engine") or ""
@@ -216,7 +239,9 @@ def _scan_bundle(ruleset_id: str | None = None):
     settings = load_settings()
     trades = load_trades()
     asof = asof_date(settings.get("last_trade_date") or "")
-    token = f"{bind.get('rules_hash')}:{asof}:{rs.get('engine')}:{len(trades)}:session:{_engine_token()}"
+    qmeta = load_quotes_meta()
+    qstamp = qmeta.get("updated_at") or qmeta.get("trade_date") or ""
+    token = f"{bind.get('rules_hash')}:{asof}:{qstamp}:{rs.get('engine')}:{len(trades)}:session:{_engine_token()}"
     cache_path = _scan_cache_path(rs["id"])
     cached = read_json(cache_path, {}) if cache_path.exists() else {}
     if (
@@ -360,8 +385,6 @@ def home():
         "by_gate": summary["by_gate"],
         "names": summary.get("names") or {},
         "position_block": "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令",
-        "market_regime": load_settings().get("market_regime"),
-        "person_present": load_settings().get("person_present"),
         "pool_count": len(load_universe()),
         "pool_trade_date": load_settings().get("last_trade_date") or "",
         "data_source": load_settings().get("data_source") or "csv",
@@ -442,6 +465,7 @@ def scan(ruleset: str = Query("rules")):
             "funnel": snap,
             "note": pool_note,
         },
+        "stamp": _scan_stamp(rs["id"]),
         "buy_log": buy_log,
     }
 
@@ -723,6 +747,9 @@ def settings_get():
     public["pool_snapshot"] = load_pool_snapshot()
     public["sync"] = load_sync_status()
     public["schedule"] = schedule_snapshot()
+    from .engine.pool import ashare_pool_public
+
+    public["ashare_pool"] = ashare_pool_public()
     return public
 
 

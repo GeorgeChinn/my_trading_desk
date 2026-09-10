@@ -65,6 +65,55 @@ def parse_date(text: str) -> str:
     return raw
 
 
+def overlay_quote_bar(bars: list[dict], code: str, quotes: dict | None = None) -> list[dict]:
+    """用数据与设置最新快照覆盖/补上当日最后一根。不编造中间缺失的交易日。"""
+    if not bars:
+        return bars
+    from ..store import load_quotes
+    from .clock import asof_date, is_weekend_date
+
+    q = (quotes if quotes is not None else load_quotes()).get(ts_code(code)) or {}
+    close = q.get("close")
+    try:
+        close = float(close) if close is not None else None
+    except (TypeError, ValueError):
+        close = None
+    asof = str(q.get("trade_date") or asof_date())[:10]
+    if close is None or not asof or is_weekend_date(asof):
+        return bars
+    last = bars[-1]
+    last_d = str(last.get("date") or "")[:10]
+
+    def _px(key, fallback):
+        raw = q.get(key)
+        try:
+            val = float(raw) if raw is not None and raw != "" else None
+        except (TypeError, ValueError):
+            val = None
+        return val if val is not None else fallback
+
+    bar = {
+        "code": ts_code(code),
+        "date": asof,
+        "open": _px("open", close),
+        "high": _px("high", close),
+        "low": _px("low", close),
+        "close": close,
+        "volume": last.get("volume") if last_d == asof else last.get("volume") or 0,
+        "amount": q.get("amount") if q.get("amount") else last.get("amount"),
+        "name": q.get("name") or last.get("name"),
+    }
+    if bar["high"] < max(bar["open"], bar["close"]):
+        bar["high"] = max(bar["open"], bar["close"])
+    if bar["low"] > min(bar["open"], bar["close"]):
+        bar["low"] = min(bar["open"], bar["close"])
+    if last_d == asof:
+        return list(bars[:-1]) + [bar]
+    if last_d < asof:
+        return list(bars) + [bar]
+    return bars
+
+
 def csv_path_for(code: str) -> Path:
     return CSV_DIR / f"{ts_code(code)}.csv"
 

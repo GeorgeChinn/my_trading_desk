@@ -11,7 +11,7 @@ from ..config import (
     POOL_MIN_PRICE,
     VETO_AMOUNT_YI,
 )
-from .bars import attach_indicators, bar_amount, load_bars, parse_amount, ts_code
+from .bars import attach_indicators, bar_amount, load_bars, overlay_quote_bar, parse_amount, ts_code
 from .indicators import last_number, sma
 from .pool import is_st_name
 
@@ -23,8 +23,6 @@ MISSING_NO_BUY = "缺数据，不升买入"
 
 
 def funnel_reminders(settings: dict) -> list[str]:
-    if (settings.get("market_regime") or "未设置") == "未设置":
-        return ["大盘未定性（多 / 空 / 震荡）。只提醒，不参与筛选。"]
     return []
 
 
@@ -287,11 +285,15 @@ def _snapshot(row: Optional[dict]) -> dict:
     return snap
 
 
-def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None, flags: dict | None = None) -> dict:
+def classify_stock(
+    meta: dict,
+    settings: dict,
+    trades: list[dict] | None = None,
+    flags: dict | None = None,
+    quotes: dict | None = None,
+) -> dict:
     code = ts_code(str(meta.get("code", "")))
     name = meta.get("name") or code
-    person_present = bool(settings.get("person_present", True))
-    market_regime = settings.get("market_regime") or "未设置"
     if flags is None:
         from .rules_bind import parse_flags
 
@@ -311,8 +313,6 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         "risk": [],
         "facts": {},
         "fact_note": FACT_NOTE,
-        "person_present": person_present,
-        "market_regime": market_regime,
         "position_block": "总闸「买入」只表示路径到达，不是成交指令",
         "can_upgrade_position": False,
         "path_ready": False,
@@ -321,7 +321,7 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
         "tags": meta.get("tags") or [],
     }
 
-    raw_bars = load_bars(code)
+    raw_bars = overlay_quote_bar(load_bars(code), code, quotes)
     if len(raw_bars) < 40:
         base["missing_rules"].append("数据不足：日线不足以计算 MACD(7,28,4)，排除")
         base["risk"].append("证据不足，禁止用想象补 K 线")
@@ -472,9 +472,6 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     if meta.get("index_member"):
         base["hit_rules"].append("优先样本：" + " / ".join(meta["index_member"]))
 
-    if market_regime != "未设置":
-        base["hit_rules"].append(f"大盘开关（人工定性，不参与筛选）：{market_regime}")
-
     if s4_unknown:
         base["missing_rules"].extend(["否决证据不足：" + x for x in s4_unknown])
 
@@ -593,10 +590,12 @@ def scan_universe(
         return []
     if flags is None:
         flags = parse_flags()
+    from ..store import load_quotes
     from .eastmoney import hydrate_universe
 
     universe = hydrate_universe(universe)
-    rows = [classify_stock(meta, settings, trades, flags=flags) for meta in universe]
+    quotes = load_quotes()
+    rows = [classify_stock(meta, settings, trades, flags=flags, quotes=quotes) for meta in universe]
     order = {name: i for i, name in enumerate(GATES)}
     rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))
     return rows

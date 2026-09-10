@@ -32,22 +32,57 @@
 
     <div class="card" style="margin-bottom:14px">
       <div class="ov-title">
-        板块情绪
-        <span>{{ (data.boards || []).length }} / {{ data.board_total || 0 }}</span>
+        板块统计
+        <span>{{ visibleBoards.length }} / {{ (data.boards || []).length }}</span>
       </div>
-      <p class="sub" style="margin:0 0 10px">涨停数：中军+多只小票=共振；单只涨停=孤狼。涨停≥10，次日买入赚钱概率偏高。</p>
-      <div class="board-cloud">
-        <span
-          class="board-chip"
-          :class="b.kind === '共振' ? 'pass' : b.kind === '孤狼' ? 'fail' : ''"
-          v-for="b in data.boards || []"
-          :key="b.name"
-        >
-          {{ b.name }}
-          <em>{{ n0(b.score) }}分 · {{ b.kind }} · 涨停 {{ b.limit_ups }} · 上涨 {{ pct(b.up_pct) }}</em>
-        </span>
+      <p class="sub" style="margin:0 0 10px">
+        {{ data.board_note || "上涨占比＝板块一共多少只、多少只收红。涨停数：中军+多只小票联动＝共振；只有孤零零一只涨停＝孤狼。赚钱效应＝近20日板块内个股次日买入赚钱的概率。" }}
+      </p>
+      <div class="row-btns" style="margin-bottom:10px">
+        <button class="btn" :class="{ primary: boardFilter === '全部' }" @click="boardFilter = '全部'">全部</button>
+        <button class="btn" :class="{ primary: boardFilter === '共振' }" @click="boardFilter = '共振'">共振</button>
+        <button class="btn" :class="{ primary: boardFilter === '孤狼' }" @click="boardFilter = '孤狼'">孤狼</button>
+        <button class="btn" :class="{ primary: boardFilter === '有涨停' }" @click="boardFilter = '有涨停'">有涨停</button>
       </div>
-      <div class="empty mini" v-if="!(data.boards || []).length">还没有板块统计。到数据与设置更新一次。</div>
+      <div class="table-wrap" v-if="visibleBoards.length">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>板块</th>
+              <th>家数</th>
+              <th>收红</th>
+              <th>上涨占比</th>
+              <th>涨停</th>
+              <th>结构</th>
+              <th>次日赚钱</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b in visibleBoards" :key="b.name">
+              <td>
+                <b>{{ b.name }}</b>
+                <div class="sub" style="margin:2px 0 0" v-if="b.zhongjun">中军 {{ b.zhongjun }}</div>
+              </td>
+              <td>{{ b.n }}</td>
+              <td>{{ b.up }}</td>
+              <td>{{ pct(b.up_pct) }}</td>
+              <td>
+                {{ b.limit_ups }}
+                <div class="sub" style="margin:2px 0 0" v-if="(b.limit_names || []).length">{{ (b.limit_names || []).join("、") }}</div>
+              </td>
+              <td>
+                <span class="badge" :class="b.kind === '共振' ? '买入' : b.kind === '孤狼' ? '观察' : ''">{{ b.kind }}</span>
+                <div class="sub" style="margin:2px 0 0">{{ b.kind_detail }}</div>
+              </td>
+              <td>
+                {{ b.next_day_win_pct == null ? "—" : b.next_day_win_pct.toFixed(1) + "%" }}
+                <div class="sub" style="margin:2px 0 0">{{ b.next_day }}</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="empty mini" v-else>还没有板块统计。到数据与设置更新一次，或点刷新评分。</div>
     </div>
 
     <div class="overview" style="margin-bottom:14px">
@@ -118,8 +153,16 @@ const data = ref({ market: {}, boards: [], flow: {} });
 const stock = ref(null);
 const codeQ = ref("");
 const loading = ref(false);
+const boardFilter = ref("全部");
 const market = computed(() => data.value.market || {});
 const flow = computed(() => data.value.flow || {});
+const visibleBoards = computed(() => {
+  const rows = data.value.boards || [];
+  if (boardFilter.value === "共振") return rows.filter((b) => b.kind === "共振");
+  if (boardFilter.value === "孤狼") return rows.filter((b) => b.kind === "孤狼");
+  if (boardFilter.value === "有涨停") return rows.filter((b) => (b.limit_ups || 0) > 0);
+  return rows;
+});
 
 function n0(v) {
   return v == null || Number.isNaN(Number(v)) ? "—" : Math.round(Number(v));

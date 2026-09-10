@@ -2,41 +2,36 @@
   <div>
     <h1>数据与设置</h1>
     <p class="sub">
-      数据源只用真实行情：日线腾讯 → 新浪 → 东财；筛池优先新浪全市场快照。不使用示例 CSV 当数据源。更新时间点在下面自选。
+      数据源只用真实行情。A股全股池是所有规则的基准，按下面的更新时间点定时刷新。不使用示例 CSV。
     </p>
-    <div class="grid cols-2">
-      <div class="card">
-        <h3>在场与市况</h3>
-        <label class="field" style="margin-top:10px">
-          <span>人是否在场</span>
-          <select v-model="person" @change="save">
-            <option :value="true">在场</option>
-            <option :value="false">不在场</option>
-          </select>
-        </label>
-        <label class="field" style="margin-top:10px">
-          <span>大盘开关（只定性，不编造）</span>
-          <select v-model="regime" @change="save">
-            <option>未设置</option>
-            <option>多</option>
-            <option>空</option>
-            <option>震荡</option>
-          </select>
-        </label>
+    <div class="card" style="margin-bottom:14px">
+      <h3>A股全股池</h3>
+      <p class="sub">{{ ashare.note || "所有规则的扫描基准。按下方更新时间点定时刷新。" }}</p>
+      <div class="grid cols-4" style="margin-top:12px">
+        <div class="stat"><div class="n">{{ ashare.count || poolCount || 0 }}</div><div class="k">全股池</div></div>
+        <div class="stat"><div class="n">{{ ashare.csv_count || 0 }}</div><div class="k">本地日线</div></div>
+        <div class="stat"><div class="n">{{ ashare.quote_count || 0 }}</div><div class="k">行情快照</div></div>
+        <div class="stat"><div class="n">{{ ashare.non_st || 0 }}</div><div class="k">非 ST</div></div>
       </div>
-      <div class="card">
-        <h3>定时更新</h3>
-        <p class="sub">{{ schedule.why }}</p>
-        <label class="field">
-          <span>交易日自动拉数</span>
-          <select v-model="scheduleOn" @change="saveSchedule">
-            <option :value="true">开</option>
-            <option :value="false">关</option>
-          </select>
-        </label>
-        <p class="sub" style="margin-top:10px">下次：{{ schedule.next_run || "—" }} · 上次触发：{{ schedule.last_fired || "—" }}</p>
-        <p class="sub">{{ dataLabel }} · 池子 {{ poolCount }} 只</p>
-      </div>
+      <p class="stamp" style="margin-top:12px">
+        数据日 {{ ashare.asof || "—" }}
+        · 快照更新 {{ ashare.updated_at || "—" }}
+        · 上次同步 {{ ashare.sync_at || "—" }}
+        · 来源 {{ ashare.source || "—" }}
+      </p>
+    </div>
+    <div class="card">
+      <h3>定时更新</h3>
+      <p class="sub">{{ schedule.why }}</p>
+      <label class="field">
+        <span>交易日自动拉数</span>
+        <select v-model="scheduleOn" @change="saveSchedule">
+          <option :value="true">开</option>
+          <option :value="false">关</option>
+        </select>
+      </label>
+      <p class="sub" style="margin-top:10px">下次：{{ schedule.next_run || "—" }} · 上次触发：{{ schedule.last_fired || "—" }}</p>
+      <p class="sub">{{ dataLabel }} · 全股池 {{ ashare.count || poolCount }} 只</p>
     </div>
     <div class="card" style="margin-top:14px">
       <h3>更新时间点</h3>
@@ -81,15 +76,15 @@
     </div>
 
     <div class="card" style="margin-top:14px">
-      <h3>底池漏斗（全 A → 各规则再筛）</h3>
-      <p class="sub">底池是全市场日线。RULES 入池另要流通市值 ≥ 300 亿 · 日成交额 ≥ 5 亿 · 非 ST · 股价 ≥ 5 元 · PE &gt; 0。RULES2 用自己的 80 亿 / 1 亿门槛。</p>
+      <h3>各规则在全股池上的门槛（只记排除，不截断底池）</h3>
+      <p class="sub">RULES 观察另要流通市值 ≥ 300 亿 · 日成交额 ≥ 5 亿 · 非 ST · 股价 ≥ 5 元 · PE &gt; 0。RULES2 用 80 亿 / 1 亿。未过关仍留在全股池，状态为排除。</p>
       <div class="grid cols-4" v-if="funnel && Object.keys(funnel).length">
-        <div class="stat"><div class="n">{{ funnel.listed || 0 }}</div><div class="k">上市 A 股</div></div>
+        <div class="stat"><div class="n">{{ funnel.listed || ashare.count || 0 }}</div><div class="k">全股池</div></div>
         <div class="stat"><div class="n">{{ funnel.non_st || 0 }}</div><div class="k">非 ST</div></div>
-        <div class="stat"><div class="n">{{ funnel.mcap_ok || 0 }}</div><div class="k">市值门槛过的行</div></div>
+        <div class="stat"><div class="n">{{ funnel.mcap_ok || 0 }}</div><div class="k">RULES 市值过关</div></div>
         <div class="stat"><div class="n">{{ funnel.pool || 0 }}</div><div class="k">RULES 入池门槛</div></div>
       </div>
-      <p class="sub" v-if="funnel && funnel.preferred != null">其中优先样本 {{ funnel.preferred }} 只 · 确认收盘 {{ funnel.trade_date }} · 来源 {{ funnel.source }}</p>
+      <p class="sub" v-if="funnel && funnel.trade_date">确认日 {{ funnel.trade_date }} · 来源 {{ funnel.source }}</p>
     </div>
   </div>
 </template>
@@ -98,9 +93,8 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { api } from "../api";
 
-const person = ref(true);
-const regime = ref("未设置");
 const poolCount = ref(0);
+const ashare = ref({});
 const dataLabel = ref("");
 const funnel = ref({});
 const syncText = ref("");
@@ -131,9 +125,8 @@ function toggleTime(t) {
 
 async function load() {
   const s = await api.settings();
-  person.value = !!s.person_present;
-  regime.value = s.market_regime || "未设置";
   poolCount.value = s.pool_count || 0;
+  ashare.value = s.ashare_pool || {};
   dataLabel.value = s.data_label || "";
   funnel.value = s.pool_snapshot || {};
   schedule.value = s.schedule || {};
@@ -169,9 +162,6 @@ function startPoll() {
 function stopPoll() {
   if (timer) clearInterval(timer);
   timer = null;
-}
-async function save() {
-  await api.saveSettings({ person_present: person.value, market_regime: regime.value });
 }
 async function saveSchedule() {
   await api.saveSettings({
