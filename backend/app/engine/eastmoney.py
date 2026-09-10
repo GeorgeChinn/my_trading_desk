@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 
 from ..config import POOL_AMOUNT_YI, POOL_FLOAT_MCAP_YI, POOL_MIN_PRICE
-from ..store import load_quotes, save_quotes
+from ..store import load_quotes, load_universe, save_pool_snapshot, save_quotes, save_universe
 from .bars import load_bars, save_bars_csv, suffix_for, ts_code
 from .clock import asof_date, expected_close_date, is_weekend_date
 from .pool import is_st_name, passes_pool, sort_pool
@@ -560,6 +560,104 @@ def _round_or_none(val: float | None, ndigits: int = 3) -> float | None:
     return round(val, ndigits)
 
 
+EM_CLIST_URLS = (
+    "https://push2delay.eastmoney.com/api/qt/clist/get",
+    "https://push2.eastmoney.com/api/qt/clist/get",
+    "https://82.push2.eastmoney.com/api/qt/clist/get",
+)
+EM_CLIST_FS = "m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048"
+
+
+def fetch_em_clist(log=None) -> list[dict]:
+    """东财全 A 列表：最新价 / 动态市盈 / 流通市值 / 成交额。不按 300 亿截断。"""
+    talk = log or (lambda _m: None)
+    sess = _session()
+    sess.headers["Referer"] = "https://quote.eastmoney.com/"
+    last_exc = None
+    for url in EM_CLIST_URLS:
+        codes: dict[str, dict] = {}
+        total = None
+        try:
+            for page in range(1, 90):
+                payload = _get_json(
+                    sess,
+                    url,
+                    {
+                        "pn": page,
+                        "pz": 100,
+                        "po": 1,
+                        "np": 1,
+                        "fltt": 2,
+                        "invt": 2,
+                        "fid": "f12",
+                        "fs": EM_CLIST_FS,
+                        "fields": "f12,f14,f2,f3,f9,f20,f21,f6,f15,f16,f17,f18",
+                    },
+                    timeout=20,
+                )
+                data = (payload or {}).get("data") or {}
+                if total is None:
+                    total = int(data.get("total") or 0)
+                    talk(f"东财列表 {total} 只 · {url.split('/')[2]}")
+                diff = data.get("diff") or []
+                if isinstance(diff, dict):
+                    diff = list(diff.values())
+                if not diff:
+                    break
+                for rec in diff:
+                    if not isinstance(rec, dict):
+                        continue
+                    code = ts_code(str(rec.get("f12") or ""))
+                    if code:
+                        codes[code] = rec
+                if total and len(codes) >= total:
+                    break
+                if len(diff) < 100:
+                    break
+                time.sleep(0.04)
+            if len(codes) >= 200:
+                talk(f"东财列表完成 {len(codes)} 只")
+                return list(codes.values())
+            last_exc = RuntimeError(f"{url} 仅 {len(codes)} 只")
+        except Exception as exc:
+            last_exc = exc
+            talk(f"东财列表失败 {url.split('/')[2]}：{exc}")
+            continue
+    talk(f"东财列表不可用：{last_exc}")
+    return []
+
+
+def quotes_from_em_clist(rows: list[dict]) -> dict:
+    asof = expected_close_date().isoformat()
+    codes = {}
+    for rec in rows or []:
+        code = ts_code(str(rec.get("f12") or rec.get("code") or ""))
+        if not code:
+            continue
+        pe = _fnum(rec.get("f9"))
+        circ = _fnum(rec.get("f21"))
+        amount = _fnum(rec.get("f6"))
+        close = _fnum(rec.get("f2"))
+        float_mcap_yi = circ / YI if circ and circ > 0 else None
+        amount_yi = amount / YI if amount and amount > 0 else None
+        codes[code] = {
+            "code": code,
+            "name": str(rec.get("f14") or rec.get("name") or code),
+            "pe": _round_or_none(pe),
+            "amount": amount if amount and amount > 0 else None,
+            "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
+            "float_mcap_yi": round(float_mcap_yi, 2) if float_mcap_yi is not None else None,
+            "close": close,
+            "open": _fnum(rec.get("f17")),
+            "high": _fnum(rec.get("f15")),
+            "low": _fnum(rec.get("f16")),
+            "preclose": _fnum(rec.get("f18")),
+            "pct": _round_or_none(_fnum(rec.get("f3")), 3),
+            "trade_date": asof,
+        }
+    return {"trade_date": asof, "source": "eastmoney-clist", "codes": codes}
+
+
 def quotes_from_spot(spot: list[dict]) -> dict:
     asof = expected_close_date().isoformat()
     codes = {}
@@ -604,6 +702,187 @@ def quotes_from_spot(spot: list[dict]) -> dict:
     return {"trade_date": asof, "source": "sina", "codes": codes}
 
 
+def _fmt_ymd(raw: str) -> str:
+    raw = str(raw or "").replace("-", "")
+    if len(raw) < 8:
+        return ""
+    return f"{raw[:4]}-{raw[4:6]}-{raw[6:8]}"
+
+
+def _fnum(val):
+    try:
+        if val is None:
+            return None
+        num = float(val)
+        if num != num:
+            return None
+        return num
+    except (TypeError, ValueError):
+        return None
+
+
+def _quotes_from_tushare(log=None) -> dict:
+    """PE / 流通市值 / 成交额。Tushare daily_basic 一次拉全市场，不按 300 亿截断。"""
+    talk = log or (lambda _m: None)
+    from ..store import load_settings
+
+    token = (load_settings().get("tushare_token") or "").strip()
+    if not token:
+        return {"trade_date": "", "source": "tushare", "codes": {}}
+    try:
+        import tushare as ts  # type: ignore
+
+        pro = ts.pro_api(token)
+        end = datetime.now().strftime("%Y%m%d")
+        start = (datetime.now() - timedelta(days=20)).strftime("%Y%m%d")
+        cal = pro.trade_cal(exchange="SSE", start_date=start, end_date=end, is_open="1")
+        if cal is None or cal.empty:
+            talk("Tushare 交易日历为空")
+            return {"trade_date": "", "source": "tushare", "codes": {}}
+        trade_date = str(cal["cal_date"].iloc[-1])
+        talk(f"Tushare 快照日 {_fmt_ymd(trade_date)}")
+        basic = pro.stock_basic(exchange="", list_status="L", fields="ts_code,symbol,name")
+        daily_basic = pro.daily_basic(
+            trade_date=trade_date, fields="ts_code,trade_date,close,circ_mv,pe,pe_ttm"
+        )
+        daily = pro.daily(
+            trade_date=trade_date, fields="ts_code,open,high,low,close,vol,amount"
+        )
+        if daily_basic is None or daily_basic.empty:
+            talk("Tushare daily_basic 为空")
+            return {"trade_date": "", "source": "tushare", "codes": {}}
+        basic = basic.set_index("ts_code") if basic is not None and not basic.empty else None
+        daily_basic = daily_basic.set_index("ts_code")
+        if daily is not None and not daily.empty:
+            daily = daily.set_index("ts_code")
+            merged = daily_basic.join(daily[["amount", "vol", "open", "high", "low"]], how="left")
+        else:
+            merged = daily_basic
+        if basic is not None:
+            merged = merged.join(basic[["symbol", "name"]], how="left")
+        asof = _fmt_ymd(trade_date)
+        codes = {}
+        for ts_full, rec in merged.iterrows():
+            code = ts_code(str(rec.get("symbol") or str(ts_full).split(".")[0]))
+            if not code:
+                continue
+            pe = _fnum(rec.get("pe_ttm"))
+            if pe is None:
+                pe = _fnum(rec.get("pe"))
+            circ = _fnum(rec.get("circ_mv"))
+            amount = _fnum(rec.get("amount"))
+            close = _fnum(rec.get("close"))
+            float_mcap_yi = circ / 10_000.0 if circ and circ > 0 else None
+            amount_yi = amount / 100_000.0 if amount and amount > 0 else None
+            codes[code] = {
+                "code": code,
+                "name": str(rec.get("name") or code),
+                "pe": round(pe, 3) if pe is not None else None,
+                "amount": amount * 1000.0 if amount and amount > 0 else None,
+                "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
+                "float_mcap_yi": round(float_mcap_yi, 2) if float_mcap_yi is not None else None,
+                "close": close,
+                "open": _fnum(rec.get("open")),
+                "high": _fnum(rec.get("high")),
+                "low": _fnum(rec.get("low")),
+                "trade_date": asof,
+            }
+        talk(f"Tushare 快照 {len(codes)} 只")
+        return {"trade_date": asof, "source": "tushare", "codes": codes}
+    except Exception as exc:
+        talk(f"Tushare 快照失败：{exc}")
+        return {"trade_date": "", "source": "tushare", "codes": {}}
+
+
+def apply_quote_fields(meta: dict, quotes: dict | None = None) -> dict:
+    """把快照里的 PE / 流通市值补进单票 meta。不编造。"""
+    out = dict(meta or {})
+    code = ts_code(str(out.get("code") or ""))
+    qmap = quotes if quotes is not None else load_quotes()
+    q = (qmap or {}).get(code) or {}
+    if q.get("pe") is not None and out.get("pe") is None:
+        out["pe"] = q["pe"]
+    if q.get("float_mcap_yi") is not None and (
+        out.get("float_mcap_yi") is None or float(out.get("float_mcap_yi") or 0) <= 0
+    ):
+        out["float_mcap_yi"] = q["float_mcap_yi"]
+    if q.get("amount_yi") is not None and out.get("amount_yi") is None:
+        out["amount_yi"] = q["amount_yi"]
+    if q.get("name") and (not out.get("name") or out.get("name") == code):
+        out["name"] = q["name"]
+    return out
+
+
+def hydrate_universe(universe: list[dict] | None = None, log=None) -> list[dict]:
+    """全 A 底池 + 快照 PE/市值。规则池子由各 RULES 自己记排除，这里不截断。"""
+    talk = log or (lambda _m: None)
+    quotes = ensure_quotes(log=talk)
+    items = list(universe) if universe is not None else list(load_universe())
+    if not items:
+        from .pool import build_universe_from_csv
+
+        talk("universe 空，改用本地日线重建全 A 底池")
+        items, _ = build_universe_from_csv()
+    asof = expected_close_date().isoformat()
+    funnel = {
+        "listed": 0,
+        "quote_rows": len(quotes or {}),
+        "non_st": 0,
+        "price_ok": 0,
+        "mcap_ok": 0,
+        "amount_ok": 0,
+        "pool": 0,
+        "preferred": 0,
+        "pe_ok": 0,
+        "trade_date": asof,
+        "source": "quotes+csv",
+        "rules": {
+            "底池": "本地日线全 A，不按单条规则截断",
+            "流通市值": f"RULES 入池 ≥ {POOL_FLOAT_MCAP_YI:.0f} 亿",
+            "日成交额": f"RULES 入池 ≥ {POOL_AMOUNT_YI:.0f} 亿",
+        },
+    }
+    out = []
+    for item in items:
+        meta = apply_quote_fields(item, quotes)
+        code = ts_code(str(meta.get("code") or ""))
+        if not code:
+            continue
+        name = str(meta.get("name") or code)
+        st = bool(meta.get("is_st")) or is_st_name(name)
+        meta["is_st"] = st
+        close = _fnum(meta.get("close"))
+        if close is None:
+            close = _fnum((quotes or {}).get(code, {}).get("close"))
+            if close is not None:
+                meta["close"] = close
+        mcap = _fnum(meta.get("float_mcap_yi"))
+        amount_yi = _fnum(meta.get("amount_yi"))
+        pe = _fnum(meta.get("pe"))
+        funnel["listed"] += 1
+        if not st:
+            funnel["non_st"] += 1
+        if close is not None and close >= POOL_MIN_PRICE:
+            funnel["price_ok"] += 1
+        if mcap is not None and mcap >= POOL_FLOAT_MCAP_YI:
+            funnel["mcap_ok"] += 1
+        if amount_yi is not None and amount_yi >= POOL_AMOUNT_YI:
+            funnel["amount_ok"] += 1
+        if pe is not None and pe > 0:
+            funnel["pe_ok"] += 1
+        if passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=mcap, is_st=st, pe=pe):
+            funnel["pool"] += 1
+            if meta.get("index_member"):
+                funnel["preferred"] += 1
+        out.append(meta)
+    funnel["listed"] = len(out)
+    if out:
+        save_universe(out)
+        save_pool_snapshot(funnel)
+    talk(f"底池 {len(out)} 只 · 快照 {len(quotes or {})} · RULES 入池 {funnel['pool']}")
+    return out
+
+
 def ensure_quotes(log=None, force: bool = False) -> dict:
     """All-A quote map for PE / 成交额 / 流通市值. Not the RULES.md 300亿池。"""
     talk = log or (lambda _m: None)
@@ -621,12 +900,24 @@ def ensure_quotes(log=None, force: bool = False) -> dict:
         and len(cached) >= 200
     ):
         return cached
-    talk("正在拉新浪全市场快照，补全市盈 / 成交额 / 流通市值…")
-    spot = fetch_spot(log=talk)
-    payload = quotes_from_spot(spot)
+    talk("正在补全市盈 / 成交额 / 流通市值（东财列表 / Tushare / 新浪）…")
+    payload = {"trade_date": "", "source": "", "codes": {}}
+    em_rows = fetch_em_clist(log=talk)
+    if em_rows:
+        payload = quotes_from_em_clist(em_rows)
+    if len(payload.get("codes") or {}) < 200:
+        ts_payload = _quotes_from_tushare(log=talk)
+        if len(ts_payload.get("codes") or {}) > len(payload.get("codes") or {}):
+            payload = ts_payload
+    if len(payload.get("codes") or {}) < 200:
+        talk("改拉新浪全市场")
+        spot = fetch_spot(log=talk)
+        sina_payload = quotes_from_spot(spot)
+        if len(sina_payload.get("codes") or {}) > len(payload.get("codes") or {}):
+            payload = sina_payload
     save_quotes(payload)
     talk(f"行情快照 {len(payload.get('codes') or {})} 只 · 最新 {payload.get('trade_date')}")
-    return payload.get("codes") or {}
+    return payload.get("codes") or load_quotes() or {}
 
 
 def build_pool(log=None) -> tuple[list[dict], dict]:

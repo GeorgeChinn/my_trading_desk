@@ -116,15 +116,24 @@ def save_pool_snapshot(payload: dict) -> None:
     write_json(POOL_SNAPSHOT_PATH, payload)
 
 
+_quotes_mem: dict | None = None
+
+
 def load_quotes() -> dict:
+    global _quotes_mem
+    if isinstance(_quotes_mem, dict):
+        return _quotes_mem
     data = read_json(QUOTES_PATH, {})
     if not isinstance(data, dict):
-        return {}
+        _quotes_mem = {}
+        return _quotes_mem
     codes = data.get("codes")
-    return codes if isinstance(codes, dict) else {}
+    _quotes_mem = codes if isinstance(codes, dict) else {}
+    return _quotes_mem
 
 
 def save_quotes(payload: dict) -> None:
+    global _quotes_mem
     from .engine.clock import asof_date
 
     out = dict(payload or {})
@@ -136,6 +145,7 @@ def save_quotes(payload: dict) -> None:
         return
     out["trade_date"] = asof_date(out.get("trade_date") or "")
     write_json(QUOTES_PATH, out)
+    _quotes_mem = codes
 
 
 def load_sync_status() -> dict:

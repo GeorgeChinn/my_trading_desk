@@ -18,6 +18,7 @@ from .config import (
     ALLOWED_STATUS,
     BUILTIN_CONDITIONS,
     CSV_DIR,
+    LAST_SCAN_PATH,
     PROFILE_PATH,
     ROOT,
     RULES_PATH,
@@ -260,6 +261,18 @@ def _scan_bundle(ruleset_id: str | None = None):
     from .engine.buy_log import sync_buy_log
 
     sync_buy_log(rs["id"], rs.get("engine") or "", rows)
+    if rs["id"] == "rules":
+        tallied = summarize(rows)
+        write_json(
+            LAST_SCAN_PATH,
+            {
+                "bind": bind,
+                "by_gate": tallied.get("by_gate"),
+                "summary": tallied.get("summary"),
+                "buy_count": (tallied.get("by_gate") or {}).get("买入") or 0,
+                "buys": (tallied.get("names") or {}).get("买入") or [],
+            },
+        )
     return rs, flags, bind, rows
 
 
@@ -387,14 +400,14 @@ def scan(ruleset: str = Query("rules")):
         reminders.append(f"买入池 {buy_n} 只。开几只由人定，扫描不把其余票打回观察。买入不是成交指令。")
     elif buy_n > 1 and not pullback:
         reminders.append(f"买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
-    pool_count = len(rows) if pullback else len(load_universe())
+    pool_count = len(rows) if rows else len(load_universe())
     pool_note = (
-        "RULES2：从全 A 底池再筛 80 亿/1 亿/结构。主线已注释。"
+        "RULES2：底池全 A。池子 80亿/1亿/非ST/PE 与结构记排除，不从列表拿掉。主线已注释。"
         if pullback and not want_ml
         else (
-            "RULES2：从全 A 底池先主线再挑个股。"
+            "RULES2：底池全 A。先主线再挑个股；未过关记排除。"
             if pullback
-            else "底池为全 A 日线。本规则再按 300 亿/5 亿/非 ST 筛观察与买入。"
+            else "底池为全 A 日线。本规则再按 300亿/5亿/非ST/PE 记排除或观察，不从列表拿掉。"
         )
     )
     boards = []
@@ -440,8 +453,10 @@ def _classify_for(code: str, ruleset_id: str | None = None) -> dict:
 
         row = classify_one_s1(code, load_settings(), load_trades())
     elif rs and rs.get("engine") == "low_golden":
+        from .engine.eastmoney import apply_quote_fields
+
         uni = _universe_map()
-        meta = uni.get(ts_code(code)) or {"code": code, "name": _name_of(code)}
+        meta = apply_quote_fields(uni.get(ts_code(code)) or {"code": code, "name": _name_of(code)})
         row = classify_stock(meta, load_settings(), load_trades())
     else:
         note = (rs or {}).get("engine_note") or "没有这个规则文件"

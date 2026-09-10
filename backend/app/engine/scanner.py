@@ -13,6 +13,7 @@ from ..config import (
 )
 from .bars import attach_indicators, bar_amount, load_bars, parse_amount, ts_code
 from .indicators import last_number, sma
+from .pool import is_st_name
 
 YI = 100_000_000.0
 PROFILE_BAN = ("打板", "连板", "高位接力")
@@ -351,9 +352,19 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     amount_yi = amount / YI if amount is not None else None
     close = float(last["close"])
     float_mcap = _num(meta.get("float_mcap_yi"))
+    pe = dyn_pe_value(meta)
+    q = {}
+    if float_mcap is None or pe is None:
+        from ..store import load_quotes
+
+        q = load_quotes().get(code) or {}
+        if float_mcap is None:
+            float_mcap = _num(q.get("float_mcap_yi"))
+        if pe is None:
+            pe = dyn_pe_value(q)
     if float_mcap is not None and float_mcap <= 0:
         float_mcap = None
-    is_st = bool(meta.get("is_st"))
+    is_st = bool(meta.get("is_st")) or is_st_name(name)
     tags = list(meta.get("tags") or [])
 
     # 否决：打板、连板、高位接力
@@ -398,7 +409,6 @@ def classify_stock(meta: dict, settings: dict, trades: list[dict] | None = None,
     else:
         pool_hit.append("非 ST")
 
-    pe = dyn_pe_value(meta)
     if pe is not None:
         base["facts"]["pe"] = pe
     if pe is None:
@@ -583,6 +593,9 @@ def scan_universe(
         return []
     if flags is None:
         flags = parse_flags()
+    from .eastmoney import hydrate_universe
+
+    universe = hydrate_universe(universe)
     rows = [classify_stock(meta, settings, trades, flags=flags) for meta in universe]
     order = {name: i for i, name in enumerate(GATES)}
     rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))

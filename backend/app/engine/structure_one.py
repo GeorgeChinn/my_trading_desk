@@ -373,16 +373,28 @@ def classify_s1(
     if name == code and (meta.get("name") or "").strip() and meta.get("name") != code:
         name = str(meta["name"]).strip()
     base["name"] = name
-    base["facts"] = {"date": last["date"], "close": close, "pe": dyn_pe_value(meta)}
+    pe_meta = dict(meta or {})
+    q = {}
+    if pe_meta.get("pe") is None or pe_meta.get("float_mcap_yi") is None:
+        from ..store import load_quotes
+
+        q = load_quotes().get(code) or {}
+        if q.get("pe") is not None and pe_meta.get("pe") is None:
+            pe_meta["pe"] = q["pe"]
+        if q.get("float_mcap_yi") is not None and pe_meta.get("float_mcap_yi") is None:
+            pe_meta["float_mcap_yi"] = q["float_mcap_yi"]
+    base["facts"] = {"date": last["date"], "close": close, "pe": dyn_pe_value(pe_meta)}
     if is_st_name(name):
-        base["veto"] = ["ST / *ST"]
+        base["missing_rules"].append("池子：ST / *ST")
         return base
     if close < POOL_MIN_PRICE:
         base["missing_rules"].append(f"池子：股价 {close:.2f} < 5 元")
         return base
     amt = _amt(last)
-    pe = dyn_pe_value(meta)
-    mcap = _float_mcap_yi(meta, last)
+    pe = dyn_pe_value(pe_meta)
+    mcap = _float_mcap_yi(pe_meta, last)
+    if mcap is None:
+        mcap = _float_mcap_yi(q, last)
     data_gap = []
     industry = meta.get("industry")
     if not industry:
@@ -404,13 +416,13 @@ def classify_s1(
             base["missing_rules"].append("池子：市盈证据不足")
             return base
         if pe <= 0:
-            base["veto"] = [f"动态市盈 {pe:.2f} ≤ 0"]
+            base["missing_rules"].append(f"池子：动态市盈 {pe:.2f} ≤ 0")
             return base
         if mcap is None:
             base["missing_rules"].append("池子：流通市值证据不足")
             return base
         if mcap < MIN_FLOAT_YI:
-            base["veto"] = [f"小盘：流通市值 {mcap:.1f} 亿 < {MIN_FLOAT_YI:.0f} 亿"]
+            base["missing_rules"].append(f"池子：流通市值 {mcap:.1f} 亿 < {MIN_FLOAT_YI:.0f} 亿")
             return base
         base["facts"]["float_mcap_yi"] = round(mcap, 2)
     if _any_limit(bars, code, 3):
@@ -617,10 +629,10 @@ def evaluate_exit_s1(bars: list[dict], open_trade: dict | None, zone: dict | Non
     elapsed = len(bars) - 1 - entry_idx
 
     if hard_stop and last["close"] < hard_stop:
-        return True, "7.1", f"收盘低于买入日20日线×0.95（{hard_stop:.2f}）"
+        return True, "止损", f"收盘低于买入日20日线×0.95（{hard_stop:.2f}）"
 
     if buy_ma20 and last["close"] < buy_ma20 and len(bars) >= 2 and bars[-2]["close"] < buy_ma20:
-        return True, "7.1b", f"连续2日收盘低于买入日20日线 {buy_ma20:.2f}"
+        return True, "失败", f"连续2日收盘低于买入日20日线 {buy_ma20:.2f}"
 
     today_limit = _is_limit_up(bars, len(bars) - 1, code)
     had_accel = _had_accel(bars, entry_idx, code)
@@ -635,7 +647,7 @@ def evaluate_exit_s1(bars: list[dict], open_trade: dict | None, zone: dict | Non
         is_top2 = last_rank <= 1
         left_zone = bool(m20_today and last["close"] > m20_today * 1.12)
         if new_close_high and is_top2 and left_zone:
-            return True, "7.2", "高潮离场：收盘新高、未涨停、量列买入以来前2、高于当天20日线12%"
+            return True, "高潮卖", "高潮离场：收盘新高、未涨停、量列买入以来前2、高于当天20日线12%"
     return False, "", ""
 
 
@@ -729,38 +741,22 @@ def list_s1_cycle_universe() -> list[dict]:
 
 
 def list_s1_pool() -> list[dict]:
-    """RULES2 第3.1条底池，不走 RULES.md 300亿/5亿宇宙。"""
-    uni = {ts_code(str(x.get("code") or "")): x for x in load_universe()}
-    quotes = load_quotes()
+    """全 A 底池。池子（非ST/≥5元/1亿/80亿/PE）和结构在 classify 里记排除，这里不截断列表。"""
+    from .eastmoney import hydrate_universe
+
+    items = hydrate_universe()
     imap = _load_industry_map()
+    quotes = load_quotes()
     cands = []
-    for path in CSV_DIR.glob("*.csv"):
-        code = path.stem
-        last = peek_last_bar(code)
-        if not last:
+    for item in items:
+        code = ts_code(str(item.get("code") or ""))
+        if not code:
             continue
         q = quotes.get(code) or {}
-        name = last.get("name") or q.get("name") or (uni.get(code) or {}).get("name") or code
-        if is_st_name(name):
-            continue
-        if last["close"] < POOL_MIN_PRICE:
-            continue
-        amt = _amt(last)
-        if amt is None and q.get("amount"):
-            amt = q["amount"]
-        if amt is not None and amt < YI:
-            continue
-        industry = imap.get(code) or (uni.get(code) or {}).get("industry")
-        bars = load_bars(code, last_n=80)
-        if len(bars) < 25:
-            continue
-        last = bars[-1]
-        if last.get("amount") in (None, "", 0, 0.0) and q.get("amount"):
-            last["amount"] = q["amount"]
-            bars[-1]["amount"] = q["amount"]
-        name = last.get("name") or name
-        meta = dict(uni.get(code) or {})
-        meta.update({"code": code, "name": name, "bars": bars, "industry": industry})
+        meta = dict(item)
+        meta["code"] = code
+        meta["name"] = meta.get("name") or q.get("name") or code
+        meta["industry"] = imap.get(code) or meta.get("industry") or ""
         if q.get("pe") is not None:
             meta["pe"] = q["pe"]
         if q.get("float_mcap_yi") is not None:
@@ -810,9 +806,6 @@ def board_funnel(industry_stats: dict, market_3d: float | None) -> list[dict]:
 
 
 def scan_structure_one(settings: dict, trades: list | None = None) -> list[dict]:
-    from .eastmoney import ensure_quotes
-
-    ensure_quotes()
     want_ml = need_mainline()
     cands = list_s1_pool()
     daily = None

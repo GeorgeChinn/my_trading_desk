@@ -57,6 +57,10 @@ def is_buy_signal(s: dict, flags: dict) -> bool:
     close = last.get("close")
     if close is None or close < POOL_MIN_PRICE:
         return False
+    from .pool import is_st_name
+
+    if is_st_name(str(last.get("name") or "")):
+        return False
     amt = bar_amount(last)
     if amt is None or amt < POOL_AMOUNT_YI * 100_000_000.0:
         return False
@@ -188,6 +192,7 @@ def _cycle_stats(
             "7.1": "止损",
             "7.1b": "连续跌破均线",
             "7.2": "高潮卖",
+            "高潮卖": "高潮卖",
         }.get(exit_section)
         if exit_label:
             result = f"{result} · {exit_label}"

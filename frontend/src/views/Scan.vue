@@ -143,7 +143,14 @@
       <span>搜索代码 / 名称 / 板块</span>
       <input v-model="q" placeholder="600519 或 茅台 或 有色" />
     </label>
-    <p class="sub">当前列出 {{ visible.length }} / {{ (data.rows || []).length }}</p>
+    <p class="sub">
+      当前列出 {{ visible.length }} / {{ (data.rows || []).length }}
+      <span v-if="pageCount > 1"> · 第 {{ page }} / {{ pageCount }} 页</span>
+    </p>
+    <div class="row-btns" v-if="pageCount > 1" style="margin-bottom:12px">
+      <button class="btn" :disabled="page <= 1" @click="page--">上一页</button>
+      <button class="btn" :disabled="page >= pageCount" @click="page++">下一页</button>
+    </div>
     <div v-if="!visible.length" class="empty">{{ emptyText }}</div>
     <div v-for="grp in groups" :key="grp.key" style="margin-bottom:18px">
       <div class="ov-title" v-if="grp.title" style="margin-bottom:10px">
@@ -213,6 +220,8 @@ const extraRulesets = ref([]);
 const cache = {};
 const filter = ref("观察");
 const q = ref("");
+const page = ref(1);
+const pageSize = 80;
 const loading = ref(true);
 const poolBacktest = ref(null);
 const gates = GATES;
@@ -254,8 +263,16 @@ const visible = computed(() => {
     return (r.code && r.code.includes(query)) || (r.name && r.name.includes(query)) || ind.includes(query);
   });
 });
+const pageCount = computed(() => Math.max(1, Math.ceil(visible.value.length / pageSize)));
+const pageRows = computed(() => {
+  const start = (page.value - 1) * pageSize;
+  return visible.value.slice(start, start + pageSize);
+});
+watch([filter, q, rulesetId], () => {
+  page.value = 1;
+});
 const groups = computed(() => {
-  const rows = visible.value;
+  const rows = pageRows.value;
   if (!isPullback.value) return [{ key: "_all", title: "", rows }];
   const map = new Map();
   for (const r of rows) {
@@ -283,6 +300,14 @@ const emptyText = computed(() => {
   if (loading.value) return "正在按当前规则扫描…";
   if (currentRuleset.value && !currentRuleset.value.engine_ok) {
     return currentRuleset.value.engine_note || "本规则尚未写成扫描器。";
+  }
+  const total = (data.value.rows || []).length;
+  const g = data.value.by_gate || {};
+  if (filter.value === "观察" && total && !(g.观察)) {
+    return `观察闸 0 只。底池 ${total} 只（排除 ${g.排除 || 0}）。点「全部」或「排除」看未过池原因。`;
+  }
+  if (filter.value === "买入" && total && !(g.买入)) {
+    return `买入闸 0 只。底池 ${total} 只。点「观察」或「全部」看未齐条件的票。`;
   }
   return "这一闸没有股票。";
 });
