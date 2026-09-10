@@ -47,6 +47,112 @@ def passes_pool(**kwargs) -> bool:
     return not pool_fail_reasons(**kwargs)
 
 
+def build_universe_from_csv() -> tuple[list[dict], dict]:
+    """用本地日线重建全 A 底池。规则池子由各 RULES 自己筛，这里不按 300 亿截断。"""
+    from ..config import CSV_DIR, DATA_DIR
+    from ..store import load_quotes, read_json
+    from .bars import bar_amount, peek_last_bar, suffix_for, ts_code
+    from .clock import asof_date
+
+    quotes = load_quotes() or {}
+    blob = read_json(DATA_DIR / "industry_map.json", {})
+    imap = {}
+    if isinstance(blob, dict):
+        raw = blob.get("sw2") or blob.get("codes") or blob
+        if isinstance(raw, dict):
+            imap = {str(k): str(v) for k, v in raw.items() if v and not str(k).startswith("_")}
+    asof = asof_date()
+    funnel = {
+        "listed": 0,
+        "quote_rows": 0,
+        "non_st": 0,
+        "price_ok": 0,
+        "mcap_ok": 0,
+        "amount_ok": 0,
+        "pool": 0,
+        "preferred": 0,
+        "pe_ok": 0,
+        "trade_date": asof,
+        "source": "local-csv",
+        "rules": {
+            "底池": "本地日线全 A，不按单条规则截断",
+            "流通市值": f"RULES 入池 ≥ {POOL_FLOAT_MCAP_YI:.0f} 亿",
+            "日成交额": f"RULES 入池 ≥ {POOL_AMOUNT_YI:.0f} 亿",
+        },
+    }
+    out: list[dict] = []
+    for path in CSV_DIR.glob("*.csv"):
+        code = ts_code(path.stem)
+        if not code:
+            continue
+        last = peek_last_bar(code) or {}
+        q = quotes.get(code) or {}
+        name = str(last.get("name") or q.get("name") or code).strip() or code
+        st = is_st_name(name)
+        close = last.get("close")
+        if close is None:
+            close = q.get("close")
+        try:
+            close = float(close) if close is not None else None
+        except (TypeError, ValueError):
+            close = None
+        amt = bar_amount(last) if last else None
+        if amt is None and q.get("amount"):
+            amt = q.get("amount")
+        amount_yi = None
+        if amt:
+            amount_yi = amt / 100_000_000.0
+        elif q.get("amount_yi") is not None:
+            try:
+                amount_yi = float(q["amount_yi"])
+            except (TypeError, ValueError):
+                amount_yi = None
+        mcap = q.get("float_mcap_yi")
+        try:
+            mcap = float(mcap) if mcap is not None else None
+        except (TypeError, ValueError):
+            mcap = None
+        pe = q.get("pe")
+        try:
+            pe = float(pe) if pe is not None else None
+        except (TypeError, ValueError):
+            pe = None
+        funnel["listed"] += 1
+        funnel["quote_rows"] += 1
+        if not st:
+            funnel["non_st"] += 1
+        if close is not None and close >= POOL_MIN_PRICE:
+            funnel["price_ok"] += 1
+        if mcap is not None and mcap >= POOL_FLOAT_MCAP_YI:
+            funnel["mcap_ok"] += 1
+        if amount_yi is not None and amount_yi >= POOL_AMOUNT_YI:
+            funnel["amount_ok"] += 1
+        if pe is not None and pe > 0:
+            funnel["pe_ok"] += 1
+        if passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=mcap, is_st=st, pe=pe):
+            funnel["pool"] += 1
+        out.append(
+            {
+                "code": code,
+                "ts_code": f"{code}.{suffix_for(code)}",
+                "name": name,
+                "float_mcap_yi": round(mcap, 2) if mcap is not None else None,
+                "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
+                "close": close,
+                "pe": round(pe, 3) if pe is not None else None,
+                "is_st": st,
+                "industry": imap.get(code) or "",
+                "index_member": [],
+                "tags": [],
+                "trade_date": str(last.get("date") or asof)[:10],
+                "source": "local-csv",
+            }
+        )
+    out.sort(key=lambda x: x.get("code") or "")
+    funnel["listed"] = len(out)
+    return out, funnel
+
+
 def sort_pool(items: list[dict]) -> list[dict]:
     def key(item: dict):
         preferred = 0 if item.get("index_member") else 1

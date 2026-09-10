@@ -685,8 +685,6 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
             funnel["amount_ok"] += 1
         if pe is not None and pe > 0:
             funnel["pe_ok"] += 1
-        if not passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st, pe=pe):
-            continue
         members = []
         if code in hs300:
             members.append("沪深300")
@@ -694,6 +692,10 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
             members.append("上证50")
         if code in hgt:
             members.append("沪股通")
+        if passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st, pe=pe):
+            funnel["pool"] += 1
+            if members:
+                funnel["preferred"] += 1
         pool.append(
             {
                 "code": code,
@@ -703,18 +705,15 @@ def build_pool(log=None) -> tuple[list[dict], dict]:
                 "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
                 "close": close,
                 "pe": _round_or_none(pe),
-                "is_st": False,
+                "is_st": st,
                 "index_member": members,
                 "tags": [],
                 "trade_date": funnel["trade_date"],
                 "source": "sina",
             }
         )
-        funnel["pool"] += 1
-        if members:
-            funnel["preferred"] += 1
     pool = sort_pool(pool)
-    talk(f"池子入池 {len(pool)} 只（优先样本 {funnel['preferred']}）")
+    talk(f"底池 {len(pool)} 只 · RULES 入池 {funnel['pool']}（优先样本 {funnel['preferred']}）")
     return pool, funnel
 
 

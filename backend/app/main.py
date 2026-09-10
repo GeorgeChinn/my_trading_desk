@@ -389,12 +389,12 @@ def scan(ruleset: str = Query("rules")):
         reminders.append(f"买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
     pool_count = len(rows) if pullback else len(load_universe())
     pool_note = (
-        "RULES2：池子 + 结构。主线已注释，不参与筛选。"
+        "RULES2：从全 A 底池再筛 80 亿/1 亿/结构。主线已注释。"
         if pullback and not want_ml
         else (
-            "RULES2：先主线（申万二级 vs 沪深300 + 涨停），再在过关板块里挑个股。"
+            "RULES2：从全 A 底池先主线再挑个股。"
             if pullback
-            else "PROFILE 同时跟踪 100 只。下列按当前规则全量列出，不截断。"
+            else "底池为全 A 日线。本规则再按 300 亿/5 亿/非 ST 筛观察与买入。"
         )
     )
     boards = []

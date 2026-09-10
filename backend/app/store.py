@@ -62,7 +62,15 @@ def write_json(path: Path, payload: Any) -> None:
 def load_universe() -> list[dict]:
     data = read_json(UNIVERSE_PATH, [])
     if not isinstance(data, list):
-        return []
+        data = []
+    if not data:
+        from .engine.pool import build_universe_from_csv
+
+        data, funnel = build_universe_from_csv()
+        if data:
+            write_json(UNIVERSE_PATH, data)
+            if funnel:
+                write_json(POOL_SNAPSHOT_PATH, funnel)
     from .engine.clock import asof_date, is_weekend_date
 
     asof = asof_date()
@@ -78,6 +86,11 @@ def load_universe() -> list[dict]:
 
 
 def save_universe(items: list[dict]) -> None:
+    if not items:
+        from .config import CSV_DIR
+
+        if UNIVERSE_PATH.exists() or any(CSV_DIR.glob("*.csv")):
+            return
     write_json(UNIVERSE_PATH, items)
 
 
@@ -115,6 +128,12 @@ def save_quotes(payload: dict) -> None:
     from .engine.clock import asof_date
 
     out = dict(payload or {})
+    codes = out.get("codes")
+    if not isinstance(codes, dict) or len(codes) < 50:
+        prev = load_quotes()
+        if prev:
+            return
+        return
     out["trade_date"] = asof_date(out.get("trade_date") or "")
     write_json(QUOTES_PATH, out)
 

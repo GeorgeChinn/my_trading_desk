@@ -81,13 +81,13 @@
     </div>
 
     <div class="card" style="margin-top:14px">
-      <h3>池子漏斗（全市场 → 入池）</h3>
-      <p class="sub">流通市值 ≥ 300 亿 · 日成交额 ≥ 5 亿 · 非 ST · 股价 ≥ 5 元。优先样本只加标签。PROFILE 跟踪带宽 100 只，扫描不截断。</p>
+      <h3>底池漏斗（全 A → 各规则再筛）</h3>
+      <p class="sub">底池是全市场日线。RULES 入池另要流通市值 ≥ 300 亿 · 日成交额 ≥ 5 亿 · 非 ST · 股价 ≥ 5 元 · PE &gt; 0。RULES2 用自己的 80 亿 / 1 亿门槛。</p>
       <div class="grid cols-4" v-if="funnel && Object.keys(funnel).length">
         <div class="stat"><div class="n">{{ funnel.listed || 0 }}</div><div class="k">上市 A 股</div></div>
         <div class="stat"><div class="n">{{ funnel.non_st || 0 }}</div><div class="k">非 ST</div></div>
         <div class="stat"><div class="n">{{ funnel.mcap_ok || 0 }}</div><div class="k">市值门槛过的行</div></div>
-        <div class="stat"><div class="n">{{ funnel.pool || 0 }}</div><div class="k">同时满足入池</div></div>
+        <div class="stat"><div class="n">{{ funnel.pool || 0 }}</div><div class="k">RULES 入池门槛</div></div>
       </div>
       <p class="sub" v-if="funnel && funnel.preferred != null">其中优先样本 {{ funnel.preferred }} 只 · 确认收盘 {{ funnel.trade_date }} · 来源 {{ funnel.source }}</p>
     </div>

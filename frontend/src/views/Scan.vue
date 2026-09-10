@@ -58,7 +58,7 @@
     </div>
     <p class="sub" v-if="currentRuleset && data.pool">
       {{ currentRuleset.file }} · {{ currentRuleset.title }}
-      · 池子 {{ data.pool.count }} 只 · {{ data.pool.source }} {{ data.pool.trade_date }}
+      · 底池 {{ data.pool.count }} 只 · {{ data.pool.source }} {{ data.pool.trade_date }}
     </p>
     <div class="warn-banner" v-for="(r, i) in (data.reminders || [])" :key="'rm'+i">{{ r }}</div>
 

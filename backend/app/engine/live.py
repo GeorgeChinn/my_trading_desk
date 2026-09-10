@@ -191,8 +191,6 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
         pe = _f(rec.get("pe_ttm"))
         if pe is None:
             pe = _f(rec.get("pe"))
-        if not passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st, pe=pe):
-            continue
         members = []
         code_full = str(ts)
         if code_full in hs300:
@@ -202,27 +200,29 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
         if code_full in hs:
             members.append("沪股通")
         symbol = ts_code(str(rec.get("symbol") or code_full.split(".")[0]))
-        item = {
-            "code": symbol,
-            "ts_code": code_full,
-            "name": name,
-            "float_mcap_yi": round(float_mcap_yi, 2) if float_mcap_yi is not None else None,
-            "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
-            "close": close,
-            "pe": round(pe, 3) if pe is not None else None,
-            "is_st": False,
-            "index_member": members,
-            "tags": [],
-            "trade_date": _fmt_date(trade_date),
-            "source": "tushare",
-        }
-        pool.append(item)
-        funnel["pool"] += 1
-        if members:
-            funnel["preferred"] += 1
+        if passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st, pe=pe):
+            funnel["pool"] += 1
+            if members:
+                funnel["preferred"] += 1
+        pool.append(
+            {
+                "code": symbol,
+                "ts_code": code_full,
+                "name": name,
+                "float_mcap_yi": round(float_mcap_yi, 2) if float_mcap_yi is not None else None,
+                "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
+                "close": close,
+                "pe": round(pe, 3) if pe is not None else None,
+                "is_st": st,
+                "index_member": members,
+                "tags": [],
+                "trade_date": _fmt_date(trade_date),
+                "source": "tushare",
+            }
+        )
 
     pool = sort_pool(pool)
-    talk(f"池子入池 {len(pool)} 只（优先样本 {funnel['preferred']}）")
+    talk(f"底池 {len(pool)} 只 · RULES 入池 {funnel['pool']}（优先样本 {funnel['preferred']}）")
     return pool, funnel
 
 
@@ -355,13 +355,15 @@ def build_pool_akshare(log: Callable[[str], None] | None = None) -> tuple[list[d
                 if val == val:
                     pe = val
                     break
-        if not passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st, pe=pe):
-            continue
         members = []
         if code in hs300:
             members.append("沪深300")
         if code in sse50:
             members.append("上证50")
+        if passes_pool(close=close, amount_yi=amount_yi, float_mcap_yi=float_mcap_yi, is_st=st, pe=pe):
+            funnel["pool"] += 1
+            if members:
+                funnel["preferred"] += 1
         pool.append(
             {
                 "code": code,
@@ -371,18 +373,15 @@ def build_pool_akshare(log: Callable[[str], None] | None = None) -> tuple[list[d
                 "amount_yi": round(amount_yi, 2) if amount_yi is not None else None,
                 "close": close,
                 "pe": round(pe, 3) if pe is not None else None,
-                "is_st": False,
+                "is_st": st,
                 "index_member": members,
                 "tags": [],
                 "trade_date": funnel["trade_date"],
                 "source": "akshare",
             }
         )
-        funnel["pool"] += 1
-        if members:
-            funnel["preferred"] += 1
     pool = sort_pool(pool)
-    talk(f"池子入池 {len(pool)} 只")
+    talk(f"底池 {len(pool)} 只 · RULES 入池 {funnel['pool']}")
     return pool, funnel
 
 
@@ -500,16 +499,24 @@ def _sync_live(force_bars: bool = False) -> dict:
                 source = "akshare"
                 err = None
             except Exception as exc2:
-                finished = {
-                    "state": "error",
-                    "message": f"真实行情不可用：{err or exc2}",
-                    "error": str(err or exc2),
-                    "started_at": started,
-                    "finished_at": _now(),
-                    "log": messages[-12:],
-                }
-                save_sync_status(finished)
-                return finished
+                log(f"AKShare 失败：{exc2}")
+    if not pool:
+        from .pool import build_universe_from_csv
+
+        log("在线快照为空，改用本地日线重建全 A 底池（不截断）")
+        pool, funnel = build_universe_from_csv()
+        source = (funnel or {}).get("source") or "local-csv"
+    if not pool:
+        finished = {
+            "state": "error",
+            "message": f"真实行情不可用，本地日线也没有：{err or '空'}",
+            "error": str(err or "empty"),
+            "started_at": started,
+            "finished_at": _now(),
+            "log": messages[-12:],
+        }
+        save_sync_status(finished)
+        return finished
 
     status_holder["funnel"] = funnel
     status_holder["source"] = source
