@@ -390,6 +390,24 @@ h1 { font-size: 22px; letter-spacing: 0.01em; }
 
 .card:has(.table) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
+.scan-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+.scan-head-left { min-width: 0; flex: 1; }
+.buy-log-card {
+  width: min(540px, 100%);
+  flex: none;
+  max-height: 300px;
+  overflow: auto;
+  padding: 12px 14px;
+}
+.buy-log-table { max-height: 220px; overflow: auto; }
+.buy-log-card .table th, .buy-log-card .table td { padding: 6px 6px; font-size: 12px; }
+
 .time-grid {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
@@ -496,6 +514,8 @@ h1 { font-size: 22px; letter-spacing: 0.01em; }
   .grid.cols-3, .grid.cols-4, .grid.cols-2, .overview { grid-template-columns: 1fr 1fr; }
   .time-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .emo-hero { flex-wrap: wrap; }
+  .scan-head { flex-direction: column; }
+  .buy-log-card { width: 100%; max-height: none; }
   .fact-strip { grid-template-columns: 1fr 1fr; }
   .stat .n { font-size: 22px; }
   .btn { min-height: 40px; }

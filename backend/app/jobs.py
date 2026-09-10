@@ -38,6 +38,9 @@ def run_rules_scan() -> dict:
         "buys": buys,
     }
     write_json(LAST_SCAN_PATH, payload)
+    from .engine.buy_log import sync_buy_log
+
+    sync_buy_log("rules", (rs or {}).get("engine") or "low_golden", rows)
     return payload
 
 
@@ -67,6 +70,9 @@ def main() -> None:
             )
             tallied = summarize(rows)
             print("scan", item["id"], json.dumps(tallied.get("by_gate"), ensure_ascii=False))
+            from .engine.buy_log import sync_buy_log
+
+            sync_buy_log(item["id"], item.get("engine") or "", rows)
         flags = parse_flags(item["text"])
         page = cycles_page(load_universe(), flags=flags, ruleset=item, warm=True)
         summary = page.get("summary") or {}

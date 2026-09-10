@@ -44,6 +44,7 @@ GATES = ("排除", "观察", "买入", "卖出")
 SCAN_SUMMARY_BUCKETS = ("买入", "观察", "排除", "卖出")
 CYCLE_CACHE_DIR = DATA_DIR / "cycle_cache"
 SCAN_CACHE_DIR = DATA_DIR / "scan_cache"
+BUY_LOG_DIR = DATA_DIR / "buy_log"
 
 BUILTIN_CONDITIONS = [
     {
@@ -63,3 +64,4 @@ def ensure_dirs() -> None:
     JOURNAL_DIR.mkdir(parents=True, exist_ok=True)
     CYCLE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     SCAN_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    BUY_LOG_DIR.mkdir(parents=True, exist_ok=True)

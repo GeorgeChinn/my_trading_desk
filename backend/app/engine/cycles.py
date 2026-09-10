@@ -565,6 +565,9 @@ def _cycles_page_s1(
         warming = True
 
     segments = _codes_to_segments(codes)
+    from .buy_log import overlay_cycles
+
+    segments = overlay_cycles(segments, ruleset_id)
     page_rows, total, size, cur, pages = _paginate(segments, tab, q, sort, order, page, page_size, warm)
     done = int(store.get("done") or 0)
     all_n = int(store.get("total") or 0)
@@ -612,7 +615,7 @@ def cycles_page(
     engine = (ruleset or {}).get("engine") or ENGINE_LOW_GOLDEN
     ruleset_id = (ruleset or {}).get("id") or "rules"
     rules_hash = _rules_hash((ruleset or {}).get("text") or "")
-    note = "一段回测 = 路径到达买入的当日 → 卖出条件日。价格用「数据与设置」最新更新的实时价。与买入池同一套条件。这是事实记录，不是成交指令。"
+    note = "进行中只来自规则扫描买入池列入的票。已结束含池记录，以及更早的理论回测段。买入不是成交指令。"
     if engine not in ("low_golden", "pullback_restart"):
         payload = {
             "fact_note": "这是事实记录",
@@ -682,6 +685,9 @@ def cycles_page(
                 "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             },
         )
+    from .buy_log import overlay_cycles
+
+    segments = overlay_cycles(segments, ruleset_id)
     query = (q or "").strip()
     filtered = []
     for s in segments:

@@ -230,6 +230,9 @@ def _scan_bundle(ruleset_id: str | None = None):
 
             s1_scan.funnel = cached.get("boards") or []
             s1_scan.market = cached.get("market")
+        from .engine.buy_log import sync_buy_log
+
+        sync_buy_log(rs["id"], rs.get("engine") or "", rows)
         return rs, flags, bind, rows
     rows = _stamp_rows(
         scan_universe(
@@ -254,6 +257,9 @@ def _scan_bundle(ruleset_id: str | None = None):
         payload["boards"] = list(getattr(s1_scan, "funnel", None) or [])
         payload["market"] = getattr(s1_scan, "market", None)
     write_json(cache_path, payload)
+    from .engine.buy_log import sync_buy_log
+
+    sync_buy_log(rs["id"], rs.get("engine") or "", rows)
     return rs, flags, bind, rows
 
 
@@ -400,6 +406,9 @@ def scan(ruleset: str = Query("rules")):
         market = getattr(s1_scan, "market", None)
         passed_n = sum(1 for b in boards if b.get("pass"))
         reminders.append(f"主线：过关 {passed_n} / {len(boards)} 个申万二级（缺则一级）。先强段内相对沪深300+3pct且累计涨停≥6；买入日近3日≥沪深300且至少1只涨停。")
+    from .engine.buy_log import public_buy_log
+
+    buy_log = public_buy_log(rs["id"])
     return {
         "rows": rows,
         **tallied,
@@ -420,6 +429,7 @@ def scan(ruleset: str = Query("rules")):
             "funnel": snap,
             "note": pool_note,
         },
+        "buy_log": buy_log,
     }
 
 
