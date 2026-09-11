@@ -25,3 +25,7 @@ data/sector_snap.json
 data/pool_snapshot.json
 data/sync_status.json
 data/industry_map.json
+data/board_daily.json
+data/emotions.json
+data/hs300.json
+data/buy_log/
