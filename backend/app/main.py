@@ -18,6 +18,8 @@ from .config import (
     ALLOWED_STATUS,
     BUILTIN_CONDITIONS,
     CSV_DIR,
+    GATES,
+    GATES_S1,
     LAST_SCAN_PATH,
     PROFILE_PATH,
     ROOT,
@@ -406,32 +408,30 @@ def scan(ruleset: str = Query("rules")):
     if not bundle:
         raise HTTPException(404, "没有这个规则文件")
     rs, _flags, bind, rows = bundle
-    grouped = {key: [] for key in ("排除", "观察", "买入", "卖出")}
+    pullback = rs.get("engine") == "pullback_restart"
+    gates = list(GATES_S1 if pullback else GATES)
+    grouped = {key: [] for key in gates}
     for row in rows:
         grouped.setdefault(row["status"], []).append(row)
     snap = load_pool_snapshot()
-    tallied = summarize(rows)
+    tallied = summarize(rows, gates)
     reminders = funnel_reminders(load_settings()) + list(bind.get("unimplemented") or [])
     if not rs.get("engine_ok"):
         reminders = [rs["engine_note"]] + reminders
-    pullback = rs.get("engine") == "pullback_restart"
     from .engine.structure_one import need_mainline
 
     want_ml = bool(pullback and need_mainline(rs.get("text") or ""))
-    buy_n = (tallied.get("by_gate") or {}).get("买入") or 0
+    buy_n = (tallied.get("by_gate") or {}).get("试仓" if pullback else "买入") or 0
     if buy_n > 1 and pullback:
-        reminders.append(f"买入池 {buy_n} 只。开几只由人定，扫描不把其余票打回观察。买入不是成交指令。")
+        reminders.append(f"试仓池 {buy_n} 只。开几只由人定。试仓不是成交指令。")
     elif buy_n > 1 and not pullback:
         reminders.append(f"买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
     pool_count = len(rows) if rows else len(load_universe())
+    remain = int(tallied.get("remain") or 0)
     pool_note = (
-        "RULES2：底池全 A。池子 80亿/1亿/非ST/PE 与结构记排除，不从列表拿掉。主线已注释。"
-        if pullback and not want_ml
-        else (
-            "RULES2：底池全 A。先主线再挑个股；未过关记排除。"
-            if pullback
-            else "底池为全 A 日线。本规则再按 300亿/5亿/非ST/PE 记排除或观察，不从列表拿掉。"
-        )
+        "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 试仓 / 持有 / 取关。"
+        if pullback
+        else "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 买入 / 卖出。"
     )
     boards = []
     market = None
@@ -452,15 +452,24 @@ def scan(ruleset: str = Query("rules")):
         "boards": boards,
         "mainline": want_ml,
         "market": market,
-        "position_block": "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令。",
+        "position_block": (
+            "总闸：排除 → 观察 → 试仓 → 持有 → 取关。试仓不是成交指令。"
+            if pullback
+            else "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令。"
+        ),
         "reminders": reminders,
         "rules_bind": bind,
         "ruleset": public_ruleset(rs),
         "rulesets": [public_ruleset(item) for item in list_rulesets()],
+        "gates": tallied.get("gates") or gates,
+        "remain": remain,
         "pool": {
             "count": pool_count,
+            "total": pool_count,
+            "remain": remain,
+            "excluded": int((tallied.get("by_gate") or {}).get("排除") or 0),
             "trade_date": asof_date(snap.get("trade_date") or load_settings().get("last_trade_date")),
-            "source": snap.get("source") or load_settings().get("data_source"),
+            "source": "data/csv",
             "preferred": snap.get("preferred"),
             "funnel": snap,
             "note": pool_note,

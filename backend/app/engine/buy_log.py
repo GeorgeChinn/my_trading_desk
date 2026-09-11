@@ -1,8 +1,8 @@
-"""买入池是信号源：只有扫描列入买入的票才开一段回测，直到止损/失败/获利。"""
+"""买入池是信号源：只有扫描列入买入/试仓的票才开一段回测。"""
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from ..config import BUY_LOG_DIR, ensure_dirs
 from ..store import read_json, write_json
@@ -27,16 +27,22 @@ def load_buy_log(ruleset_id: str) -> dict:
     return data
 
 
+def record_since() -> str:
+    """买入池记录从昨天起。"""
+    return (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+
 def save_buy_log(ruleset_id: str, payload: dict) -> None:
     payload = dict(payload or {})
     payload["ruleset"] = ruleset_id
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     prev = load_buy_log(ruleset_id) if _path(ruleset_id).exists() else {}
-    started = payload.get("started_at") or prev.get("started_at")
-    if not started:
-        logged = [x.get("logged_at") for x in (payload.get("items") or []) if x.get("logged_at")]
-        started = min(logged) if logged else now
-    payload["started_at"] = started
+    if prev.get("record_mode") == "scan_pool" and prev.get("started_at"):
+        started = str(prev.get("started_at") or "")[:10]
+    else:
+        started = record_since()
+    payload["started_at"] = payload.get("started_at") or started
+    payload["record_mode"] = "scan_pool"
     payload["updated_at"] = now
     write_json(_path(ruleset_id), payload)
 
@@ -71,6 +77,8 @@ def _close_item(item: dict, last: dict, section: str, detail: str) -> None:
         item["result"] = "获利卖"
     elif section == "止损":
         item["result"] = "止损"
+    elif section in ("取关", "高潮走"):
+        item["result"] = section
     else:
         item["result"] = "失败离场"
     item["closed_at"] = _now()
@@ -99,9 +107,13 @@ def _eval_item(item: dict, engine: str) -> None:
         from .structure_one import evaluate_exit_s1
 
         zone = {
-            "buy_ma20": item.get("buy_ma20"),
             "stop": item.get("stop_price"),
-            "ma20": item.get("buy_ma20"),
+            "di_low": item.get("di_low"),
+            "di_close": item.get("di_close"),
+            "a_pre_close": item.get("a_pre_close"),
+            "a_high_close": item.get("a_high_close"),
+            "c_vol_avg": item.get("c_vol_avg"),
+            "trial_close": item.get("buy_price"),
         }
         hit, section, detail = evaluate_exit_s1(
             raw, {"date": buy_date, "code": code, "buy_date": buy_date}, zone
@@ -121,8 +133,12 @@ def _eval_item(item: dict, engine: str) -> None:
 
 
 def sync_buy_log(ruleset_id: str, engine: str, rows: list[dict]) -> dict:
-    """扫描买入池是唯一开仓来源。已开仓的票按对应规则核卖出。"""
+    """扫描列入买入/试仓是唯一开仓来源。已开仓的票按对应规则核卖出/取关。"""
     store = load_buy_log(ruleset_id)
+    if store.get("record_mode") != "scan_pool":
+        store["started_at"] = record_since()
+        store["record_mode"] = "scan_pool"
+    since = str(store.get("started_at") or record_since())[:10]
     items = list(store.get("items") or [])
     by_code_open: dict[str, dict] = {}
     for item in items:
@@ -135,7 +151,8 @@ def sync_buy_log(ruleset_id: str, engine: str, rows: list[dict]) -> dict:
     by_code_open = {ts_code(str(i.get("code") or "")): i for i in items if not i.get("closed")}
 
     for row in rows or []:
-        if (row.get("status") or row.get("gate")) != "买入":
+        st = row.get("status") or row.get("gate")
+        if st not in ("买入", "试仓"):
             continue
         code = ts_code(str(row.get("code") or ""))
         if not code or code in by_code_open:
@@ -147,6 +164,8 @@ def sync_buy_log(ruleset_id: str, engine: str, rows: list[dict]) -> dict:
         except (TypeError, ValueError):
             buy_price = 0.0
         if not buy_date or not buy_price:
+            continue
+        if buy_date < since:
             continue
         item = {
             "id": uuid.uuid4().hex[:12],
@@ -168,6 +187,11 @@ def sync_buy_log(ruleset_id: str, engine: str, rows: list[dict]) -> dict:
             "exit_detail": None,
             "buy_ma20": (facts.get("buy_ma20") or row.get("key_price")),
             "stop_price": facts.get("stop_price") or row.get("stop_price"),
+            "di_low": facts.get("di_low"),
+            "di_close": facts.get("di_close"),
+            "a_pre_close": facts.get("a_pre_close"),
+            "a_high_close": facts.get("a_high_close"),
+            "c_vol_avg": facts.get("c_vol_avg"),
             "logged_at": _now(),
             "from_pool": True,
         }
@@ -175,6 +199,7 @@ def sync_buy_log(ruleset_id: str, engine: str, rows: list[dict]) -> dict:
         by_code_open[code] = item
 
     store["items"] = items
+    store["started_at"] = since
     save_buy_log(ruleset_id, store)
     return public_buy_log(ruleset_id)
 
@@ -190,12 +215,17 @@ def public_buy_log(ruleset_id: str) -> dict:
         ),
         reverse=True,
     )
+    if store.get("record_mode") != "scan_pool":
+        started = record_since()
+    else:
+        started = str(store.get("started_at") or record_since())[:10]
+    items = [
+        x
+        for x in items
+        if str(x.get("buy_date") or "")[:10] >= started or str(x.get("logged_at") or "")[:10] >= started
+    ]
     open_n = sum(1 for x in items if not x.get("closed"))
     closed_n = sum(1 for x in items if x.get("closed"))
-    started = store.get("started_at") or ""
-    if not started:
-        logged = [x.get("logged_at") for x in items if x.get("logged_at")]
-        started = min(logged) if logged else store.get("updated_at") or ""
     return {
         "ruleset": ruleset_id,
         "items": items,
@@ -204,7 +234,7 @@ def public_buy_log(ruleset_id: str) -> dict:
         "total": len(items),
         "updated_at": store.get("updated_at"),
         "started_at": started,
-        "note": "只有规则扫描买入池列入的票才开这段。卖出按该规则止损/失败/获利核。",
+        "note": f"记录从 {started}（昨天）起。只有规则扫描列入买入/试仓的票才开规则回测。列入日期=扫描列入日。",
     }
 
 
@@ -248,17 +278,10 @@ def log_as_segments(ruleset_id: str) -> list[dict]:
 
 
 def overlay_cycles(segments: list[dict], ruleset_id: str) -> list[dict]:
-    """进行中只保留买入池开出来的段。理论回测的已结束段保留，但与池记录重复的去掉。"""
+    """规则回测只含扫描列入过买入/试仓池的票，不用理论回走段。"""
     log_segs = log_as_segments(ruleset_id)
-    closed_log = [s for s in log_segs if s.get("closed")]
     open_log = [s for s in log_segs if not s.get("closed")]
-    keys = {(s.get("code"), s.get("buy_date")) for s in log_segs}
-    walk_closed = [
-        s
-        for s in (segments or [])
-        if s.get("closed") and (s.get("code"), s.get("buy_date")) not in keys
-    ]
+    closed_log = [s for s in log_segs if s.get("closed")]
     open_log.sort(key=lambda s: (s.get("buy_date") or "", s.get("code") or ""), reverse=True)
     closed_log.sort(key=lambda s: (s.get("sell_date") or "", s.get("code") or ""), reverse=True)
-    walk_closed.sort(key=lambda s: (s.get("sell_date") or "", s.get("code") or ""), reverse=True)
-    return open_log + closed_log + walk_closed
+    return open_log + closed_log

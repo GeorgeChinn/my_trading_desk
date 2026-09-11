@@ -5,7 +5,7 @@
       数据源只用真实行情。A股全股池是所有规则的基准，按下面的更新时间点定时刷新。不使用示例 CSV。
     </p>
     <div class="card" style="margin-bottom:14px">
-      <h3>A股全股池</h3>
+      <h3>A股全股池（总股池）</h3>
       <p class="sub">{{ ashare.note || "所有规则的扫描基准。按下方更新时间点定时刷新。" }}</p>
       <div class="grid cols-4" style="margin-top:12px">
         <div class="stat"><div class="n">{{ ashare.count || poolCount || 0 }}</div><div class="k">全股池</div></div>

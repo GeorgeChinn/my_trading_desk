@@ -823,15 +823,13 @@ def apply_quote_fields(meta: dict, quotes: dict | None = None) -> dict:
 
 
 def hydrate_universe(universe: list[dict] | None = None, log=None) -> list[dict]:
-    """全 A 底池 + 快照 PE/市值。规则池子由各 RULES 自己记排除，这里不截断。"""
+    """总股池 = data/csv 有效代码。快照只补 PE/市值，不另加 CSV 里没有的票。"""
     talk = log or (lambda _m: None)
-    quotes = ensure_quotes(log=talk)
-    items = list(universe) if universe is not None else list(load_universe())
-    if not items:
-        from .pool import build_universe_from_csv
+    from .pool import build_universe_from_csv
 
-        talk("universe 空，改用本地日线重建全 A 底池")
-        items, _ = build_universe_from_csv()
+    quotes = ensure_quotes(log=talk)
+    talk("总股池按 data/csv 有效日线重建")
+    items, _ = build_universe_from_csv()
     asof = expected_close_date().isoformat()
     funnel = {
         "listed": 0,
@@ -844,9 +842,9 @@ def hydrate_universe(universe: list[dict] | None = None, log=None) -> list[dict]
         "preferred": 0,
         "pe_ok": 0,
         "trade_date": asof,
-        "source": "quotes+csv",
+        "source": "data/csv",
         "rules": {
-            "底池": "本地日线全 A，不按单条规则截断",
+            "底池": "data/csv 有效日线 = 总股池，所有规则的基准",
             "流通市值": f"RULES 入池 ≥ {POOL_FLOAT_MCAP_YI:.0f} 亿",
             "日成交额": f"RULES 入池 ≥ {POOL_AMOUNT_YI:.0f} 亿",
         },

@@ -97,10 +97,9 @@ def is_exit_signal(s: dict, entry_idx: int | None = None) -> bool:
 
 
 def walk_cycles_s1(bars: list[dict], ctx: dict | None = None) -> tuple[list[dict], dict | None]:
-    from .structure_one import _choose_kind, _key_zone, evaluate_exit_s1, find_structure, is_buy_s1, need_mainline
+    from .structure_one import evaluate_exit_s1, find_structure, is_buy_s1
 
     ctx = dict(ctx or {})
-    ctx.setdefault("require_mainline", need_mainline())
     if len(bars) < 30:
         return [], None
     n = len(bars)
@@ -112,12 +111,20 @@ def walk_cycles_s1(bars: list[dict], ctx: dict | None = None) -> tuple[list[dict
         if open_i is None:
             if is_buy_s1(sl, ctx):
                 open_i = i
-                st = find_structure(sl)
-                zone = _key_zone(sl, st) if st else {}
-                kind, px, _n = _choose_kind(zone) if zone else (None, None, None)
-                m20 = (zone or {}).get("ma20") or px
-                stop = m20 * 0.95 if m20 else None
-                open_zone = {**(zone or {}), "kind": kind or "A1", "buy_ma20": m20, "stop": stop, "price": m20}
+                st = find_structure(sl, ctx.get("hs"))
+                zone = {}
+                if st:
+                    a, c = st["a"], st["c"]
+                    zone = {
+                        "stop": min(c["di"]["low"], a["fund"]["low"]) * 0.97,
+                        "di_low": c["di"]["low"],
+                        "di_close": c["di"]["close"],
+                        "a_pre_close": a.get("pre_c"),
+                        "a_high_close": a["hi_c"],
+                        "c_vol_avg": c["c_avg"],
+                        "trial_close": bars[i]["close"],
+                    }
+                open_zone = zone
             continue
         hit, section, detail = evaluate_exit_s1(sl, {"date": bars[open_i]["date"]}, open_zone)
         if i > open_i and hit:
@@ -193,6 +200,8 @@ def _cycle_stats(
             "7.1b": "连续跌破均线",
             "7.2": "高潮卖",
             "高潮卖": "高潮卖",
+            "取关": "取关",
+            "高潮走": "高潮走",
         }.get(exit_section)
         if exit_label:
             result = f"{result} · {exit_label}"
@@ -620,7 +629,7 @@ def cycles_page(
     engine = (ruleset or {}).get("engine") or ENGINE_LOW_GOLDEN
     ruleset_id = (ruleset or {}).get("id") or "rules"
     rules_hash = _rules_hash((ruleset or {}).get("text") or "")
-    note = "进行中只来自规则扫描买入池列入的票。已结束含池记录，以及更早的理论回测段。买入不是成交指令。"
+    note = "规则回测只含规则扫描列入过买入/试仓池的票。列入日期=扫描列入日。记录从昨天起。买入/试仓不是成交指令。"
     if engine not in ("low_golden", "pullback_restart"):
         payload = {
             "fact_note": "这是事实记录",
@@ -636,98 +645,22 @@ def cycles_page(
         }
         save_cycles(payload, ruleset_id)
         return payload
-    if engine == "pullback_restart":
-        return _cycles_page_s1(
-            flags,
-            ruleset or {},
-            pub,
-            rules_hash,
-            ruleset_id,
-            note,
-            tab,
-            q,
-            sort,
-            order,
-            page,
-            page_size,
-            warm,
-        )
-    segments: list[dict] = []
-    scan_uni = universe
-    pe_map = {ts_code(str(m.get("code") or "")): m.get("pe") for m in universe}
-    path = _cache_path(ruleset_id)
-    store = read_json(path, {}) if path.exists() else {}
-    if not isinstance(store, dict):
-        store = {}
-    codes = store.get("codes") if isinstance(store.get("codes"), dict) else {}
-    hash_ok = store.get("rules_hash") == rules_hash
-    dirty = not hash_ok
-    if not hash_ok:
-        codes = {}
-    for meta in scan_uni:
-        code = ts_code(str(meta.get("code") or ""))
-        name = meta.get("name") or code
-        if not code:
-            continue
-        last = _last_date(code)
-        hit = codes.get(code) or {}
-        if hash_ok and hit.get("last_date") == last and isinstance(hit.get("segments"), list):
-            segs = [{**dict(seg), "name": name} for seg in hit["segments"]]
-        else:
-            segs = walk_stock_segments(code, name, flags, engine=engine)
-            codes[code] = {"last_date": last, "segments": segs}
-            dirty = True
-        for seg in segs:
-            if seg.get("pe") is None:
-                seg["pe"] = pe_map.get(code)
-        segments.extend(segs)
-    if dirty:
-        write_json(
-            path,
-            {
-                "rules_hash": rules_hash,
-                "codes": codes,
-                "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            },
-        )
     from .buy_log import overlay_cycles
 
-    segments = overlay_cycles(segments, ruleset_id)
-    query = (q or "").strip()
-    filtered = []
-    for s in segments:
-        if tab == "open" and s.get("closed"):
-            continue
-        if tab == "done" and not s.get("closed"):
-            continue
-        if query and query not in (s.get("code") or "") and query not in (s.get("name") or ""):
-            continue
-        filtered.append(s)
-    if sort in ("", "default"):
-        open_rows = [s for s in filtered if not s.get("closed")]
-        closed_rows = [s for s in filtered if s.get("closed")]
-        open_rows.sort(key=lambda s: (s.get("buy_date") or "", s.get("code") or ""), reverse=True)
-        closed_rows.sort(key=lambda s: (s.get("sell_date") or "", s.get("code") or ""), reverse=True)
-        filtered = open_rows + closed_rows
-    else:
-        filtered = _sort_segments(filtered, sort, order)
-    total = len(filtered)
-    size = max(1, min(int(page_size or 40), 200))
-    pages = max(1, (total + size - 1) // size)
-    cur = max(1, min(int(page or 1), pages))
-    start = (cur - 1) * size
-    page_rows = filtered if warm else filtered[start : start + size]
+    segments = overlay_cycles([], ruleset_id)
+    page_rows, total, size, cur, pages = _paginate(segments, tab, q, sort, order, page, page_size, False)
     payload = {
         "fact_note": "这是事实记录",
         "note": note,
         "ruleset": pub,
         "segments": page_rows,
         "summary": summarize_segments(segments),
-        "page": 1 if warm else cur,
+        "page": cur,
         "page_size": size,
-        "pages": 1 if warm else pages,
+        "pages": pages,
         "filtered": total,
         "cached": True,
+        "warming": False,
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
     save_cycles(payload, ruleset_id)
@@ -754,7 +687,7 @@ def cycles_for_stock(code: str, name: str, ruleset: dict | None) -> dict:
 
     pub = public_ruleset(ruleset) if ruleset else None
     engine = (ruleset or {}).get("engine") or "low_golden"
-    note = "一段回测 = 路径到达买入的最新更新 → 卖出条件日。买入不是成交指令。"
+    note = "规则回测只含扫描列入过买入/试仓池的段。列入日期=扫描列入日。"
     if engine not in ("low_golden", "pullback_restart"):
         return {
             "code": ts_code(code),
@@ -765,32 +698,11 @@ def cycles_for_stock(code: str, name: str, ruleset: dict | None) -> dict:
             "note": (ruleset or {}).get("engine_note") or "本规则尚未写成扫描器，没有轨迹。",
             "fact_note": "这是事实记录",
         }
-    flags = parse_flags((ruleset or {}).get("text") or "")
-    last_n = 0 if engine == "pullback_restart" else None
-    ctx = None
-    if engine == "pullback_restart":
-        from .structure_one import need_mainline
-        from .boards import industry_of
-        from ..store import load_quotes
+    from .buy_log import log_as_segments
 
-        want_ml = need_mainline((ruleset or {}).get("text"))
-        daily = None
-        if want_ml:
-            from .boards import build_board_daily
-
-            daily = build_board_daily()
-        q = (load_quotes() or {}).get(ts_code(code)) or {}
-        ctx = {
-            "board_daily": daily,
-            "require_mainline": want_ml,
-            "industry": industry_of(code),
-            "pe": q.get("pe"),
-            "float_mcap_yi": q.get("float_mcap_yi"),
-        }
-    segs = _stamp_segments(
-        walk_stock_segments(code, name, flags, engine=engine, last_n=last_n, ctx=ctx),
-        ruleset or {},
-    )
+    rid = (ruleset or {}).get("id") or "rules"
+    segs = [s for s in log_as_segments(rid) if ts_code(str(s.get("code") or "")) == ts_code(code)]
+    segs = _stamp_segments(segs, ruleset or {})
     return {
         "code": ts_code(code),
         "name": name,
@@ -808,7 +720,7 @@ def cycles_for_pool(items: list[dict], ruleset: dict | None) -> dict:
 
     pub = public_ruleset(ruleset) if ruleset else None
     engine = (ruleset or {}).get("engine") or "low_golden"
-    note = "只回放当前观察池/买入池里的股票。一段 = 买入条件日 → 卖出条件日。买入不是成交指令。"
+    note = "只回放这些代码里、扫描列入过买入/试仓池的段。"
     if engine not in ("low_golden", "pullback_restart"):
         return {
             "ruleset": pub,
@@ -818,41 +730,13 @@ def cycles_for_pool(items: list[dict], ruleset: dict | None) -> dict:
             "fact_note": "这是事实记录",
             "pool_count": len(items or []),
         }
-    flags = parse_flags((ruleset or {}).get("text") or "")
-    last_n = 0 if engine == "pullback_restart" else None
-    ctx_base = None
-    if engine == "pullback_restart":
-        from .structure_one import need_mainline
-        from .boards import industry_of
-        from ..store import load_quotes
+    from .buy_log import log_as_segments
 
-        want_ml = need_mainline((ruleset or {}).get("text"))
-        daily = None
-        if want_ml:
-            from .boards import build_board_daily
-
-            daily = build_board_daily()
-        quotes = load_quotes() or {}
-        ctx_base = {"board_daily": daily, "require_mainline": want_ml}
-    segments: list[dict] = []
-    for item in items or []:
-        code = ts_code(str((item or {}).get("code") or ""))
-        if not code:
-            continue
-        name = (item or {}).get("name") or code
-        ctx = None
-        if ctx_base is not None:
-            q = quotes.get(code) or {}
-            ctx = {
-                **ctx_base,
-                "industry": (item or {}).get("industry") or industry_of(code),
-                "pe": (item or {}).get("pe") if (item or {}).get("pe") is not None else q.get("pe"),
-                "float_mcap_yi": (item or {}).get("float_mcap_yi")
-                if (item or {}).get("float_mcap_yi") is not None
-                else q.get("float_mcap_yi"),
-            }
-        segs = walk_stock_segments(code, name, flags, engine=engine, last_n=last_n, ctx=ctx)
-        segments.extend(_stamp_segments(segs, ruleset or {}))
+    want = {ts_code(str((item or {}).get("code") or "")) for item in items or []}
+    want.discard("")
+    rid = (ruleset or {}).get("id") or "rules"
+    segments = [s for s in log_as_segments(rid) if ts_code(str(s.get("code") or "")) in want]
+    segments = _stamp_segments(segments, ruleset or {})
     closed = [s for s in segments if s.get("closed")]
     opened = [s for s in segments if not s.get("closed")]
     closed.sort(key=lambda s: (s.get("sell_date") or "", s.get("code") or ""), reverse=True)

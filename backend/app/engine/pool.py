@@ -75,7 +75,7 @@ def build_universe_from_csv() -> tuple[list[dict], dict]:
         "trade_date": asof,
         "source": "local-csv",
         "rules": {
-            "底池": "本地日线全 A，不按单条规则截断",
+            "底池": "data/csv 有效日线 = 总股池，所有规则的基准",
             "流通市值": f"RULES 入池 ≥ {POOL_FLOAT_MCAP_YI:.0f} 亿",
             "日成交额": f"RULES 入池 ≥ {POOL_AMOUNT_YI:.0f} 亿",
         },
@@ -85,7 +85,11 @@ def build_universe_from_csv() -> tuple[list[dict], dict]:
         code = ts_code(path.stem)
         if not code:
             continue
-        last = peek_last_bar(code) or {}
+        if not code.isdigit() or len(code) != 6:
+            continue
+        last = peek_last_bar(code)
+        if not last or last.get("close") is None:
+            continue
         q = quotes.get(code) or {}
         name = str(last.get("name") or q.get("name") or code).strip() or code
         st = is_st_name(name)
@@ -175,9 +179,9 @@ def ashare_pool_public() -> dict:
         "asof": asof,
         "updated_at": qmeta.get("updated_at") or sync.get("finished_at") or "",
         "sync_at": sync.get("finished_at") or "",
-        "source": qmeta.get("source") or snap.get("source") or settings.get("data_source") or "",
+        "source": "data/csv",
         "schedule_last": settings.get("schedule_last_fired") or "",
-        "note": "A股全股池是以后所有规则的扫描基准。按下方更新时间点定时刷新行情与日线，规则只在这张表上筛排除/观察/买入。",
+        "note": "总股池 = data/csv 目录里有效日线。这是 A 股可扫描底池，所有 RULES 以此为基准再排除 / 观察 / 买入（试仓） / 卖出（取关）。",
         "funnel": snap,
     }
 

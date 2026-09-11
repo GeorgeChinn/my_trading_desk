@@ -5,6 +5,7 @@ from typing import Optional
 from ..config import (
     DIF_LOOKBACK,
     GATES,
+    GATES_S1,
     KDJ_LOW,
     POOL_AMOUNT_YI,
     POOL_FLOAT_MCAP_YI,
@@ -583,7 +584,7 @@ def scan_universe(
         from .structure_one import scan_structure_one
 
         rows = scan_structure_one(settings, trades)
-        order = {name: i for i, name in enumerate(GATES)}
+        order = {name: i for i, name in enumerate(GATES_S1)}
         rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))
         return rows
     if engine != "low_golden":
@@ -601,13 +602,16 @@ def scan_universe(
     return rows
 
 
-def summarize(rows: list[dict]) -> dict:
-    by_gate = {key: 0 for key in GATES}
-    names = {key: [] for key in GATES}
+def summarize(rows: list[dict], gates: tuple | list | None = None) -> dict:
+    gates = list(gates or GATES)
+    by_gate = {key: 0 for key in gates}
+    names = {key: [] for key in gates}
     for row in rows:
         gate = row.get("gate") or row.get("status") or "排除"
         if gate not in by_gate:
-            gate = "排除"
+            by_gate[gate] = 0
+            names[gate] = []
+            gates.append(gate)
         by_gate[gate] += 1
         pe = None
         facts = row.get("facts") or {}
@@ -623,4 +627,13 @@ def summarize(rows: list[dict]) -> dict:
                 "engine": row.get("engine"),
             }
         )
-    return {"summary": by_gate, "by_gate": by_gate, "names": names, "total": len(rows)}
+    total = len(rows)
+    remain = total - int(by_gate.get("排除") or 0)
+    return {
+        "summary": by_gate,
+        "by_gate": by_gate,
+        "names": names,
+        "total": total,
+        "remain": remain,
+        "gates": gates,
+    }

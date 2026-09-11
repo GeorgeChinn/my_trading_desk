@@ -11,7 +11,7 @@
           · 扫描 {{ stamp.scanned_at || "—" }}
           · 行情快照 {{ stamp.quotes_at || stamp.quotes_date || "—" }}
           <span v-if="stamp.quotes_source">（{{ stamp.quotes_source }} {{ stamp.quotes_n || 0 }} 只）</span>
-          · 全股池 {{ stamp.pool_n || data.pool && data.pool.count || 0 }} 只
+          · 总股池 {{ stamp.pool_n || data.pool && data.pool.count || 0 }} 只
         </p>
       </div>
       <div class="card buy-log-card">
@@ -21,9 +21,9 @@
         </div>
         <p class="sub" style="margin:0 0 8px">
           本次更新 {{ buyLog.updated_at || stamp.scanned_at || "—" }}
-          · 记录从 {{ buyLog.started_at || "本次更新" }} 起
+          · 记录从昨天（{{ buyLog.started_at || "—" }}）起
         </p>
-        <p class="sub" style="margin:0 0 8px">只有进过买入池的票才记账，再按该规则核卖出。</p>
+        <p class="sub" style="margin:0 0 8px">列入日期 = 扫描列入买入/试仓池的那天。只有列入过的票才能做规则回测。</p>
         <div v-if="!(buyLog.items || []).length" class="empty mini">还没有记录。扫描出现买入后会写在这里。</div>
         <div v-else class="table-wrap buy-log-table">
           <table class="table">
@@ -69,12 +69,25 @@
     </div>
     <p class="sub" v-if="currentRuleset && data.pool">
       {{ currentRuleset.file }} · {{ currentRuleset.title }}
-      · 全股池 {{ data.pool.count }} 只 · {{ data.pool.source }} {{ data.pool.trade_date }}
+      · 总股池 {{ data.pool.count }} 只 · 排除 {{ (data.by_gate && data.by_gate.排除) || 0 }} · 剩下 {{ data.remain || 0 }}
+      · {{ data.pool.source }} {{ data.pool.trade_date }}
     </p>
     <div class="warn-banner" v-for="(r, i) in (data.reminders || [])" :key="'rm'+i">{{ r }}</div>
 
     <div class="grid cols-4" style="margin-bottom:14px">
-      <div class="card stat" v-for="k in gates" :key="k">
+      <div class="card stat">
+        <div class="n">{{ (data.pool && data.pool.count) || (data.rows || []).length }}</div>
+        <div class="k">总股池</div>
+      </div>
+      <div class="card stat">
+        <div class="n">{{ (data.by_gate && data.by_gate.排除) || 0 }}</div>
+        <div class="k">排除</div>
+      </div>
+      <div class="card stat">
+        <div class="n">{{ data.remain || 0 }}</div>
+        <div class="k">剩下</div>
+      </div>
+      <div class="card stat" v-for="k in remainGates" :key="k">
         <div class="n">{{ (data.by_gate && data.by_gate[k]) || 0 }}</div>
         <div class="k">{{ k }}</div>
       </div>
@@ -101,10 +114,10 @@
     <div class="card overview" style="margin-bottom:14px">
       <div class="ov-block">
         <div class="ov-title">
-          <div>买入池 <span>{{ buyNames.length }}</span></div>
-          <button class="btn" :disabled="!buyNames.length" @click="runPoolBacktest('买入')">历史回测</button>
+          <div>{{ isPullback ? "试仓池" : "买入池" }} <span>{{ buyNames.length }}</span></div>
+          <button class="btn" :disabled="!buyNames.length" @click="runPoolBacktest(isPullback ? '试仓' : '买入')">规则回测</button>
         </div>
-        <p class="sub" style="margin:0 0 8px">路径到达，不是成交指令</p>
+        <p class="sub" style="margin:0 0 8px">{{ isPullback ? "试仓" : "买入" }} = 路径到达，不是成交指令。回测只跟列入过的票。</p>
         <div class="name-cloud" v-if="buyNames.length">
           <router-link class="name-chip 买入" v-for="s in buyNames" :key="'b'+s.code" :to="chartLink(s.code, '买入')">
             {{ stockTitle(s) }}
@@ -116,7 +129,7 @@
       <div class="ov-block">
         <div class="ov-title">
           <div>观察池 <span>{{ watchNames.length }}</span></div>
-          <button class="btn" :disabled="!watchNames.length" @click="runPoolBacktest('观察')">历史回测</button>
+          <button class="btn" :disabled="!watchNames.length" @click="runPoolBacktest('观察')">规则回测</button>
         </div>
         <div class="name-cloud" v-if="watchNames.length">
           <router-link class="name-chip 观察" v-for="s in watchNames" :key="'w'+s.code" :to="chartLink(s.code, '观察')">
@@ -147,7 +160,7 @@
       <button class="btn" v-for="g in gates" :key="g" :class="{ primary: filter === g }" @click="filter = g">
         {{ g }} {{ (data.by_gate && data.by_gate[g]) || 0 }}
       </button>
-      <button class="btn" :class="{ primary: filter === '在池' }" @click="filter = '在池'">观察+买入</button>
+      <button class="btn" :class="{ primary: filter === '在池' }" @click="filter = '在池'">剩下</button>
       <button class="btn" :class="{ primary: filter === '全部' }" @click="filter = '全部'">全部</button>
     </div>
     <label class="field" style="margin-bottom:14px;max-width:320px">
@@ -207,9 +220,9 @@
           <router-link class="btn" :to="chartLink(row.code, row.status === '买入' || row.status === '观察' ? row.status : '')">查看日线与事实</router-link>
           <router-link
             class="btn"
-            v-if="row.status === '买入' || row.status === '观察'"
+            v-if="['买入', '观察', '试仓', '持有'].includes(row.status)"
             :to="backtestLink(row.code, row.status)"
-          >历史回测</router-link>
+          >规则回测</router-link>
         </div>
       </div>
     </div>
@@ -235,7 +248,8 @@ const page = ref(1);
 const pageSize = 80;
 const loading = ref(true);
 const poolBacktest = ref(null);
-const gates = GATES;
+const gates = computed(() => (data.value.gates && data.value.gates.length ? data.value.gates : GATES));
+const remainGates = computed(() => gates.value.filter((g) => g !== "排除"));
 const poolClosed = computed(() => ((poolBacktest.value && poolBacktest.value.segments) || []).filter((s) => s.closed).length);
 const poolOpen = computed(() => ((poolBacktest.value && poolBacktest.value.segments) || []).filter((s) => !s.closed).length);
 const rulesetId = computed(() => String(route.query.ruleset || "rules"));
@@ -249,7 +263,16 @@ const marketRet = computed(() => (data.value.market && data.value.market.ret_3d_
 function ownRow(row) {
   return !row || !row.ruleset || row.ruleset === rulesetId.value;
 }
-const buyNames = computed(() => ((data.value.names && data.value.names.买入) || []).filter(ownRow));
+const buyNames = computed(() => {
+  const names = data.value.names || {};
+  const out = [];
+  for (const k of ["买入", "试仓", "持有"]) {
+    for (const s of names[k] || []) {
+      if (ownRow(s)) out.push(s);
+    }
+  }
+  return out;
+});
 const watchNames = computed(() => ((data.value.names && data.value.names.观察) || []).filter(ownRow));
 const buyLog = computed(() => data.value.buy_log || { items: [], open: 0, closed: 0 });
 const stamp = computed(() => data.value.stamp || {});
@@ -268,7 +291,7 @@ const visible = computed(() => {
   const query = q.value.trim();
   return (data.value.rows || []).filter((r) => {
     if (!ownRow(r)) return false;
-    if (filter.value === "在池" && r.status !== "观察" && r.status !== "买入") return false;
+    if (filter.value === "在池" && r.status === "排除") return false;
     if (filter.value !== "全部" && filter.value !== "在池" && r.status !== filter.value) return false;
     if (!query) return true;
     const ind = industryOf(r) || "";
