@@ -1,20 +1,17 @@
-"""RULES2 回调后的重新启动（野人哥 C 区）。按 RULES2.MD 全文量化，不沿用旧 20 日线买点。"""
+"""RULES2 野人哥低吸。按 RULES2.MD 全文量化。他没给的阈值不写。无分时不得把日线代理记成正式试仓。"""
 from __future__ import annotations
 
 import re
 
-from ..config import CSV_DIR, DATA_DIR, GATES_S1, POOL_MIN_PRICE
+from ..config import CSV_DIR, GATES_S1
 from ..store import load_quotes, load_universe
 from .bars import bar_amount, load_bars, overlay_quote_bar, peek_last_bar, ts_code
 from .pool import is_st_name
 from .scanner import FACT_NOTE, dyn_pe_value
 
-YI = 100_000_000.0
-MIN_FLOAT_YI = 80.0
-LISTED_DAYS = 60
-A_MIN, A_MAX = 5, 12
-C_MIN, C_MAX = 4, 8
-TRIAL_WINDOW = 3
+RATIO_7030 = 30.0 / 70.0
+RATIO_5149 = 40.0 / 60.0
+C_MIN_LOW_ABSORB = 8
 _HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
@@ -23,7 +20,6 @@ def _strip_html_comments(text: str) -> str:
 
 
 def need_mainline(text: str | None = None) -> bool:
-    """现行 RULES2 无主线闸。仅当正文仍有未注释的 ## 主线 才打开。"""
     raw = text
     if raw is None:
         from .rulesets import get_ruleset
@@ -40,10 +36,6 @@ def need_mainline(text: str | None = None) -> bool:
 
 def _vol(row: dict) -> float:
     return float(row.get("volume") or 0)
-
-
-def _amt(row: dict) -> float | None:
-    return bar_amount(row)
 
 
 def _yang(row: dict) -> bool:
@@ -69,34 +61,8 @@ def _is_limit_up(bars: list[dict], i: int, code: str) -> bool:
     return (cur / prev - 1.0) >= _limit_pct(code) - 0.005
 
 
-def _day_gain(bars: list[dict], i: int) -> float | None:
-    if i < 1:
-        return None
-    prev = bars[i - 1].get("close")
-    cur = bars[i].get("close")
-    if not prev or not cur:
-        return None
-    return cur / prev - 1.0
-
-
-def _float_mcap_yi(meta: dict, last: dict | None = None) -> float | None:
-    blob = dict(meta or {})
-    if last:
-        blob.setdefault("float_mcap_yi", last.get("float_mcap_yi"))
-    for key in ("float_mcap_yi", "float_mcap", "circ_mv", "流通市值", "mcap"):
-        raw = blob.get(key)
-        if raw is None or raw == "":
-            continue
-        try:
-            val = float(raw)
-        except (TypeError, ValueError):
-            continue
-        if val <= 0:
-            continue
-        if key != "float_mcap_yi" and val > 10000:
-            return val / YI
-        return val
-    return None
+def _mean(xs: list[float]) -> float:
+    return sum(xs) / len(xs) if xs else 0.0
 
 
 def _load_industry_map() -> dict[str, str]:
@@ -121,244 +87,246 @@ def _hs300() -> dict[str, float]:
 
 
 def _hs_px(hs: dict[str, float], day: str) -> float | None:
+    if not day:
+        return None
     if day in hs:
         return hs[day]
     prev = [d for d in hs if d <= day]
-    if not prev:
+    return hs[max(prev)] if prev else None
+
+
+def _day_ret(bars: list[dict], i: int) -> float | None:
+    if i < 1:
         return None
-    return hs[max(prev)]
-
-
-def _hs_ret(hs: dict[str, float], d0: str, d1: str) -> float | None:
-    a, b = _hs_px(hs, d0), _hs_px(hs, d1)
+    a, b = bars[i - 1].get("close"), bars[i].get("close")
     if not a or not b:
         return None
-    return (b / a - 1.0) * 100.0
+    return b / a - 1.0
 
 
-def _mean(xs: list[float]) -> float:
-    return sum(xs) / len(xs) if xs else 0.0
-
-
-def _check_a(bars: list[dict], s: int, e: int, hs: dict[str, float]) -> dict | None:
-    if e - s + 1 < A_MIN or e - s + 1 > A_MAX:
-        return None
-    start_c = bars[s].get("close")
-    if not start_c:
-        return None
-    seg = bars[s : e + 1]
-    closes = [x["close"] for x in seg if x.get("close")]
-    if len(closes) != len(seg):
-        return None
-    hi_c = max(closes)
-    end_c = bars[e]["close"]
-    gain = (hi_c - start_c) / start_c
-    if gain < 0.12:
-        return None
-    if end_c < hi_c * 0.97:
-        return None
-    yang_n = sum(1 for x in seg if _yang(x))
-    yin_n = len(seg) - yang_n
-    if yang_n < yin_n:
-        return None
+def _close_dd_and_gain(seg: list[dict]) -> tuple[float | None, float | None]:
+    closes = [x.get("close") for x in seg]
+    if any(c is None for c in closes) or not closes:
+        return None, None
+    start = closes[0]
+    hi = max(closes)
+    if not start or hi <= start:
+        return None, None
+    gain = (hi - start) / start
     peak = closes[0]
     max_dd = 0.0
     for c in closes:
         peak = max(peak, c)
         if peak:
             max_dd = max(max_dd, (peak - c) / peak)
-    if max_dd > gain * 0.30 + 1e-12:
+    return max_dd, gain
+
+
+def _check_a(bars: list[dict], s: int, e: int) -> dict | None:
+    """近 20 日连续上涨段：结束日收在该段最高收盘，7030 小回；>40/60 为 5149。"""
+    if e <= s:
         return None
-    d0, d1 = str(bars[s].get("date") or ""), str(bars[e].get("date") or "")
-    hs_ret = _hs_ret(hs, d0, d1)
-    if hs_ret is None:
+    seg = bars[s : e + 1]
+    end_c = bars[e].get("close")
+    hi_c = max(x["close"] for x in seg if x.get("close"))
+    if end_c is None or hi_c is None:
         return None
-    stk_ret = (end_c / start_c - 1.0) * 100.0
-    if stk_ret - hs_ret < 0:
+    if end_c < hi_c:
+        return None
+    max_dd, gain = _close_dd_and_gain(seg)
+    if gain is None or gain <= 0:
+        return None
+    ratio = max_dd / gain
+    if ratio > RATIO_5149 + 1e-12:
+        return None
+    if ratio > RATIO_7030 + 1e-12:
         return None
     vols = [_vol(x) for x in seg]
     a_avg = _mean(vols)
     if a_avg <= 0:
         return None
-    fund = None
-    for i, row in enumerate(seg):
-        gi = _day_gain(bars, s + i)
-        if gi is None:
-            continue
-        if _vol(row) >= a_avg * 2 and _yang(row) and gi >= 0.03:
-            fund = {
-                "idx": s + i,
-                "low": row["low"],
-                "close": row["close"],
-                "vol": _vol(row),
-                "date": row.get("date"),
-            }
-    if not fund:
-        return None
-    pre_c = bars[s - 1]["close"] if s > 0 else None
+    pre_c = bars[s - 1].get("close") if s > 0 else None
     return {
         "s": s,
         "e": e,
-        "gain": gain,
-        "hi_c": hi_c,
-        "start_c": start_c,
-        "end_c": end_c,
-        "pre_c": pre_c,
-        "a_avg": a_avg,
-        "fund": fund,
-        "stk_ret": stk_ret,
-        "hs_ret": hs_ret,
         "len": e - s + 1,
+        "start_c": seg[0]["close"],
+        "end_c": end_c,
+        "hi_c": hi_c,
+        "gain": gain,
+        "dd": max_dd,
+        "ratio": ratio,
+        "a_avg": a_avg,
+        "pre_c": pre_c,
     }
 
 
-def _check_c(bars: list[dict], a: dict, c_end: int) -> dict | None:
-    c0 = a["e"] + 1
-    clen = c_end - c0 + 1
-    if clen < C_MIN or clen > C_MAX:
-        return None
-    if c_end >= len(bars):
-        return None
-    seg = bars[c0 : c_end + 1]
-    if len(seg) != clen:
-        return None
-    c_vols = [_vol(x) for x in seg]
-    c_avg = _mean(c_vols)
-    if c_avg > a["a_avg"] * 0.70 + 1e-12:
-        return None
-    c_closes = [x["close"] for x in seg]
-    c_min_c = min(c_closes)
-    retrace = (a["hi_c"] - c_min_c) / a["hi_c"]
-    if retrace > a["gain"] * 0.40 + 1e-12:
-        return None
-    win0 = max(0, c_end + 1 - 20)
-    ma20 = _mean([_vol(x) for x in bars[win0 : c_end + 1]])
-    di_cap = min(a["a_avg"] * 0.45, ma20 * 0.50) if ma20 else a["a_avg"] * 0.45
-    di = None
-    for row in seg:
-        if _vol(row) <= di_cap + 1e-12:
-            if di is None or row["low"] <= di["low"]:
-                di = {
-                    "idx": None,
-                    "low": row["low"],
-                    "close": row["close"],
-                    "vol": _vol(row),
-                    "date": row.get("date"),
-                }
-    if not di:
-        return None
-    for i, row in enumerate(seg):
-        if row.get("date") == di["date"] and abs(row["low"] - di["low"]) < 1e-12:
-            di["idx"] = c0 + i
-            break
-    c_low = min(x["low"] for x in seg)
-    if a.get("pre_c") and c_low < a["pre_c"] * 0.97 - 1e-12:
-        return None
-    if c_low < a["fund"]["low"] * 0.95 - 1e-12:
-        return None
-    for i, row in enumerate(seg):
-        g = _day_gain(bars, c0 + i)
-        if g is not None and g <= -0.07 and _vol(row) >= a["a_avg"] - 1e-12:
-            return None
-    return {
-        "s": c0,
-        "e": c_end,
-        "len": clen,
-        "c_avg": c_avg,
-        "di": di,
-        "c_low": c_low,
-        "c_min_c": c_min_c,
-        "ma20_vol": ma20,
-    }
+def _cycle_pressure(bars: list[dict], a: dict, hs: dict[str, float]) -> tuple[bool | None, str]:
+    """先强这段里：沪深300 收跌日，个股跌幅小于沪深300 的天数 ≥ 一半。"""
+    down = 0
+    hold = 0
+    missing = 0
+    for i in range(a["s"], a["e"] + 1):
+        if i < 1:
+            continue
+        d0 = str(bars[i - 1].get("date") or "")
+        d1 = str(bars[i].get("date") or "")
+        h0, h1 = _hs_px(hs, d0), _hs_px(hs, d1)
+        if not h0 or not h1:
+            missing += 1
+            continue
+        hs_ret = h1 / h0 - 1.0
+        if hs_ret >= 0:
+            continue
+        down += 1
+        stk = _day_ret(bars, i)
+        if stk is None:
+            missing += 1
+            continue
+        if stk > hs_ret:
+            hold += 1
+    if down == 0 and missing:
+        return None, "周期测压：沪深300 先强段内收跌日证据不足"
+    if down == 0:
+        return True, "周期测压：先强段内沪深300 无收跌日，测压未挡"
+    share = hold / down
+    if share + 1e-12 >= 0.5:
+        return True, f"周期测压：大盘收跌 {down} 日，个股跌幅更小 {hold} 日（≥一半）"
+    return False, f"周期测压：大盘收跌 {down} 日，个股只在 {hold} 日抗跌（不足一半），大盘跌它跟跌"
 
 
-def find_structure(bars: list[dict], hs: dict[str, float] | None = None) -> dict | None:
-    """近 20 日取结束日最晚的合格 A，再接 4～8 日 C。"""
-    n = len(bars)
-    if n < 25:
+def _fund_bar(bars: list[dict], a: dict) -> dict | None:
+    """A 段放量阳线。放量 = 量 ≥ A 段日均（与第 5 条同一口径）。取离结束最近的一根。"""
+    fund = None
+    for i in range(a["s"], a["e"] + 1):
+        row = bars[i]
+        if _yang(row) and _vol(row) >= a["a_avg"] - 1e-12:
+            fund = {"idx": i, "low": row["low"], "close": row["close"], "vol": _vol(row), "date": row.get("date")}
+    if not fund:
         return None
-    hs = hs if hs is not None else _hs300()
-    win0 = max(0, n - 20)
-    for e in range(n - 1, win0 + A_MIN - 2, -1):
-        for alen in range(A_MAX, A_MIN - 1, -1):
-            s = e - alen + 1
-            if s < win0 or s < 1:
-                continue
-            a = _check_a(bars, s, e, hs)
-            if not a:
-                continue
-            for clen in range(C_MIN, C_MAX + 1):
-                c_end = e + clen
-                if c_end >= n:
-                    break
-                c = _check_c(bars, a, c_end)
-                if c:
-                    return {"a": a, "c": c}
-    return None
+    if bars[a["e"]]["close"] < fund["close"]:
+        return None
+    return fund
 
 
-def _recent_limit(bars: list[dict], code: str, n: int) -> bool:
-    last = len(bars)
-    for i in range(max(1, last - n), last):
-        if _is_limit_up(bars, i, code):
+def _c_retrace_ratio(a: dict, c_seg: list[dict]) -> float | None:
+    lows = [x.get("close") for x in c_seg if x.get("close")]
+    if not lows:
+        return None
+    c_min = min(lows)
+    den = a["hi_c"] - a["start_c"]
+    if den <= 0:
+        return None
+    return (a["hi_c"] - c_min) / den
+
+
+def _broken_fund(bars: list[dict], a: dict, fund: dict, c0: int, today: int) -> bool:
+    """不破资金柱最低价。放量破位后再抄 = 第二次释放。"""
+    for i in range(c0, today + 1):
+        row = bars[i]
+        if row.get("low") is not None and row["low"] < fund["low"]:
+            return True
+        if row.get("close") is not None and row["close"] < fund["low"] and _vol(row) >= a["a_avg"] - 1e-12:
             return True
     return False
 
 
-def _ret5(bars: list[dict]) -> float | None:
-    if len(bars) < 6:
+def _di_volume(bars: list[dict], a: dict, c0: int, i: int) -> bool:
+    """当日量是 C 段到当日为止的最低量，且低于 A 段日均。"""
+    v = _vol(bars[i])
+    if v >= a["a_avg"] - 1e-12:
+        return False
+    so_far = [_vol(bars[j]) for j in range(c0, i + 1)]
+    return bool(so_far) and v <= min(so_far) + 1e-12
+
+
+def _di_price_ok(bars: list[dict], c0: int, i: int) -> bool:
+    """地价：地量日附近不再创新低，或创新低但当日收回。"""
+    if i <= c0:
+        return True
+    prior_low = min(bars[j]["low"] for j in range(c0, i) if bars[j].get("low") is not None)
+    row = bars[i]
+    low, close = row.get("low"), row.get("close")
+    if low is None or close is None:
+        return False
+    if low >= prior_low - 1e-12:
+        return True
+    return close >= prior_low - 1e-12
+
+
+def find_structure(bars: list[dict], hs: dict[str, float] | None = None) -> dict | None:
+    """1～4：周期测压 + 近20日最晚 7030 A + 资金柱 + 第一段 C≥8 缩量小回。"""
+    n = len(bars)
+    if n < 10:
         return None
-    a, b = bars[-6].get("close"), bars[-1].get("close")
-    if not a or not b:
+    hs = hs if hs is not None else _hs300()
+    win0 = max(0, n - 20)
+    last_e = n - 1 - C_MIN_LOW_ABSORB
+    if last_e < win0:
         return None
-    return (b / a - 1.0) * 100.0
+    best_a = None
+    for e in range(last_e, win0 - 1, -1):
+        for s in range(win0, e):
+            a = _check_a(bars, s, e)
+            if a:
+                best_a = a
+                break
+        if best_a:
+            break
+    if not best_a:
+        return None
+    ok, why = _cycle_pressure(bars, best_a, hs)
+    if ok is None:
+        return None
+    if ok is False:
+        return None
+    fund = _fund_bar(bars, best_a)
+    if not fund:
+        return None
+    c0 = best_a["e"] + 1
+    if c0 >= n:
+        return None
+    c_len = n - c0
+    if c_len < C_MIN_LOW_ABSORB:
+        return None
+    if c_len == 4:
+        return None
+    c_seg = bars[c0:]
+    c_avg = _mean([_vol(x) for x in c_seg])
+    if c_avg >= best_a["a_avg"] - 1e-12:
+        return None
+    cr = _c_retrace_ratio(best_a, c_seg)
+    if cr is None or cr > RATIO_7030 + 1e-12:
+        return None
+    if _broken_fund(bars, best_a, fund, c0, n - 1):
+        return None
+    return {
+        "a": best_a,
+        "fund": fund,
+        "c0": c0,
+        "c_len": c_len,
+        "c_avg": c_avg,
+        "c_retrace": cr,
+        "pressure": why,
+    }
 
 
-def _trial_ok(bars: list[dict], st: dict) -> tuple[bool, list[str], list[str]]:
-    last = bars[-1]
-    a, c = st["a"], st["c"]
-    hit, miss = [], []
-    vol_ok = _vol(last) <= a["a_avg"] * 0.80 + 1e-12
-    (hit if vol_ok else miss).append(
-        f"量 {_vol(last):.0f} {'≤' if vol_ok else '>'} A段日均×0.80（{a['a_avg'] * 0.80:.0f}）"
-    )
-    prev_h = bars[-2]["high"] if len(bars) > 1 else None
-    yang_or = _yang(last) or (prev_h is not None and last["close"] > prev_h)
-    (hit if yang_or else miss).append("收阳或收盘>昨高" if yang_or else "未收阳且收盘未过昨高")
-    di_low = c["di"]["low"]
-    low_ok = last["low"] >= di_low * 0.99 - 1e-12
-    (hit if low_ok else miss).append(
-        f"最低 {last['low']:.2f} {'≥' if low_ok else '<'} 地量日最低×0.99（{di_low * 0.99:.2f}）"
-    )
-    gap_ok = last["close"] <= a["hi_c"] * 0.96 + 1e-12
-    gap_pct = (a["hi_c"] - last["close"]) / a["hi_c"] * 100.0
-    (hit if gap_ok else miss).append(
-        f"收盘低于A段最高收盘 {gap_pct:.1f}% {'≥' if gap_ok else '<'} 4%"
-    )
-    return bool(vol_ok and yang_or and low_ok and gap_ok), hit, miss
+def _latest_di(bars: list[dict], a: dict, c0: int) -> dict | None:
+    di = None
+    for i in range(c0, len(bars)):
+        if _di_volume(bars, a, c0, i) and _di_price_ok(bars, c0, i):
+            row = bars[i]
+            di = {"idx": i, "low": row["low"], "close": row["close"], "vol": _vol(row), "date": row.get("date")}
+    return di
 
 
-def _add_ok(bars: list[dict], st: dict, entry_idx: int) -> tuple[bool, str]:
-    last = bars[-1]
-    a, c = st["a"], st["c"]
-    entry = bars[entry_idx]
-    elapsed = len(bars) - 1 - entry_idx
-    if elapsed < 1 or elapsed > 5:
-        return False, f"加仓窗口 1～5 日，当前第 {elapsed} 日"
-    if last["close"] < entry["close"]:
-        return False, "收盘未站上试仓日收盘"
-    v = _vol(last)
-    if v <= c["c_avg"]:
-        return False, "当日量未大于 C 段日均"
-    if v > a["a_avg"] * 1.5 + 1e-12:
-        return False, "当日量超过 A 段日均×1.5"
-    if last["close"] >= a["hi_c"]:
-        return False, "收盘已过 A 段最高收盘，不再加仓，按取关"
-    return True, "加仓条件齐：收盘≥试仓日、C均量<当日量≤A均量×1.5、收盘<A最高收盘"
+def _has_intraday(code: str, day: str) -> bool:
+    """本系统无分时库。有分时再接。"""
+    return False
 
 
 def evaluate_exit_s1(bars: list[dict], open_trade: dict | None, zone: dict | None) -> tuple[bool, str, str]:
-    """取关。当天走 / 次日走 / 高潮走。"""
+    """第 7 条取关。"""
     if not bars:
         return False, "", ""
     zone = zone or {}
@@ -369,74 +337,47 @@ def evaluate_exit_s1(bars: list[dict], open_trade: dict | None, zone: dict | Non
             if str(row.get("date")) >= trade_date:
                 entry_idx = i
                 break
-    if len(bars) - 1 < entry_idx:
-        return False, "", ""
     last = bars[-1]
-    entry = bars[entry_idx]
     code = str(last.get("code") or (open_trade or {}).get("code") or "")
-    stop = zone.get("stop") or (open_trade or {}).get("stop_price")
-    di_low = zone.get("di_low")
-    di_close = zone.get("di_close")
+    fund_low = zone.get("fund_low")
     a_pre = zone.get("a_pre_close")
     a_hi = zone.get("a_high_close")
-    c_avg = zone.get("c_vol_avg")
-    trial_c = zone.get("trial_close") or entry.get("close")
-    elapsed = len(bars) - 1 - entry_idx
+    a_avg = zone.get("a_vol_avg")
+    di_low = zone.get("di_low")
+    v = _vol(last)
+    close = last.get("close")
+    if close is None:
+        return False, "", ""
 
-    if stop and last["close"] < float(stop):
-        return True, "取关", f"收盘 {last['close']:.2f} < 止损 {float(stop):.2f}"
-    if di_low and c_avg and last["close"] < float(di_low) and _vol(last) >= float(c_avg) * 1.3 - 1e-12:
-        return True, "取关", f"收盘低于地量日最低 {float(di_low):.2f} 且量 ≥ C段日均×1.3"
-    if a_pre and last["close"] < float(a_pre):
-        return True, "取关", f"收盘低于 A 开始日前收盘 {float(a_pre):.2f}"
-    if a_hi and last["close"] > float(a_hi):
-        return True, "取关", f"收盘过 A 段最高收盘 {float(a_hi):.2f}，不再加仓，按取关"
-
-    if elapsed >= 2 and trial_c:
-        c0, c1 = bars[-2]["close"], last["close"]
-        if c0 < trial_c and c1 < trial_c:
-            recovered = di_close is not None and last["close"] >= float(di_close)
-            if not recovered:
-                return True, "取关", f"连续2日收盘低于试仓日收盘 {trial_c:.2f}，且未收回地量日收盘"
-    if elapsed > 8 and trial_c:
-        hold_closes = [x["close"] for x in bars[entry_idx : len(bars)]]
-        new_high = max(hold_closes) > trial_c + 1e-12
-        if (not new_high) and last["close"] < trial_c:
-            return True, "取关", "持仓超 8 日未收盘新高，且收盘 < 试仓日收盘"
-
-    if elapsed >= 1:
-        had = False
-        for i in range(entry_idx, len(bars)):
-            if _is_limit_up(bars, i, code):
-                had = True
-                break
-            g = _day_gain(bars, i)
-            if g is not None and g >= 0.07 - 1e-12:
-                had = True
-                break
-        today_limit = _is_limit_up(bars, len(bars) - 1, code)
-        prior = [x["close"] for x in bars[entry_idx : len(bars) - 1]]
-        new_c_high = bool(prior) and last["close"] > max(prior)
-        hold = bars[entry_idx:]
-        vols = [_vol(x) for x in hold]
-        rank = 99
-        if vols:
-            order = sorted(range(len(vols)), key=lambda j: vols[j], reverse=True)
-            rank = order.index(len(hold) - 1)
-        over_a = bool(a_hi) and last["close"] > float(a_hi)
-        if had and (not today_limit) and new_c_high and rank <= 1 and over_a:
-            return True, "高潮走", "高潮走：持仓后有过涨停或涨幅≥7%，当日收盘新高、未涨停、量列买入以来前2、收盘>A段最高收盘"
+    if fund_low is not None and close < float(fund_low):
+        return True, "取关", f"收盘跌破资金柱最低价 {float(fund_low):.2f}"
+    if a_pre is not None and a_avg is not None and close < float(a_pre) and v >= float(a_avg) - 1e-12:
+        return True, "取关", f"收盘跌破 A 段起点前收盘 {float(a_pre):.2f} 且当日放量"
+    if di_low is not None and a_avg is not None and v >= float(a_avg) - 1e-12:
+        low = last.get("low")
+        if low is not None and low < float(di_low):
+            return True, "取关", f"C 段之后再次放量破地量低点 {float(di_low):.2f}（倒 ACB）"
+        if close < float(di_low):
+            return True, "取关", f"C 段之后再次放量破地量低点 {float(di_low):.2f}（倒 ACB）"
+    if a_hi is not None and close > float(a_hi):
+        prior = [x["close"] for x in bars[entry_idx : len(bars) - 1] if x.get("close")]
+        new_high = bool(prior) and close > max(prior)
+        sealed = _is_limit_up(bars, len(bars) - 1, code)
+        hold_vols = [_vol(x) for x in bars[entry_idx:]]
+        is_top = bool(hold_vols) and v >= max(hold_vols) - 1e-12
+        if new_high and (not sealed) and is_top:
+            return True, "取关", "已到 B：收盘过 A 段最高后放量滞涨（收盘新高、未封死、量是持仓以来最大之一）"
     return False, "", ""
 
 
-def _base_row(code: str, name: str, settings: dict) -> dict:
+def _base_row(code: str, name: str) -> dict:
     return {
         "code": code,
         "name": name,
         "status": "排除",
         "gate": "排除",
         "summary_bucket": "排除",
-        "path": "回调再启动",
+        "path": "野人哥低吸",
         "hit_rules": [],
         "missing_rules": [],
         "reminders": [],
@@ -451,38 +392,8 @@ def _base_row(code: str, name: str, settings: dict) -> dict:
         "key_kind": None,
         "key_price": None,
         "stop_price": None,
+        "daily_proxy": False,
     }
-
-
-def _stamp_structure(base: dict, st: dict) -> None:
-    a, c = st["a"], st["c"]
-    stop = min(c["di"]["low"], a["fund"]["low"]) * 0.97
-    base["data_ok"] = True
-    base["stop_price"] = round(stop, 3)
-    base["key_kind"] = "地量/资金柱止损"
-    base["key_price"] = round(c["di"]["low"], 3)
-    base["facts"].update(
-        {
-            "a_start": a["s"],
-            "a_end": a["e"],
-            "a_len": a["len"],
-            "a_gain_pct": round(a["gain"] * 100, 2),
-            "a_high_close": round(a["hi_c"], 3),
-            "a_pre_close": None if a["pre_c"] is None else round(a["pre_c"], 3),
-            "a_vol_avg": round(a["a_avg"], 2),
-            "c_len": c["len"],
-            "c_vol_avg": round(c["c_avg"], 2),
-            "di_low": round(c["di"]["low"], 3),
-            "di_close": round(c["di"]["close"], 3),
-            "di_date": c["di"].get("date"),
-            "fund_low": round(a["fund"]["low"], 3),
-            "fund_date": a["fund"].get("date"),
-            "stop_price": round(stop, 3),
-            "buy_ma20": None,
-            "hs_ret": round(a["hs_ret"], 2),
-            "stk_ret": round(a["stk_ret"], 2),
-        }
-    )
 
 
 def classify_s1(
@@ -504,9 +415,9 @@ def classify_s1(
     bars = meta.get("bars") or load_bars(code, last_n=120)
     if apply_quote:
         bars = overlay_quote_bar(bars, code, quotes)
-    base = _base_row(code, name, settings)
-    if len(bars) < LISTED_DAYS:
-        base["missing_rules"].append(f"池子：上市不满 {LISTED_DAYS} 日（仅 {len(bars)} 根日线）")
+    base = _base_row(code, name)
+    if len(bars) < 12:
+        base["missing_rules"].append("数据不足：日线不够核对周期 / A / C")
         return base
     last = bars[-1]
     close = last["close"]
@@ -518,19 +429,9 @@ def classify_s1(
     qrow = {}
     if isinstance(quotes, dict) and quotes.get(code):
         qrow = quotes.get(code) or {}
-    elif isinstance(quotes, dict) and (quotes.get("pe") is not None or quotes.get("float_mcap_yi") is not None):
-        qrow = quotes
-    if not qrow and (pe_meta.get("pe") is None or pe_meta.get("float_mcap_yi") is None):
-        from ..store import load_quotes as _lq
-
-        qrow = _lq().get(code) or {}
-    if qrow.get("pe") is not None and pe_meta.get("pe") is None:
+    if qrow.get("pe") is not None:
         pe_meta["pe"] = qrow["pe"]
-    if qrow.get("float_mcap_yi") is not None and pe_meta.get("float_mcap_yi") is None:
-        pe_meta["float_mcap_yi"] = qrow["float_mcap_yi"]
     pe = dyn_pe_value(pe_meta)
-    mcap = _float_mcap_yi(pe_meta, last)
-    amt = _amt(last)
     base["facts"] = {"date": last["date"], "close": close, "pe": pe}
     industry = meta.get("industry")
     if not industry:
@@ -541,146 +442,186 @@ def classify_s1(
         base["industry"] = industry
         base["facts"]["industry"] = industry
 
-    if is_st_name(name):
-        base["missing_rules"].append("池子：ST / *ST")
+    hs_map = hs if hs is not None else _hs300()
+    n = len(bars)
+    win0 = max(0, n - 20)
+    last_e = n - 1 - C_MIN_LOW_ABSORB
+    best_a = None
+    if last_e >= win0:
+        for e in range(last_e, win0 - 1, -1):
+            for s in range(win0, e):
+                a = _check_a(bars, s, e)
+                if a:
+                    best_a = a
+                    break
+            if best_a:
+                break
+    if not best_a:
+        base["missing_rules"].append("流畅高频 7030：近 20 日未见结束日收在最高、回撤/涨幅≤30/70、且其后已有 C≥8 的上涨段")
         return base
-    if close < POOL_MIN_PRICE:
-        base["missing_rules"].append(f"池子：股价 {close:.2f} < 5 元")
+    max_dd, gain = best_a["dd"], best_a["gain"]
+    if gain and max_dd / gain > RATIO_5149:
+        base["missing_rules"].append("5149：回撤/涨幅 > 40/60，排除")
         return base
-    if not structure_only:
-        if amt is None:
-            base["missing_rules"].append("池子：成交额证据不足")
-            return base
-        if amt < YI:
-            base["missing_rules"].append(f"池子：成交额 {amt / YI:.2f} 亿 < 1 亿")
-            return base
-        base["facts"]["amount_yi"] = round(amt / YI, 2)
-        if pe is None:
-            base["missing_rules"].append("池子：市盈证据不足")
-            return base
-        if pe <= 0:
-            base["missing_rules"].append(f"池子：动态市盈 {pe:.2f} ≤ 0")
-            return base
-        if mcap is None:
-            base["missing_rules"].append("池子：流通市值证据不足")
-            return base
-        if mcap < MIN_FLOAT_YI:
-            base["missing_rules"].append(f"池子：流通市值 {mcap:.1f} 亿 < {MIN_FLOAT_YI:.0f} 亿")
-            return base
-        base["facts"]["float_mcap_yi"] = round(mcap, 2)
+    ok, why = _cycle_pressure(bars, best_a, hs_map)
+    if ok is None:
+        base["missing_rules"].append(why)
+        return base
+    if ok is False:
+        base["missing_rules"].append(why)
+        return base
+    base["hit_rules"].append(why)
+    fund = _fund_bar(bars, best_a)
+    if not fund:
+        base["missing_rules"].append("资金柱：A 段内无放量阳线，或结束日收盘低于该柱收盘（重心下移）")
+        return base
+    base["hit_rules"].append(f"资金柱：{fund.get('date')} 放量阳线，结束日重心未下移")
 
-    if _recent_limit(bars, code, 3):
-        base["missing_rules"].append("结构：近 3 日有涨停")
+    c0 = best_a["e"] + 1
+    c_len = n - c0
+    if c_len < C_MIN_LOW_ABSORB:
+        if c_len == 4:
+            base["missing_rules"].append("时间周期：C=4 是日线 ACB 进攻，本规则不做")
+        elif c_len < 4:
+            base["missing_rules"].append(f"时间周期：C={c_len} 是连板/轴心，本规则不做")
+        else:
+            base["missing_rules"].append(f"时间周期：低吸只做 C≥8，当前 C={c_len}")
         return base
-    r5 = _ret5(bars)
-    if r5 is not None and r5 >= 20:
-        base["missing_rules"].append(f"结构：近 5 日涨幅 {r5:.1f}% ≥ 20%")
+    c_seg = bars[c0:]
+    c_avg = _mean([_vol(x) for x in c_seg])
+    if c_avg >= best_a["a_avg"] - 1e-12:
+        base["missing_rules"].append("时间周期：C 段未缩量（C 日均量未小于 A 日均量）")
         return base
-
-    st = find_structure(bars, hs if hs is not None else _hs300())
-    if not st:
-        base["missing_rules"].append("结构：未见近20日合格 A（5～12日、涨幅≥12%、阳≥阴、回撤、相对沪深300、资金柱）后接 4～8 日 C")
+    cr = _c_retrace_ratio(best_a, c_seg)
+    if cr is None or cr > RATIO_7030 + 1e-12:
+        base["missing_rules"].append("时间周期：C 段回撤/A 段涨幅 > 30/70，或从 B 阴跌吃掉 A 涨幅")
         return base
-    _stamp_structure(base, st)
-    a, c = st["a"], st["c"]
-    after = (len(bars) - 1) - c["e"]
+    if _broken_fund(bars, best_a, fund, c0, n - 1):
+        base["missing_rules"].append("C 区失效：已破资金柱最低价，或第一段 C 放量破位后再抄（第二次释放）")
+        return base
     base["hit_rules"].append(
-        f"结构：A {a['len']} 日涨 {a['gain'] * 100:.1f}%（相对沪深300 {a['stk_ret'] - a['hs_ret']:.1f}pct），"
-        f"C {c['len']} 日缩量；资金柱 {a['fund'].get('date')}，地量 {c['di'].get('date')}；"
-        f"止损 {base['stop_price']:.2f}（min(地量最低,资金柱最低)×0.97）"
+        f"7030 A {best_a['len']} 日（回撤/涨幅 {best_a['ratio'] * 100:.1f}%≤30/70）；"
+        f"第一段 C {c_len} 日缩量小回"
     )
+    base["data_ok"] = True
+    base["key_kind"] = "资金柱最低价"
+    base["key_price"] = round(fund["low"], 3)
+    base["stop_price"] = round(fund["low"], 3)
+    base["facts"].update(
+        {
+            "a_len": best_a["len"],
+            "a_gain_pct": round(best_a["gain"] * 100, 2),
+            "a_high_close": round(best_a["hi_c"], 3),
+            "a_pre_close": None if best_a["pre_c"] is None else round(best_a["pre_c"], 3),
+            "a_vol_avg": round(best_a["a_avg"], 2),
+            "c_len": c_len,
+            "c_vol_avg": round(c_avg, 2),
+            "fund_low": round(fund["low"], 3),
+            "fund_date": fund.get("date"),
+            "stop_price": round(fund["low"], 3),
+        }
+    )
+    st = {"a": best_a, "fund": fund, "c0": c0, "c_avg": c_avg}
 
     if open_pos:
+        di = _latest_di(bars, best_a, c0)
         zone = {
-            "stop": base["stop_price"],
-            "di_low": c["di"]["low"],
-            "di_close": c["di"]["close"],
-            "a_pre_close": a.get("pre_c"),
-            "a_high_close": a["hi_c"],
-            "c_vol_avg": c["c_avg"],
-            "trial_close": open_pos.get("buy_price") or last["close"],
+            "fund_low": fund["low"],
+            "a_pre_close": best_a.get("pre_c"),
+            "a_high_close": best_a["hi_c"],
+            "a_vol_avg": best_a["a_avg"],
+            "di_low": None if not di else di["low"],
         }
         hit, section, detail = evaluate_exit_s1(bars, open_pos, zone)
         if hit:
             base["status"] = "取关"
             base["gate"] = "取关"
             base["summary_bucket"] = "取关"
-            base["hit_rules"].append(f"取关已见（{section}）：{detail}")
+            base["hit_rules"].append(f"取关已见：{detail}")
             return base
         base["status"] = "持有"
         base["gate"] = "持有"
         base["summary_bucket"] = "持有"
-        base["path_ready"] = False
-        add_ok, add_why = _add_ok(bars, st, _entry_idx(bars, str(open_pos.get("buy_date") or "")))
-        if add_ok:
-            base["hit_rules"].append("加仓：" + add_why)
+        if close > best_a["hi_c"]:
+            base["hit_rules"].append("已到 B：收盘过 A 段最高，停止加仓，改为减")
+        elif _vol(last) >= best_a["a_avg"] - 1e-12 and not _yang(last):
+            base["missing_rules"].append("仓位：不在 C 段放量阴线上加")
         else:
-            base["missing_rules"].append("加仓未齐：" + add_why)
+            base["hit_rules"].append("仓位：C 区分批建。第一笔试仓，确认地量后再加一笔")
         return base
 
-    if after > TRIAL_WINDOW:
-        base["missing_rules"].append(f"观察：C 段结束后 {after} 日仍未试仓 → 排除，重扫 A")
-        return base
-    if after < 1:
+    di = _latest_di(bars, best_a, c0)
+    if not di:
         base["status"] = "观察"
         base["gate"] = "观察"
         base["summary_bucket"] = "观察"
-        base["missing_rules"].append("观察：C 段刚结束，当天未到试仓窗（C 结束后 3 日内）")
+        base["missing_rules"].append("地量地价：1～4 已成立，地量还没走完")
         return base
-
-    ok, hit, miss = _trial_ok(bars, st)
-    if not ok:
+    base["facts"]["di_low"] = round(di["low"], 3)
+    base["facts"]["di_close"] = round(di["close"], 3)
+    base["facts"]["di_date"] = di.get("date")
+    last_i = n - 1
+    vol_now = _vol(last)
+    fangliang = vol_now >= best_a["a_avg"] - 1e-12
+    is_di_day = last_i == di["idx"]
+    after_di_yang = last_i > di["idx"] and _yang(last) and (not fangliang)
+    daily_trial = (is_di_day or after_di_yang) and (not fangliang)
+    if fangliang:
         base["status"] = "观察"
         base["gate"] = "观察"
         base["summary_bucket"] = "观察"
-        base["hit_rules"].extend(["观察已见：" + x for x in hit])
-        base["missing_rules"].extend(["试仓未齐：" + x for x in miss])
-        base["missing_rules"].append("须先观察。当天未满足试仓")
+        base["hit_rules"].append("地量已见")
+        base["missing_rules"].append("当日放量（量 ≥ A 段日均）= 不买")
         return base
-    base["hit_rules"].extend(["试仓：" + x for x in hit])
-    base["hit_rules"].append("路径到达试仓。试仓不是成交指令。仓位 8%～12%")
-    base["path_ready"] = True
+    if not daily_trial:
+        base["status"] = "观察"
+        base["gate"] = "观察"
+        base["summary_bucket"] = "观察"
+        base["hit_rules"].append("地量已见")
+        base["missing_rules"].append("试仓：不是地量日，也不是地量后仍缩量的阳线")
+        return base
+    has_fs = _has_intraday(code, str(last.get("date") or ""))
+    if not has_fs:
+        base["status"] = "观察"
+        base["gate"] = "观察"
+        base["summary_bucket"] = "观察"
+        base["daily_proxy"] = True
+        base["path_ready"] = False
+        base["hit_rules"].append("日线代理观察：地量日或地量后缩量阳线（无分时，不得记为正式试仓）")
+        base["missing_rules"].append("分时数据缺失：不得把日线代理标成完整低吸，回测不得记正式试仓成交")
+        return base
     base["status"] = "试仓"
     base["gate"] = "试仓"
     base["summary_bucket"] = "试仓"
+    base["path_ready"] = True
+    base["hit_rules"].append("试仓：地量日或地量后仍缩量阳线，且分时条件已核")
     return base
 
 
-def _entry_idx(bars: list[dict], buy_date: str) -> int:
-    if not buy_date:
-        return max(0, len(bars) - 1)
-    for i, row in enumerate(bars):
-        if str(row.get("date") or "") >= str(buy_date)[:10]:
-            return i
-    return max(0, len(bars) - 1)
-
-
 def is_buy_s1(bars: list[dict], ctx: dict | None = None) -> bool:
-    """与规则扫描同一套试仓。历史回放不算主线。"""
+    """正式试仓才算买入。无分时时日线代理不得记成交。"""
     if not bars:
         return False
     ctx = ctx or {}
     code = ts_code(str(bars[-1].get("code") or ctx.get("code") or ""))
     name = bars[-1].get("name") or ctx.get("name") or code
-    meta = {
-        "code": code,
-        "name": name,
-        "bars": bars,
-        "industry": ctx.get("industry"),
-        "pe": ctx.get("pe"),
-        "float_mcap_yi": ctx.get("float_mcap_yi"),
-    }
     row = classify_s1(
-        meta,
-        {"person_present": True},
+        {
+            "code": code,
+            "name": name,
+            "bars": bars,
+            "industry": ctx.get("industry"),
+            "pe": ctx.get("pe"),
+            "float_mcap_yi": ctx.get("float_mcap_yi"),
+        },
+        {},
         None,
         {},
-        ctx.get("market_3d"),
-        structure_only=False,
+        None,
         apply_quote=False,
         hs=ctx.get("hs"),
     )
-    return row.get("status") == "试仓"
+    return row.get("status") == "试仓" and not row.get("daily_proxy")
 
 
 def classify_one_s1(code: str, settings: dict, trades: list | None = None) -> dict:
@@ -727,7 +668,6 @@ def list_s1_cycle_universe() -> list[dict]:
 
 
 def list_s1_pool() -> list[dict]:
-    """总股池 = 有效 CSV。池子/结构在 classify 记排除。"""
     from .eastmoney import hydrate_universe
 
     items = hydrate_universe()
@@ -747,8 +687,6 @@ def list_s1_pool() -> list[dict]:
             meta["pe"] = q["pe"]
         if q.get("float_mcap_yi") is not None:
             meta["float_mcap_yi"] = q["float_mcap_yi"]
-        if q.get("amount_yi") is not None:
-            meta["amount_yi"] = q["amount_yi"]
         cands.append(meta)
     return cands
 
@@ -762,7 +700,7 @@ def scan_structure_one(settings: dict, trades: list | None = None) -> list[dict]
         from .buy_log import load_buy_log, record_since
 
         since = record_since()
-        for item in (load_buy_log("rules2").get("items") or []):
+        for item in load_buy_log("rules2").get("items") or []:
             if item.get("closed"):
                 continue
             if str(item.get("buy_date") or "")[:10] < since:

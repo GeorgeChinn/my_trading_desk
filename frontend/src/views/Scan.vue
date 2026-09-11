@@ -7,11 +7,9 @@
           总闸：排除 → 观察 → 买入 → 卖出。买入 = 路径到达，不是成交指令。列入买入池后才开这段回测。
         </p>
         <p class="stamp" v-if="stamp.asof || stamp.scanned_at">
-          数据日 {{ stamp.asof || "—" }}
+          总股池 {{ stamp.pool_n || data.pool && data.pool.count || 0 }} 只
+          · 数据日 {{ stamp.asof || "—" }}
           · 扫描 {{ stamp.scanned_at || "—" }}
-          · 行情快照 {{ stamp.quotes_at || stamp.quotes_date || "—" }}
-          <span v-if="stamp.quotes_source">（{{ stamp.quotes_source }} {{ stamp.quotes_n || 0 }} 只）</span>
-          · 总股池 {{ stamp.pool_n || data.pool && data.pool.count || 0 }} 只
         </p>
       </div>
       <div class="card buy-log-card">

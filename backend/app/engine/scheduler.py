@@ -25,7 +25,7 @@ def schedule_snapshot() -> dict:
         "timezone": "Asia/Shanghai",
         "next_run": nxt.strftime("%Y-%m-%d %H:%M") if enabled else "",
         "last_fired": settings.get("schedule_last_fired") or "",
-        "why": f"到点先更新 A 股全股池（行情+日线），再重扫全部规则与情绪。当前：{shown}（北京时间，工作日）。周六日不跑。",
+        "why": f"到点更新 data/csv 全股池日线，再按各 RULES 重扫。当前：{shown}（北京时间，工作日）。周六日不跑。",
     }
 
 

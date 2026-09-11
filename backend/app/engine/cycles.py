@@ -114,15 +114,12 @@ def walk_cycles_s1(bars: list[dict], ctx: dict | None = None) -> tuple[list[dict
                 st = find_structure(sl, ctx.get("hs"))
                 zone = {}
                 if st:
-                    a, c = st["a"], st["c"]
+                    a, fund = st["a"], st["fund"]
                     zone = {
-                        "stop": min(c["di"]["low"], a["fund"]["low"]) * 0.97,
-                        "di_low": c["di"]["low"],
-                        "di_close": c["di"]["close"],
+                        "fund_low": fund["low"],
                         "a_pre_close": a.get("pre_c"),
                         "a_high_close": a["hi_c"],
-                        "c_vol_avg": c["c_avg"],
-                        "trial_close": bars[i]["close"],
+                        "a_vol_avg": a["a_avg"],
                     }
                 open_zone = zone
             continue

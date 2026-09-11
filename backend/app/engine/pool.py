@@ -160,29 +160,23 @@ def build_universe_from_csv() -> tuple[list[dict], dict]:
 def ashare_pool_public() -> dict:
     """A 股全股池：所有规则的扫描基准。"""
     from ..config import CSV_DIR
-    from ..store import load_pool_snapshot, load_quotes, load_quotes_meta, load_settings, load_sync_status, load_universe
+    from ..store import load_quotes_meta, load_settings, load_sync_status, load_universe
     from .clock import asof_date
 
     uni = load_universe()
-    quotes = load_quotes() or {}
     qmeta = load_quotes_meta()
-    snap = load_pool_snapshot()
     settings = load_settings()
     sync = load_sync_status()
     csv_n = sum(1 for _ in CSV_DIR.glob("*.csv"))
-    asof = asof_date(settings.get("last_trade_date") or qmeta.get("trade_date") or snap.get("trade_date") or "")
+    asof = asof_date(settings.get("last_trade_date") or qmeta.get("trade_date") or "")
+    n = csv_n or len(uni)
     return {
-        "count": len(uni) or csv_n,
-        "csv_count": csv_n,
-        "quote_count": len(quotes),
-        "non_st": snap.get("non_st"),
+        "count": n,
         "asof": asof,
         "updated_at": qmeta.get("updated_at") or sync.get("finished_at") or "",
         "sync_at": sync.get("finished_at") or "",
         "source": "data/csv",
-        "schedule_last": settings.get("schedule_last_fired") or "",
-        "note": "总股池 = data/csv 目录里有效日线。这是 A 股可扫描底池，所有 RULES 以此为基准再排除 / 观察 / 买入（试仓） / 卖出（取关）。",
-        "funnel": snap,
+        "note": f"全股池 {n} 只，就是 data/csv 里的股票。规则门槛只在规则扫描里按各 RULES 排除。",
     }
 
 

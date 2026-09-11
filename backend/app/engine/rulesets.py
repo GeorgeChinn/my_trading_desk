@@ -26,14 +26,12 @@ def _title(text: str, fallback: str) -> str:
 
 def _engine(text: str) -> str:
     title = _title(text, "")
-    if "回调后的重新启动" in title:
-        return ENGINE_PULLBACK
-    if "低位金叉" in title:
-        return ENGINE_LOW_GOLDEN
     raw = text or ""
-    if "回调后的重新启动" in raw:
+    if "野人哥低吸" in title or "野人哥低吸" in raw:
         return ENGINE_PULLBACK
-    if "低位金叉" in raw:
+    if "回调后的重新启动" in title or "回调后的重新启动" in raw:
+        return ENGINE_PULLBACK
+    if "低位金叉" in title or "低位金叉" in raw:
         return ENGINE_LOW_GOLDEN
     return ENGINE_UNIMPLEMENTED
 
@@ -42,7 +40,7 @@ def _engine_note(engine: str) -> str:
     if engine == ENGINE_LOW_GOLDEN:
         return "扫描器已执行本结构（低位金叉波段）。判定用数据与设置最新更新的实时价。买入不是成交指令。"
     if engine == ENGINE_PULLBACK:
-        return "扫描器已执行 RULES2（野人哥 C 区）：排除 → 观察 → 试仓 → 持有 → 取关。试仓不是成交指令。"
+        return "扫描器已执行 RULES2 野人哥低吸：周期测压 → 7030 → 资金柱 → C≥8 缩量到地量。无分时只标日线代理观察，不得记正式试仓。"
     return "本规则结构尚未写成扫描器。证据不足，不编造信号。"
 
 

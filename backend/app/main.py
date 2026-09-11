@@ -196,11 +196,10 @@ def _scan_stamp(ruleset_id: str) -> dict:
         "quotes_at": qmeta.get("updated_at") or "",
         "quotes_date": qmeta.get("trade_date") or asof,
         "quotes_source": qmeta.get("source") or snap.get("source") or settings.get("data_source") or "",
-        "quotes_n": len(qmeta.get("codes") or {}),
-        "pool_n": len(load_universe()),
+        "pool_n": csv_n or len(load_universe()),
         "csv_n": csv_n,
         "sync_at": sync.get("finished_at") or "",
-        "note": "扫描用数据与设置最新一次更新的全 A 底池与日线，不编造。",
+        "note": "总股池 = data/csv 全部股票。规则门槛只在本页按各 RULES 排除。",
     }
 
 

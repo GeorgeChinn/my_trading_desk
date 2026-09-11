@@ -2,22 +2,17 @@
   <div>
     <h1>数据与设置</h1>
     <p class="sub">
-      数据源只用真实行情。A股全股池是所有规则的基准，按下面的更新时间点定时刷新。不使用示例 CSV。
+      全股池就是 data/csv 里那五千多只股票。规则门槛只在「规则扫描」里按各自 RULES 记排除，这里不另建小池子。
     </p>
     <div class="card" style="margin-bottom:14px">
-      <h3>A股全股池（总股池）</h3>
-      <p class="sub">{{ ashare.note || "所有规则的扫描基准。按下方更新时间点定时刷新。" }}</p>
+      <h3>全股池</h3>
+      <p class="sub">{{ ashare.note || "data/csv 有多少只，全股池就是多少只。" }}</p>
       <div class="grid cols-4" style="margin-top:12px">
         <div class="stat"><div class="n">{{ ashare.count || poolCount || 0 }}</div><div class="k">全股池</div></div>
-        <div class="stat"><div class="n">{{ ashare.csv_count || 0 }}</div><div class="k">本地日线</div></div>
-        <div class="stat"><div class="n">{{ ashare.quote_count || 0 }}</div><div class="k">行情快照</div></div>
-        <div class="stat"><div class="n">{{ ashare.non_st || 0 }}</div><div class="k">非 ST</div></div>
       </div>
       <p class="stamp" style="margin-top:12px">
         数据日 {{ ashare.asof || "—" }}
-        · 快照更新 {{ ashare.updated_at || "—" }}
-        · 上次同步 {{ ashare.sync_at || "—" }}
-        · 来源 {{ ashare.source || "—" }}
+        · 上次更新 {{ ashare.updated_at || ashare.sync_at || "—" }}
       </p>
     </div>
     <div class="card">
@@ -31,7 +26,7 @@
         </select>
       </label>
       <p class="sub" style="margin-top:10px">下次：{{ schedule.next_run || "—" }} · 上次触发：{{ schedule.last_fired || "—" }}</p>
-      <p class="sub">{{ dataLabel }} · 全股池 {{ ashare.count || poolCount }} 只</p>
+      <p class="sub">全股池 {{ ashare.count || poolCount }} 只</p>
     </div>
     <div class="card" style="margin-top:14px">
       <h3>更新时间点</h3>
@@ -72,20 +67,9 @@
       </table>
       <p class="sub" style="margin-top:10px">{{ syncText }}</p>
       <div v-if="syncing || barsTotal" class="sub">日线 {{ barsDone }} / {{ barsTotal }}</div>
-      <p class="sub">全A近3年是确认收盘补历史，大约 5000+ 只、每只约 800 根，要较长时间。不改规则扫描池子，失败会跳过不编 K 线。</p>
+      <p class="sub">补全日线是给全股池里每一只补历史 K 线，不另建小池子。</p>
     </div>
 
-    <div class="card" style="margin-top:14px">
-      <h3>各规则在全股池上的门槛（只记排除，不截断底池）</h3>
-      <p class="sub">RULES 观察另要流通市值 ≥ 300 亿 · 日成交额 ≥ 5 亿 · 非 ST · 股价 ≥ 5 元 · PE &gt; 0。RULES2 用 80 亿 / 1 亿。未过关仍留在全股池，状态为排除。</p>
-      <div class="grid cols-4" v-if="funnel && Object.keys(funnel).length">
-        <div class="stat"><div class="n">{{ funnel.listed || ashare.count || 0 }}</div><div class="k">全股池</div></div>
-        <div class="stat"><div class="n">{{ funnel.non_st || 0 }}</div><div class="k">非 ST</div></div>
-        <div class="stat"><div class="n">{{ funnel.mcap_ok || 0 }}</div><div class="k">RULES 市值过关</div></div>
-        <div class="stat"><div class="n">{{ funnel.pool || 0 }}</div><div class="k">RULES 入池门槛</div></div>
-      </div>
-      <p class="sub" v-if="funnel && funnel.trade_date">确认日 {{ funnel.trade_date }} · 来源 {{ funnel.source }}</p>
-    </div>
   </div>
 </template>
 
@@ -95,8 +79,6 @@ import { api } from "../api";
 
 const poolCount = ref(0);
 const ashare = ref({});
-const dataLabel = ref("");
-const funnel = ref({});
 const syncText = ref("");
 const syncing = ref(false);
 const barsDone = ref(0);
@@ -127,8 +109,6 @@ async function load() {
   const s = await api.settings();
   poolCount.value = s.pool_count || 0;
   ashare.value = s.ashare_pool || {};
-  dataLabel.value = s.data_label || "";
-  funnel.value = s.pool_snapshot || {};
   schedule.value = s.schedule || {};
   scheduleOn.value = schedule.value.enabled !== false;
   picked.value = schedule.value.times && schedule.value.times.length ? [...schedule.value.times] : ["15:30", "16:30"];
@@ -139,7 +119,6 @@ function applySync(st) {
   syncText.value = st.message || "";
   barsDone.value = st.bars_done || 0;
   barsTotal.value = st.bars_total || 0;
-  if (st.funnel) funnel.value = st.funnel;
   if (st.pool_size) poolCount.value = st.pool_size;
 }
 async function poll() {
