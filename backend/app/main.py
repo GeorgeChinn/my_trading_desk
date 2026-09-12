@@ -753,16 +753,16 @@ def settings_get():
     token = public.get("tushare_token") or ""
     public["tushare_configured"] = bool(token)
     public["tushare_token"] = "********" if token else ""
-    from .engine.pool import csv_universe_count
+    from .engine.pool import ashare_pool_public, csv_universe_count, public_pool_snapshot
 
+    csv_n = csv_universe_count()
     public["csv_files"] = list_csv_files()
     public["csv_dir"] = str(CSV_DIR)
-    public["pool_count"] = csv_universe_count()
-    public["pool_snapshot"] = load_pool_snapshot()
-    public["sync"] = load_sync_status()
+    public["csv_count"] = csv_n
+    public["pool_count"] = csv_n
+    public["pool_snapshot"] = public_pool_snapshot(load_pool_snapshot())
+    public["sync"] = _public_sync(load_sync_status(), csv_n)
     public["schedule"] = schedule_snapshot()
-    from .engine.pool import ashare_pool_public
-
     public["ashare_pool"] = ashare_pool_public()
     return public
 
@@ -804,21 +804,34 @@ def tushare_pull(payload: PullIn):
 
 @app.get("/api/pool")
 def pool_get():
+    from .engine.pool import csv_universe_count, public_pool_snapshot
+
     items = load_universe()
-    snap = load_pool_snapshot()
+    csv_n = csv_universe_count()
     return {
         "items": items,
-        "count": len(items),
+        "count": csv_n,
         "preferred": sum(1 for x in items if x.get("index_member")),
-        "snapshot": snap,
+        "snapshot": public_pool_snapshot(load_pool_snapshot()),
         "profile_bandwidth": 100,
-        "note": "PROFILE 同时跟踪 100 只。股池按第3条全量保留，扫描不截断。",
+        "note": f"全股池 {csv_n} 只，就是 data/csv。规则门槛只在规则扫描里排除。",
     }
+
+
+def _public_sync(st: dict, csv_n: int | None = None) -> dict:
+    from .engine.pool import csv_universe_count, public_pool_snapshot
+
+    out = dict(st or {})
+    n = csv_n if csv_n is not None else csv_universe_count()
+    out["pool_size"] = n
+    if out.get("funnel"):
+        out["funnel"] = public_pool_snapshot(out.get("funnel"))
+    return out
 
 
 @app.get("/api/sync")
 def sync_status():
-    return load_sync_status()
+    return _public_sync(load_sync_status())
 
 
 @app.post("/api/sync")
@@ -834,7 +847,7 @@ def sync_start(force: bool = Query(False)):
 
     _sync_thread = threading.Thread(target=run, daemon=True)
     _sync_thread.start()
-    return {"ok": True, "started": True, "message": "已开始：按池子筛全部入池股并拉取最新数据"}
+    return {"ok": True, "started": True, "message": "已开始更新 data/csv 全股池日线"}
 
 
 @app.post("/api/sync/history")

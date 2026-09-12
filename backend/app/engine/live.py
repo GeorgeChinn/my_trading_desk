@@ -500,10 +500,10 @@ def _sync_live(force_bars: bool = False) -> dict:
                 err = None
             except Exception as exc2:
                 log(f"AKShare 失败：{exc2}")
-    if not pool:
+    if not pool or len(pool) < 1000:
         from .pool import build_universe_from_csv
 
-        log("在线快照为空，改用本地日线重建全 A 底池（不截断）")
+        log("在线快照过少或为空，改用 data/csv 全股池（不按规则门槛截断）")
         pool, funnel = build_universe_from_csv()
         source = (funnel or {}).get("source") or "local-csv"
     if not pool:

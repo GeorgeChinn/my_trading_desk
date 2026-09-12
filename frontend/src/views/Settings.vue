@@ -8,7 +8,7 @@
       <h3>全股池</h3>
       <p class="sub">{{ ashare.note || "data/csv 有多少只，全股池就是多少只。" }}</p>
       <div class="grid cols-4" style="margin-top:12px">
-        <div class="stat"><div class="n">{{ ashare.count || poolCount || 0 }}</div><div class="k">全股池</div></div>
+        <div class="stat"><div class="n">{{ csvN }}</div><div class="k">全股池</div></div>
       </div>
       <p class="stamp" style="margin-top:12px">
         数据日 {{ ashare.asof || "—" }}
@@ -26,7 +26,7 @@
         </select>
       </label>
       <p class="sub" style="margin-top:10px">下次：{{ schedule.next_run || "—" }} · 上次触发：{{ schedule.last_fired || "—" }}</p>
-      <p class="sub">全股池 {{ ashare.count || poolCount }} 只</p>
+      <p class="sub">全股池 {{ csvN }} 只</p>
     </div>
     <div class="card" style="margin-top:14px">
       <h3>更新时间点</h3>
@@ -78,7 +78,14 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { api } from "../api";
 
 const poolCount = ref(0);
+const csvFileN = ref(0);
 const ashare = ref({});
+const csvN = computed(() => {
+  const a = Number(ashare.value.count || 0);
+  const p = Number(poolCount.value || 0);
+  const f = Number(csvFileN.value || 0);
+  return Math.max(a, p, f);
+});
 const syncText = ref("");
 const syncing = ref(false);
 const barsDone = ref(0);
@@ -107,7 +114,8 @@ function toggleTime(t) {
 
 async function load() {
   const s = await api.settings();
-  poolCount.value = s.pool_count || 0;
+  poolCount.value = s.csv_count || s.pool_count || 0;
+  csvFileN.value = (s.csv_files && s.csv_files.length) || s.csv_count || 0;
   ashare.value = s.ashare_pool || {};
   schedule.value = s.schedule || {};
   scheduleOn.value = schedule.value.enabled !== false;
@@ -119,7 +127,6 @@ function applySync(st) {
   syncText.value = st.message || "";
   barsDone.value = st.bars_done || 0;
   barsTotal.value = st.bars_total || 0;
-  if (st.pool_size && st.pool_size >= (poolCount.value || 0)) poolCount.value = st.pool_size;
 }
 async function poll() {
   try {

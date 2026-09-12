@@ -163,6 +163,17 @@ def csv_universe_count() -> int:
     return sum(1 for p in CSV_DIR.glob("*.csv") if p.is_file())
 
 
+def public_pool_snapshot(snap: dict | None = None) -> dict:
+    """给页面用的快照：pool / listed 一律是 CSV 全股池，不是 RULES 门槛筛完的数。"""
+    n = csv_universe_count()
+    out = dict(snap or {})
+    out["listed"] = n
+    out["pool"] = n
+    out["source"] = "data/csv"
+    out["rules"] = {"底池": "data/csv 有效日线 = 总股池，所有规则的基准"}
+    return out
+
+
 def ashare_pool_public() -> dict:
     """A 股全股池：所有规则的扫描基准。"""
     from ..store import load_quotes_meta, load_settings, load_sync_status
