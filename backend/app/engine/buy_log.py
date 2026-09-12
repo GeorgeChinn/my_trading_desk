@@ -119,6 +119,23 @@ def _eval_item(item: dict, engine: str) -> None:
             raw, {"date": buy_date, "code": code, "buy_date": buy_date}, zone
         )
         last = raw[-1]
+    elif engine == "ma20_swing":
+        from .ma20_swing import evaluate_exit_ma20
+
+        zone = {
+            "buy_ma20": item.get("buy_ma20"),
+            "buy_price": item.get("buy_price"),
+            "stop": item.get("stop_price"),
+        }
+        if zone["buy_ma20"] is None and item.get("stop_price"):
+            try:
+                zone["buy_ma20"] = float(item["stop_price"]) / 0.95
+            except (TypeError, ValueError):
+                zone["buy_ma20"] = None
+        hit, section, detail = evaluate_exit_ma20(
+            raw, {"date": buy_date, "code": code, "buy_date": buy_date}, zone
+        )
+        last = raw[-1]
     else:
         bars = attach_indicators(raw)
         from .cycles import _prefix_series
@@ -187,6 +204,7 @@ def sync_buy_log(ruleset_id: str, engine: str, rows: list[dict]) -> dict:
             "exit_detail": None,
             "buy_ma20": (facts.get("buy_ma20") or row.get("key_price")),
             "stop_price": facts.get("stop_price") or row.get("stop_price"),
+            "buy_ma20": facts.get("buy_ma20") or row.get("key_price"),
             "di_low": facts.get("di_low"),
             "di_close": facts.get("di_close"),
             "a_pre_close": facts.get("a_pre_close"),

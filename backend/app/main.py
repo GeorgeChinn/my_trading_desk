@@ -170,7 +170,7 @@ def _engine_token() -> str:
 
     here = Path(__file__).resolve().parent / "engine"
     parts = []
-    for name in ("scanner.py", "structure_one.py", "exits.py", "boards.py", "cycles.py"):
+    for name in ("scanner.py", "structure_one.py", "ma20_swing.py", "exits.py", "boards.py", "cycles.py"):
         path = here / name
         if path.exists():
             parts.append(path.read_bytes())
@@ -426,6 +426,8 @@ def scan(ruleset: str = Query("rules")):
     buy_n = (tallied.get("by_gate") or {}).get("试仓" if pullback else "买入") or 0
     if buy_n > 1 and pullback:
         reminders.append(f"试仓池 {buy_n} 只。开几只由人定。试仓不是成交指令。")
+    elif buy_n > 1 and rs.get("engine") == "ma20_swing":
+        reminders.append(f"买入池 {buy_n} 只。当日全账户新开 ≤ 1 只。仓位 10%～15%，突破当天不重仓。")
     elif buy_n > 1 and not pullback:
         reminders.append(f"买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
     from .engine.pool import csv_universe_count
@@ -490,6 +492,10 @@ def _classify_for(code: str, ruleset_id: str | None = None) -> dict:
         from .engine.structure_one import classify_one_s1
 
         row = classify_one_s1(code, load_settings(), load_trades())
+    elif rs and rs.get("engine") == "ma20_swing":
+        from .engine.ma20_swing import classify_one_ma20
+
+        row = classify_one_ma20(code, load_settings(), load_trades())
     elif rs and rs.get("engine") == "low_golden":
         from .engine.eastmoney import apply_quote_fields
 

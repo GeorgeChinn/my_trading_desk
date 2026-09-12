@@ -587,6 +587,13 @@ def scan_universe(
         order = {name: i for i, name in enumerate(GATES_S1)}
         rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))
         return rows
+    if engine == "ma20_swing":
+        from .ma20_swing import scan_ma20
+
+        rows = scan_ma20(settings, trades)
+        order = {name: i for i, name in enumerate(GATES)}
+        rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))
+        return rows
     if engine != "low_golden":
         return []
     if flags is None:

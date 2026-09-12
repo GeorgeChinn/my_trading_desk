@@ -7,8 +7,9 @@ from ..config import ROOT
 
 ENGINE_LOW_GOLDEN = "low_golden"
 ENGINE_PULLBACK = "pullback_restart"
+ENGINE_MA20 = "ma20_swing"
 ENGINE_UNIMPLEMENTED = "unimplemented"
-ENGINE_OK = (ENGINE_LOW_GOLDEN, ENGINE_PULLBACK)
+ENGINE_OK = (ENGINE_LOW_GOLDEN, ENGINE_PULLBACK, ENGINE_MA20)
 
 _TITLE_MARK = re.compile(r"本规则只做\s*\*\*(.+?)\*\*")
 
@@ -27,6 +28,8 @@ def _title(text: str, fallback: str) -> str:
 def _engine(text: str) -> str:
     title = _title(text, "")
     raw = text or ""
+    if "20日线波段" in title or "20日线波段" in raw:
+        return ENGINE_MA20
     if "野人哥低吸" in title or "野人哥低吸" in raw:
         return ENGINE_PULLBACK
     if "回调后的重新启动" in title or "回调后的重新启动" in raw:
@@ -41,6 +44,8 @@ def _engine_note(engine: str) -> str:
         return "扫描器已执行本结构（低位金叉波段）。判定用数据与设置最新更新的实时价。买入不是成交指令。"
     if engine == ENGINE_PULLBACK:
         return "扫描器已执行 RULES2 野人哥低吸：周期测压 → 7030 → 资金柱 → C≥8 缩量到地量。无分时只标日线代理观察，不得记正式试仓。"
+    if engine == ENGINE_MA20:
+        return "扫描器已执行 RULES3 野人哥 20日线波段：先强 A（5～12日、≥12%）→ 缩量回踩 C（4～8日）→ 收盘不破 20 日线。判定只用已收盘日线。买入不是下单。"
     return "本规则结构尚未写成扫描器。证据不足，不编造信号。"
 
 

@@ -4,7 +4,8 @@
       <div class="scan-head-left">
         <h1>规则扫描</h1>
         <p class="sub">
-          总闸：排除 → 观察 → 买入 → 卖出。买入 = 路径到达，不是成交指令。观察/买入/试仓名单可以做规则回测。
+          {{ data.position_block || "总闸：排除 → 观察 → 买入 → 卖出。买入 = 路径到达，不是成交指令。" }}
+          观察/买入/试仓名单可以做规则回测。
         </p>
         <p class="stamp" v-if="stamp.asof || stamp.scanned_at">
           总股池 {{ universeN }} 只
