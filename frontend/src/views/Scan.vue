@@ -113,12 +113,12 @@
     <div class="card overview" style="margin-bottom:14px">
       <div class="ov-block">
         <div class="ov-title">
-          <div>{{ isPullback ? "试仓池" : "买入池" }} <span>{{ buyNames.length }}</span></div>
-          <button class="btn" :disabled="!buyNames.length" @click="runPoolBacktest(isPullback ? '试仓' : '买入')">规则回测</button>
+          <div>{{ isTrial ? "试仓池" : "买入池" }} <span>{{ buyNames.length }}</span></div>
+          <button class="btn" :disabled="!buyNames.length" @click="runPoolBacktest(isTrial ? '试仓' : '买入')">规则回测</button>
         </div>
-        <p class="sub" style="margin:0 0 8px">{{ isPullback ? "试仓" : "买入" }} = 路径到达，不是成交指令。回测按当前名单回放，不写成交指令。</p>
+        <p class="sub" style="margin:0 0 8px">{{ isTrial ? "试仓" : "买入" }} = 路径到达，不是成交指令。回测按当前名单回放，不写成交指令。</p>
         <div class="name-cloud" v-if="buyNames.length">
-          <router-link class="name-chip 买入" v-for="s in buyNames" :key="'b'+s.code" :to="chartLink(s.code, isPullback ? '试仓' : '买入')">
+          <router-link class="name-chip 买入" v-for="s in buyNames" :key="'b'+s.code" :to="chartLink(s.code, isTrial ? '试仓' : '买入')">
             {{ stockTitle(s) }}
             <em v-if="s.pe != null">PE {{ pe(s.pe) }}</em>
           </router-link>
@@ -255,6 +255,12 @@ const rulesetId = computed(() => String(route.query.ruleset || "rules"));
 const rulesets = computed(() => (data.value.rulesets && data.value.rulesets.length ? data.value.rulesets : extraRulesets.value));
 const currentRuleset = computed(() => rulesets.value.find((r) => r.id === rulesetId.value) || data.value.ruleset || null);
 const isPullback = computed(() => (currentRuleset.value && currentRuleset.value.engine) === "pullback_restart");
+const isTrial = computed(() => {
+  const e = currentRuleset.value && currentRuleset.value.engine;
+  return e === "pullback_restart" || e === "test_repair";
+});
+const trialGate = computed(() => ((currentRuleset.value && currentRuleset.value.engine) === "test_repair" ? "试仓" : isPullback.value ? "试仓" : "买入"));
+const exitGate = computed(() => ((currentRuleset.value && currentRuleset.value.engine) === "test_repair" ? "退出" : isPullback.value ? "取关" : "卖出"));
 const boards = computed(() => data.value.boards || []);
 const passedBoards = computed(() => boards.value.filter((b) => b.pass));
 const failedBoards = computed(() => boards.value.filter((b) => !b.pass));

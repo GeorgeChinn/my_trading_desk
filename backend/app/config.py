@@ -39,9 +39,10 @@ HHV_LOOKBACK = 20
 HISTORY_YEARS = 3
 HISTORY_BARS = 800  # ~3 年交易日，不含编造
 
-ALLOWED_STATUS = ("排除", "观察", "买入", "卖出", "试仓", "持有", "取关")
+ALLOWED_STATUS = ("排除", "观察", "买入", "卖出", "试仓", "持有", "取关", "退出")
 GATES = ("排除", "观察", "买入", "卖出")
 GATES_S1 = ("排除", "观察", "试仓", "持有", "取关")
+GATES_TRS = ("排除", "观察", "试仓", "持有", "退出")
 SCAN_SUMMARY_BUCKETS = ("买入", "观察", "排除", "卖出")
 OPEN_SCAN = {"买入", "试仓", "持有"}
 CYCLE_CACHE_DIR = DATA_DIR / "cycle_cache"

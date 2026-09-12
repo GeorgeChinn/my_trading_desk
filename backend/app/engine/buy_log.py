@@ -136,6 +136,17 @@ def _eval_item(item: dict, engine: str) -> None:
             raw, {"date": buy_date, "code": code, "buy_date": buy_date}, zone
         )
         last = raw[-1]
+    elif engine == "test_repair":
+        from .test_repair import evaluate_exit_trs
+
+        zone = {
+            "test_low": item.get("test_low"),
+            "support": item.get("support"),
+        }
+        hit, section, detail = evaluate_exit_trs(
+            raw, {"date": buy_date, "code": code, "buy_date": buy_date}, zone
+        )
+        last = raw[-1]
     else:
         bars = attach_indicators(raw)
         from .cycles import _prefix_series
@@ -207,6 +218,8 @@ def sync_buy_log(ruleset_id: str, engine: str, rows: list[dict]) -> dict:
             "a_pre_close": facts.get("a_pre_close"),
             "a_high_close": facts.get("a_high_close"),
             "c_vol_avg": facts.get("c_vol_avg"),
+            "test_low": facts.get("test_low"),
+            "support": facts.get("support"),
             "logged_at": _now(),
             "from_pool": True,
         }

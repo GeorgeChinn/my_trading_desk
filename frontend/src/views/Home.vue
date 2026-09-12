@@ -80,18 +80,18 @@
           {{ rs.file }}
         </button>
       </div>
-      <p class="sub">{{ currentRuleset ? currentRuleset.file + " · " : "" }}{{ isPullback ? "试仓" : "买入" }} = 路径到达，不是成交指令。</p>
+      <p class="sub">{{ currentRuleset ? currentRuleset.file + " · " : "" }}{{ isTrial ? "试仓" : "买入" }} = 路径到达，不是成交指令。</p>
       <div class="grid cols-4">
-        <div class="stat"><div class="n">{{ isPullback ? (scan.试仓 ?? 0) : (scan.买入 ?? 0) }}</div><div class="k">{{ isPullback ? "试仓" : "买入" }}</div></div>
+        <div class="stat"><div class="n">{{ isTrial ? (scan.试仓 ?? 0) : (scan.买入 ?? 0) }}</div><div class="k">{{ isTrial ? "试仓" : "买入" }}</div></div>
         <div class="stat"><div class="n">{{ scan.观察 ?? 0 }}</div><div class="k">观察</div></div>
-        <div class="stat"><div class="n">{{ isPullback ? (scan.取关 ?? 0) : (scan.卖出 ?? 0) }}</div><div class="k">{{ isPullback ? "取关" : "卖出" }}</div></div>
+        <div class="stat"><div class="n">{{ (scan[exitLabel] ?? 0) }}</div><div class="k">{{ exitLabel }}</div></div>
         <div class="stat"><div class="n">{{ scan.排除 ?? 0 }}</div><div class="k">排除</div></div>
       </div>
       <div class="overview" style="margin-top:14px">
         <div class="ov-block">
-          <div class="ov-title">{{ isPullback ? "试仓池" : "买入池" }} <span>{{ buyNames.length }}</span></div>
+          <div class="ov-title">{{ isTrial ? "试仓池" : "买入池" }} <span>{{ buyNames.length }}</span></div>
           <div class="name-cloud" v-if="buyNames.length">
-            <router-link class="name-chip 买入" v-for="s in buyNames" :key="'hb'+s.code" :to="scanChart(s.code, isPullback ? '试仓' : '买入')">
+            <router-link class="name-chip 买入" v-for="s in buyNames" :key="'hb'+s.code" :to="scanChart(s.code, isTrial ? '试仓' : '买入')">
               {{ chipTitle(s) }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
             </router-link>
           </div>
@@ -173,6 +173,16 @@ const rulesets = ref([]);
 const rulesetId = ref("rules");
 const currentRuleset = computed(() => rulesets.value.find((r) => r.id === rulesetId.value) || null);
 const isPullback = computed(() => (currentRuleset.value && currentRuleset.value.engine) === "pullback_restart");
+const isTrial = computed(() => {
+  const e = currentRuleset.value && currentRuleset.value.engine;
+  return e === "pullback_restart" || e === "test_repair";
+});
+const exitLabel = computed(() => {
+  const e = currentRuleset.value && currentRuleset.value.engine;
+  if (e === "test_repair") return "退出";
+  if (e === "pullback_restart") return "取关";
+  return "卖出";
+});
 const scanCache = {};
 const emotion = ref({});
 

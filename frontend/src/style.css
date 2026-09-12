@@ -214,6 +214,7 @@ h1 { font-size: 22px; letter-spacing: 0.01em; }
 .badge.持有 { background: rgba(94, 224, 197, 0.22); color: var(--cyan); }
 .badge.卖出 { background: rgba(227, 106, 106, 0.16); color: var(--red); }
 .badge.取关 { background: rgba(227, 106, 106, 0.16); color: var(--red); }
+.badge.退出 { background: rgba(227, 106, 106, 0.16); color: var(--red); }
 .badge.减仓 { background: rgba(224, 163, 92, 0.18); color: var(--copper); }
 .badge.清仓 { background: rgba(227, 106, 106, 0.16); color: var(--red); }
 .badge.等待 { background: rgba(230, 195, 92, 0.16); color: var(--amber); }

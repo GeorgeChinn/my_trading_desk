@@ -20,6 +20,7 @@ from .config import (
     CSV_DIR,
     GATES,
     GATES_S1,
+    GATES_TRS,
     LAST_SCAN_PATH,
     PROFILE_PATH,
     ROOT,
@@ -170,7 +171,7 @@ def _engine_token() -> str:
 
     here = Path(__file__).resolve().parent / "engine"
     parts = []
-    for name in ("scanner.py", "structure_one.py", "ma20_swing.py", "exits.py", "boards.py", "cycles.py"):
+    for name in ("scanner.py", "structure_one.py", "ma20_swing.py", "test_repair.py", "exits.py", "boards.py", "cycles.py"):
         path = here / name
         if path.exists():
             parts.append(path.read_bytes())
@@ -410,8 +411,16 @@ def scan(ruleset: str = Query("rules")):
     if not bundle:
         raise HTTPException(404, "没有这个规则文件")
     rs, _flags, bind, rows = bundle
-    pullback = rs.get("engine") == "pullback_restart"
-    gates = list(GATES_S1 if pullback else GATES)
+    eng = rs.get("engine")
+    pullback = eng == "pullback_restart"
+    trs = eng == "test_repair"
+    trial = pullback or trs
+    if pullback:
+        gates = list(GATES_S1)
+    elif trs:
+        gates = list(GATES_TRS)
+    else:
+        gates = list(GATES)
     grouped = {key: [] for key in gates}
     for row in rows:
         grouped.setdefault(row["status"], []).append(row)
@@ -423,9 +432,11 @@ def scan(ruleset: str = Query("rules")):
     from .engine.structure_one import need_mainline
 
     want_ml = bool(pullback and need_mainline(rs.get("text") or ""))
-    buy_n = (tallied.get("by_gate") or {}).get("试仓" if pullback else "买入") or 0
+    buy_n = (tallied.get("by_gate") or {}).get("试仓" if trial else "买入") or 0
     if buy_n > 1 and pullback:
         reminders.append(f"试仓池 {buy_n} 只。开几只由人定。试仓不是成交指令。")
+    elif buy_n > 1 and trs:
+        reminders.append(f"试仓池 {buy_n} 只。当日本规则新开 ≤ 1 只。仓位 30%～40% 计划仓。试仓不是成交指令。")
     elif buy_n > 1 and rs.get("engine") == "ma20_swing":
         reminders.append(f"买入池 {buy_n} 只。当日全账户新开 ≤ 1 只。仓位 10%～15%，突破当天不重仓。")
     elif buy_n > 1 and not pullback:
@@ -434,11 +445,12 @@ def scan(ruleset: str = Query("rules")):
 
     pool_count = csv_universe_count()
     remain = int(tallied.get("remain") or 0)
-    pool_note = (
-        "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 试仓 / 持有 / 取关。"
-        if pullback
-        else "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 买入 / 卖出。"
-    )
+    if pullback:
+        pool_note = "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 试仓 / 持有 / 取关。"
+    elif trs:
+        pool_note = "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 试仓 / 持有 / 退出。不与金叉/低吸/20日线混池。"
+    else:
+        pool_note = "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 买入 / 卖出。"
     boards = []
     market = None
     if pullback and want_ml:
@@ -461,7 +473,11 @@ def scan(ruleset: str = Query("rules")):
         "position_block": (
             "总闸：排除 → 观察 → 试仓 → 持有 → 取关。试仓不是成交指令。"
             if pullback
-            else "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令。"
+            else (
+                "总闸：排除 → 观察 → 试仓 → 持有 → 退出。试仓不是成交指令。"
+                if trs
+                else "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令。"
+            )
         ),
         "reminders": reminders,
         "rules_bind": bind,
@@ -496,6 +512,10 @@ def _classify_for(code: str, ruleset_id: str | None = None) -> dict:
         from .engine.ma20_swing import classify_one_ma20
 
         row = classify_one_ma20(code, load_settings(), load_trades())
+    elif rs and rs.get("engine") == "test_repair":
+        from .engine.test_repair import classify_one_trs
+
+        row = classify_one_trs(code, load_settings(), load_trades())
     elif rs and rs.get("engine") == "low_golden":
         from .engine.eastmoney import apply_quote_fields
 
@@ -545,7 +565,7 @@ def _stamp_cycle_payload(payload: dict, rs: dict) -> dict:
 
 def _pool_gate_set(gate: str) -> set[str] | None:
     raw = (gate or "").strip()
-    listed = {"观察", "买入", "试仓", "持有", "卖出", "取关"}
+    listed = {"观察", "买入", "试仓", "持有", "卖出", "取关", "退出"}
     if raw == "在池":
         return {"观察", "买入", "试仓", "持有"}
     if raw in listed:

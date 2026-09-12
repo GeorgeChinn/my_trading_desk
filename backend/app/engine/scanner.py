@@ -6,6 +6,7 @@ from ..config import (
     DIF_LOOKBACK,
     GATES,
     GATES_S1,
+    GATES_TRS,
     KDJ_LOW,
     POOL_AMOUNT_YI,
     POOL_FLOAT_MCAP_YI,
@@ -592,6 +593,13 @@ def scan_universe(
 
         rows = scan_ma20(settings, trades)
         order = {name: i for i, name in enumerate(GATES)}
+        rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))
+        return rows
+    if engine == "test_repair":
+        from .test_repair import scan_trs
+
+        rows = scan_trs(settings, trades)
+        order = {name: i for i, name in enumerate(GATES_TRS)}
         rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))
         return rows
     if engine != "low_golden":
