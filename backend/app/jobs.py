@@ -5,10 +5,30 @@ import json
 import sys
 
 from .config import LAST_SCAN_PATH
-from .engine.live import sync_live
+from .engine.live import sync_live, sync_quotes
 from .engine.rules_bind import refresh_bind
 from .engine.scanner import scan_universe, summarize
 from .store import load_settings, load_trades, load_universe, write_json
+
+
+def run_all_rules_scans() -> dict:
+    """Rescan every coded ruleset after a 数据与设置 fire. 最新价规则吃刚拉的 quotes。"""
+    from .engine.rulesets import list_rulesets
+    from .main import _scan_bundle
+
+    out = {}
+    for item in list_rulesets():
+        if not item.get("engine_ok"):
+            continue
+        try:
+            bundle = _scan_bundle(item["id"])
+            rows = bundle[3] if bundle else []
+            from .engine.scanner import summarize
+
+            out[item["id"]] = summarize(rows).get("by_gate")
+        except Exception as exc:
+            out[item["id"]] = {"error": str(exc)}
+    return out
 
 
 def run_rules_scan() -> dict:
@@ -53,7 +73,12 @@ def main() -> None:
     print("RULES flags", json.dumps(bind.get("flags"), ensure_ascii=False))
     if bind.get("unimplemented"):
         print("unimplemented", bind["unimplemented"])
-    result = sync_live(force_bars=False)
+    from .engine.clock import market_has_closed
+
+    if market_has_closed():
+        result = sync_live(force_bars=False)
+    else:
+        result = sync_quotes(force=True)
     print(json.dumps({k: result.get(k) for k in ("state", "message", "source", "trade_date", "pool_size", "bars")}, ensure_ascii=False, indent=2))
     scan = run_rules_scan()
     print("scan", "rules", json.dumps(scan.get("by_gate"), ensure_ascii=False), "买入", scan.get("buy_count"))

@@ -29,10 +29,10 @@ from .config import (
     ensure_dirs,
 )
 from .engine.bars import attach_indicators, list_csv_files, load_bars, ts_code
-from .engine.clock import asof_date, half_hour_slots, normalize_times
+from .engine.clock import asof_date, half_hour_slots, market_has_closed, normalize_times
 from .engine.cycles import cycles_for_pool, cycles_for_stock, cycles_page
 from .engine.history import backfill_all_ashare
-from .engine.live import pull_one, sync_live
+from .engine.live import pull_one, sync_live, sync_quotes
 from .engine.rules_bind import parse_flags, refresh_bind
 from .engine.rulesets import get_ruleset, list_rulesets, public_ruleset
 from .engine.scanner import classify_stock, funnel_reminders, scan_universe, summarize
@@ -872,11 +872,16 @@ def sync_start(force: bool = Query(False)):
 
     def run():
         with _sync_lock:
-            sync_live(force_bars=force)
+            if force or market_has_closed():
+                sync_live(force_bars=force)
+            else:
+                sync_quotes(force=True)
 
     _sync_thread = threading.Thread(target=run, daemon=True)
     _sync_thread.start()
-    return {"ok": True, "started": True, "message": "已开始更新 data/csv 全股池日线"}
+    if force or market_has_closed():
+        return {"ok": True, "started": True, "message": "已开始写入已收盘日线到 data/csv"}
+    return {"ok": True, "started": True, "message": "已开始拉最新价快照（未收盘，不写 data/csv）"}
 
 
 @app.post("/api/sync/history")

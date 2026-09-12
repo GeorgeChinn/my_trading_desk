@@ -11,6 +11,7 @@ ENGINE_MA20 = "ma20_swing"
 ENGINE_TRS = "test_repair"
 ENGINE_UNIMPLEMENTED = "unimplemented"
 ENGINE_OK = (ENGINE_LOW_GOLDEN, ENGINE_PULLBACK, ENGINE_MA20, ENGINE_TRS)
+LATEST_QUOTE_ENGINES = (ENGINE_LOW_GOLDEN, ENGINE_PULLBACK, ENGINE_TRS)
 
 _TITLE_MARK = re.compile(r"本规则只做\s*\*\*(.+?)\*\*")
 
@@ -42,15 +43,19 @@ def _engine(text: str) -> str:
     return ENGINE_UNIMPLEMENTED
 
 
+def uses_latest_quote(engine: str) -> bool:
+    return engine in LATEST_QUOTE_ENGINES
+
+
 def _engine_note(engine: str) -> str:
     if engine == ENGINE_LOW_GOLDEN:
-        return "扫描器已执行本结构（低位金叉波段）。判定用数据与设置最新更新的实时价。买入不是成交指令。"
+        return "扫描器已执行本结构（低位金叉波段）。判定用数据与设置到点拉到的最新价。买入不是成交指令。"
     if engine == ENGINE_PULLBACK:
-        return "扫描器已执行 RULES2 野人哥低吸：周期测压 → 7030 → 资金柱 → C≥8 缩量到地量。无分时只标日线代理观察，不得记正式试仓。"
+        return "扫描器已执行 RULES2 野人哥低吸：周期测压 → 7030 → 资金柱 → C≥8 缩量到地量。判定用数据与设置到点最新价。无分时只标日线代理观察，不得记正式试仓。"
     if engine == ENGINE_MA20:
-        return "扫描器已执行 RULES3 野人哥 20日线波段：先强 A（5～12日、≥12%）→ 缩量回踩 C（4～8日）→ 收盘不破 20 日线。判定只用已收盘日线。买入不是下单。"
+        return "扫描器已执行 RULES3 野人哥 20日线波段：先强 A（5～12日、≥12%）→ 缩量回踩 C（4～8日）→ 收盘不破 20 日线。判定只用已收盘日线，不吃未收盘价。买入不是下单。"
     if engine == ENGINE_TRS:
-        return "扫描器已执行 RULES4 Test+Repair（TRS-v1）：急杀/回撤 → 第一次 Repair → Twin 回踩 Test → Repair 试仓。不与金叉/低吸/20日线混池。试仓不是成交指令。"
+        return "扫描器已执行 RULES4 Test+Repair（TRS-v1）：急杀/回撤 → 第一次 Repair → Twin 回踩 Test → Repair 试仓。判定用数据与设置到点最新价（含最新价止损）。不与金叉/低吸/20日线混池。试仓不是成交指令。"
     return "本规则结构尚未写成扫描器。证据不足，不编造信号。"
 
 
@@ -74,6 +79,7 @@ def list_rulesets() -> list[dict]:
                 "engine": engine,
                 "engine_ok": engine in ENGINE_OK,
                 "engine_note": _engine_note(engine),
+                "quote_mode": "最新价" if uses_latest_quote(engine) else "已收盘日线",
                 "path": str(path),
                 "text": text,
             }
@@ -100,4 +106,5 @@ def public_ruleset(item: dict | None) -> dict | None:
         "engine": item["engine"],
         "engine_ok": item["engine_ok"],
         "engine_note": item["engine_note"],
+        "quote_mode": "最新价" if uses_latest_quote(item.get("engine") or "") else "已收盘日线",
     }

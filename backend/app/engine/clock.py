@@ -8,6 +8,8 @@ SHANGHAI = ZoneInfo("Asia/Shanghai")
 # 默认两档：收盘附近、傍晚补失败。用户可在设置里改成任意半点。
 SYNC_TIMES = ("15:30", "16:30")
 SLOT_MINUTES = (0, 30)
+# A 股连续竞价收盘。未到此时点的 K 线不得写入 data/csv。
+MARKET_CLOSE = (15, 0)
 
 
 def half_hour_slots() -> list[str]:
@@ -89,22 +91,57 @@ def is_weekend_date(value) -> bool:
     return bool(day is not None and day.weekday() >= 5)
 
 
-def expected_close_date(when: datetime | None = None):
-    """Last session whose bar should already be treated as current. Never Sat/Sun."""
+def session_trading_date(when: datetime | None = None):
+    """Weekday session the latest quote snapshot belongs to. Not gated by 数据与设置 times."""
     when = when or now_sh()
     day = when.date()
     if day.weekday() >= 5:
         return previous_weekday(day)
-    times = configured_times()
-    first_h, first_m = parse_hhmm(times[0])
-    if (when.hour, when.minute) < (first_h, first_m):
+    return day
+
+
+def market_has_closed(when: datetime | None = None) -> bool:
+    """True when today's A-share session is already closed (or it is the weekend)."""
+    when = when or now_sh()
+    if when.weekday() >= 5:
+        return True
+    return (when.hour, when.minute) >= MARKET_CLOSE
+
+
+def confirmed_bar_date(when: datetime | None = None):
+    """Last session whose daily bar may be written to data/csv. A-share close 15:00."""
+    when = when or now_sh()
+    day = when.date()
+    if day.weekday() >= 5:
+        return previous_weekday(day)
+    if (when.hour, when.minute) < MARKET_CLOSE:
         return previous_weekday(day - timedelta(days=1))
     return day
 
 
+def expected_close_date(when: datetime | None = None):
+    """Latest-quote session date. RULES/RULES2/RULES4 follow this; CSV uses confirmed_bar_date()."""
+    return session_trading_date(when)
+
+
+def csv_write_slots(times: tuple[str, ...] | None = None) -> tuple[str, ...]:
+    times = tuple(times) if times else configured_times()
+    return tuple(stamp for stamp in times if parse_hhmm(stamp) >= MARKET_CLOSE)
+
+
+def should_write_csv(when: datetime | None = None, times: tuple[str, ...] | None = None) -> bool:
+    """Selected slot at/after 15:00 on a weekday writes official daily bars."""
+    when = when or now_sh()
+    if when.weekday() >= 5:
+        return False
+    times = tuple(times) if times else configured_times()
+    stamp = when.strftime("%H:%M")
+    return stamp in times and parse_hhmm(stamp) >= MARKET_CLOSE
+
+
 def session_date(value=None):
-    """Weekday session on or before value. Clamped to expected_close_date(). Never Sat/Sun."""
-    expect = expected_close_date()
+    """Weekday session on or before value. Clamped to session_trading_date(). Never Sat/Sun."""
+    expect = session_trading_date()
     day = parse_day(value) if value not in (None, "") else expect
     if day is None:
         return expect

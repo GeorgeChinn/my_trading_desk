@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from ..config import HISTORY_BARS, HISTORY_YEARS
 from ..store import load_sync_status, save_sync_status
 from .bars import load_bars, merge_bars, save_bars_csv, ts_code
-from .clock import expected_close_date
+from .clock import confirmed_bar_date
 from .eastmoney import fetch_kline_with_source, fetch_spot
 
 
@@ -28,7 +28,7 @@ def _enough(existing: list[dict], need_start: str, expect: str) -> bool:
 
 def backfill_all_ashare(years: int = HISTORY_YEARS, limit: int = HISTORY_BARS) -> dict:
     need_start = history_start_date(years)
-    expect = expected_close_date().isoformat()
+    expect = confirmed_bar_date().isoformat()
     started = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     messages: list[str] = []
 

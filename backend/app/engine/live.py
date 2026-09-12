@@ -21,7 +21,7 @@ from ..store import (
     save_universe,
 )
 from .bars import csv_path_for, load_bars, save_bars_csv, suffix_for, ts_code
-from .clock import asof_date, expected_close_date
+from .clock import asof_date, confirmed_bar_date, expected_close_date, session_trading_date
 from .pool import is_st_name, passes_pool, sort_pool
 
 YI = 100_000_000.0
@@ -229,15 +229,17 @@ def build_pool_tushare(token: str, log: Callable[[str], None] | None = None) -> 
 def pull_history_tushare(token: str, pool: list[dict], trade_date: str, log: Callable[[str], None] | None = None, progress: Callable[[int, int], None] | None = None) -> dict:
     talk = log or (lambda _m: None)
     pro = _pro(token)
-    start = (datetime.strptime(trade_date.replace("-", ""), "%Y%m%d") - timedelta(days=420)).strftime("%Y%m%d")
-    end = trade_date.replace("-", "")
+    cutoff = confirmed_bar_date().isoformat()
+    end_day = min(_fmt_date(trade_date), cutoff)
+    start = (datetime.strptime(end_day.replace("-", ""), "%Y%m%d") - timedelta(days=420)).strftime("%Y%m%d")
+    end = end_day.replace("-", "")
     ok = skip = fail = 0
     total = len(pool)
     for i, item in enumerate(pool, start=1):
         code = item["code"]
         ts_full = item.get("ts_code") or f"{code}.{suffix_for(code)}"
         existing = load_bars(code)
-        if existing and existing[-1]["date"] >= _fmt_date(end):
+        if existing and existing[-1]["date"] >= end_day:
             skip += 1
             if progress:
                 progress(i, total)
@@ -259,9 +261,12 @@ def pull_history_tushare(token: str, pool: list[dict], trade_date: str, log: Cal
         frame = frame.sort_values("trade_date")
         rows = []
         for _, rec in frame.iterrows():
+            day = _fmt_date(str(rec["trade_date"]))
+            if day > end_day:
+                continue
             rows.append(
                 {
-                    "date": _fmt_date(str(rec["trade_date"])),
+                    "date": day,
                     "open": float(rec["open"]),
                     "high": float(rec["high"]),
                     "low": float(rec["low"]),
@@ -270,6 +275,11 @@ def pull_history_tushare(token: str, pool: list[dict], trade_date: str, log: Cal
                     "amount": float(rec["amount"]) * 1000.0,
                 }
             )
+        if not rows:
+            fail += 1
+            if progress:
+                progress(i, total)
+            continue
         save_bars_csv(code, rows, name=item.get("name"))
         ok += 1
         if progress:
@@ -389,7 +399,8 @@ def pull_history_akshare(pool: list[dict], log: Callable[[str], None] | None = N
     talk = log or (lambda _m: None)
     import akshare as ak  # type: ignore
 
-    end = datetime.now().strftime("%Y%m%d")
+    end_day = confirmed_bar_date()
+    end = end_day.strftime("%Y%m%d")
     start = (datetime.now() - timedelta(days=420)).strftime("%Y%m%d")
     ok = skip = fail = 0
     total = len(pool)
@@ -398,7 +409,7 @@ def pull_history_akshare(pool: list[dict], log: Callable[[str], None] | None = N
         existing = load_bars(code)
         if existing and len(existing) >= 60:
             last = existing[-1]["date"].replace("-", "")
-            if last >= (datetime.now() - timedelta(days=4)).strftime("%Y%m%d"):
+            if last >= end:
                 skip += 1
                 if progress:
                     progress(i, total)
@@ -419,11 +430,14 @@ def pull_history_akshare(pool: list[dict], log: Callable[[str], None] | None = N
             continue
         rows = []
         for _, rec in frame.iterrows():
+            day = str(rec["日期"])[:10]
+            if day > end_day.isoformat():
+                continue
             vol = float(rec.get("成交量") or 0)
             # 东方财富 hist 成交量多为手
             rows.append(
                 {
-                    "date": str(rec["日期"])[:10],
+                    "date": day,
                     "open": float(rec["开盘"]),
                     "high": float(rec["最高"]),
                     "low": float(rec["最低"]),
@@ -432,6 +446,11 @@ def pull_history_akshare(pool: list[dict], log: Callable[[str], None] | None = N
                     "amount": float(rec.get("成交额") or 0),
                 }
             )
+        if not rows:
+            fail += 1
+            if progress:
+                progress(i, total)
+            continue
         save_bars_csv(code, rows, name=item.get("name"))
         ok += 1
         if progress:
@@ -473,6 +492,13 @@ def _sync_live(force_bars: bool = False) -> dict:
 
     status_holder: dict = {"bars_done": 0, "bars_total": 0, "step": "pool", "funnel": {}, "source": "", "trade_date": ""}
     _status(state="running", message="开始按池子筛入池股", started_at=started, step="pool")
+    try:
+        from .eastmoney import ensure_quotes
+
+        log("先拉最新价快照，未收盘价不写 data/csv")
+        ensure_quotes(log=log, force=True)
+    except Exception as exc:
+        log(f"最新价快照失败：{exc}")
 
     pool: list[dict] = []
     funnel: dict = {}
@@ -602,12 +628,20 @@ def _sync_live(force_bars: bool = False) -> dict:
     except Exception as exc:
         log(f"大盘/板块/情绪补数失败：{exc}")
 
-    label = f"真实行情已连接 · {source} {funnel.get('trade_date')}"
+    try:
+        from .eastmoney import ensure_quotes
+
+        ensure_quotes(log=log, force=True)
+    except Exception as exc:
+        log(f"收盘后补最新价快照失败：{exc}")
+
+    asof = session_trading_date().isoformat()
+    label = f"真实行情已连接 · {source} {funnel.get('trade_date') or asof}"
     save_settings(
         {
             "data_source": source,
             "data_label": label,
-            "last_trade_date": funnel.get("trade_date") or "",
+            "last_trade_date": asof,
         }
     )
     done = {
@@ -625,6 +659,68 @@ def _sync_live(force_bars: bool = False) -> dict:
         "log": messages[-12:],
         "pool_size": len(pool),
         "preferred": funnel.get("preferred"),
+    }
+    save_sync_status(done)
+    return done
+
+
+def sync_quotes(force: bool = True) -> dict:
+    """Pull latest quotes only. Never writes data/csv."""
+    if not _run_lock.acquire(blocking=False):
+        return {"state": "running", "message": "同步已在进行"}
+    try:
+        return _sync_quotes(force=force)
+    finally:
+        _run_lock.release()
+
+
+def _sync_quotes(force: bool = True) -> dict:
+    from .eastmoney import ensure_quotes, hydrate_universe
+
+    started = _now()
+    messages: list[str] = []
+    asof = session_trading_date().isoformat()
+
+    def log(msg: str) -> None:
+        messages.append(msg)
+        _status(
+            state="running",
+            message=msg,
+            log=messages[-12:],
+            started_at=started,
+            step="quotes",
+            trade_date=asof,
+        )
+
+    _status(state="running", message="拉最新价快照，不写未收盘日线", started_at=started, step="quotes", trade_date=asof)
+    quotes = {}
+    try:
+        quotes = ensure_quotes(log=log, force=force)
+    except Exception as exc:
+        log(f"最新价快照失败：{exc}")
+    pool: list[dict] = []
+    try:
+        pool = hydrate_universe(log=log)
+    except Exception as exc:
+        log(f"股池补快照字段失败：{exc}")
+    save_settings(
+        {
+            "last_trade_date": asof,
+            "data_label": f"最新价快照 {asof} · 未写未收盘日线",
+        }
+    )
+    n = len(quotes or {})
+    done = {
+        "state": "done",
+        "message": f"已拉最新价 {n} 只，未写入未收盘日线",
+        "step": "quotes",
+        "trade_date": asof,
+        "quotes": n,
+        "pool_size": len(pool or []),
+        "started_at": started,
+        "finished_at": _now(),
+        "log": messages[-12:],
+        "bars": {"ok": 0, "skip": 0, "fail": 0, "total": 0},
     }
     save_sync_status(done)
     return done

@@ -10,7 +10,7 @@ import requests
 from ..config import POOL_AMOUNT_YI, POOL_FLOAT_MCAP_YI, POOL_MIN_PRICE
 from ..store import load_quotes, load_universe, save_pool_snapshot, save_quotes, save_universe
 from .bars import load_bars, save_bars_csv, suffix_for, ts_code
-from .clock import asof_date, expected_close_date, is_weekend_date
+from .clock import asof_date, confirmed_bar_date, expected_close_date, is_weekend_date
 from .pool import is_st_name, passes_pool, sort_pool
 
 YI = 100_000_000.0
@@ -470,11 +470,22 @@ def fetch_kline(code: str, limit: int = 180) -> list[dict]:
     return rows
 
 
+def _clip_confirmed(rows: list[dict]) -> list[dict]:
+    cutoff = confirmed_bar_date().isoformat()
+    out = []
+    for row in rows or []:
+        day = str(row.get("date") or "")[:10]
+        if not day or is_weekend_date(day) or day > cutoff:
+            continue
+        out.append(row)
+    return out
+
+
 def fetch_kline_with_source(code: str, limit: int = 180) -> tuple[list[dict], str]:
     errors = []
     for name, fn in KLINE_CHAIN:
         try:
-            rows = fn(code, limit=limit)
+            rows = _clip_confirmed(fn(code, limit=limit))
             if rows:
                 return rows, name
             errors.append(f"{name}:空")
@@ -1031,14 +1042,14 @@ def pull_history(pool: list[dict], log=None, progress=None) -> dict:
     for i, item in enumerate(pool, start=1):
         code = item["code"]
         existing = load_bars(code)
-        expect = expected_close_date().isoformat()
+        expect = confirmed_bar_date().isoformat()
         last_date = existing[-1]["date"] if existing else ""
-        if existing and len(existing) >= 40 and last_date > expect:
+        if existing and len(existing) >= 40 and last_date >= expect:
             skip += 1
             if progress:
                 progress(i, total)
             continue
-        refresh_only = bool(existing and len(existing) >= 40 and last_date >= expect)
+        refresh_only = bool(existing and len(existing) >= 40)
         try:
             rows, used = fetch_kline_with_source(code, limit=8 if refresh_only else 180)
             item["bar_source"] = used
@@ -1049,7 +1060,7 @@ def pull_history(pool: list[dict], log=None, progress=None) -> dict:
             if progress:
                 progress(i, total)
             continue
-        rows = [r for r in rows if not is_weekend_date(r.get("date"))]
+        rows = _clip_confirmed(rows)
         if not rows:
             fail += 1
             if progress:

@@ -6,8 +6,16 @@ from pathlib import Path
 from typing import Optional
 
 from ..config import CSV_DIR, ensure_dirs
-from .clock import is_weekend_date
+from .clock import confirmed_bar_date, is_weekend_date
 from .indicators import kdj, macd_7428, sma
+
+
+def _date_confirmed(date, cutoff: str | None = None) -> bool:
+    day = str(date or "")[:10]
+    if not day or is_weekend_date(day):
+        return False
+    cut = cutoff if cutoff is not None else confirmed_bar_date().isoformat()
+    return day <= cut
 
 
 def parse_amount(raw) -> Optional[float]:
@@ -153,7 +161,7 @@ def peek_last_bar(code: str) -> dict | None:
             c = float(rec.get("close") or 0)
         except (TypeError, ValueError):
             continue
-        if is_weekend_date(date):
+        if not _date_confirmed(date):
             continue
         try:
             volume = float(rec.get("volume") or 0)
@@ -184,7 +192,7 @@ def list_csv_files() -> list[dict]:
     return rows
 
 
-def _row_to_bar(code: str, fields: dict, row: dict) -> dict | None:
+def _row_to_bar(code: str, fields: dict, row: dict, cutoff: str | None = None) -> dict | None:
     try:
         date = parse_date(str(row[fields["date"]]))
         o = float(row[fields["open"]])
@@ -202,7 +210,7 @@ def _row_to_bar(code: str, fields: dict, row: dict) -> dict | None:
     amount = None
     if "amount" in fields:
         amount = parse_amount(row.get(fields["amount"]))
-    if is_weekend_date(date):
+    if not _date_confirmed(date, cutoff):
         return None
     stock_name = ""
     if "name" in fields and row.get(fields["name"]) not in (None, ""):
@@ -259,9 +267,10 @@ def _load_bars_tail(code: str, last_n: int) -> list[dict] | None:
     fields = {name.strip().lower(): name for name in reader.fieldnames if name}
     if not all(key in fields for key in ("date", "open", "high", "low", "close")):
         return None
+    cutoff = confirmed_bar_date().isoformat()
     bars = []
     for row in reader:
-        item = _row_to_bar(code, fields, row)
+        item = _row_to_bar(code, fields, row, cutoff)
         if item:
             bars.append(item)
     bars.sort(key=lambda item: item["date"])
@@ -287,6 +296,7 @@ def load_bars(code: str, last_n: int | None = None) -> list[dict]:
         required = ("date", "open", "high", "low", "close")
         if not all(key in fields for key in required):
             return []
+        cutoff = confirmed_bar_date().isoformat()
         bars: list[dict] = []
         for row in reader:
             try:
@@ -303,7 +313,7 @@ def load_bars(code: str, last_n: int | None = None) -> list[dict]:
                     volume = float(row[fields["volume"]])
                 except ValueError:
                     volume = 0.0
-            if is_weekend_date(date):
+            if not _date_confirmed(date, cutoff):
                 continue
             amount = None
             if "amount" in fields:
@@ -373,11 +383,11 @@ def merge_bars(existing: list[dict], incoming: list[dict]) -> list[dict]:
     by_date: dict[str, dict] = {}
     for row in existing:
         date = str(row.get("date") or "")[:10]
-        if date:
+        if date and _date_confirmed(date):
             by_date[date] = dict(row)
     for row in incoming:
         date = str(row.get("date") or "")[:10]
-        if not date or date in by_date:
+        if not date or date in by_date or not _date_confirmed(date):
             continue
         by_date[date] = dict(row)
     out = list(by_date.values())
@@ -391,12 +401,14 @@ def save_bars_csv(code: str, rows: list[dict], name: str | None = None) -> Path:
     fieldnames = ["code", "date", "open", "high", "low", "close", "volume", "amount"]
     if name:
         fieldnames.append("name")
+    cutoff = confirmed_bar_date().isoformat()
+    kept = [row for row in rows if _date_confirmed(row.get("date"), cutoff)]
+    if not kept:
+        return path
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
-        for row in rows:
-            if is_weekend_date(row.get("date")):
-                continue
+        for row in kept:
             payload = {key: row.get(key, "") for key in fieldnames}
             payload["code"] = ts_code(code)
             if payload.get("amount") in (None, "", 0, 0.0):

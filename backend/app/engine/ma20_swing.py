@@ -342,7 +342,11 @@ def classify_ma20(
         "key_kind": "20日线",
     }
     quotes = quotes if quotes is not None else load_quotes()
-    bars = overlay_quote_bar(load_bars(code), code, quotes)
+    bars = load_bars(code)
+    from .clock import market_has_closed
+
+    if market_has_closed():
+        bars = overlay_quote_bar(bars, code, quotes)
     if len(bars) < 25:
         base["missing_rules"].append("数据不足：日线不足以核对 20 日线波段，排除")
         return base

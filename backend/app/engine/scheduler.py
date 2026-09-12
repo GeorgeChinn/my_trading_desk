@@ -1,11 +1,18 @@
-"""In-process weekday closer. Does not rewrite confirmed bars during the session."""
+"""In-process weekday closer. Quotes every fire; CSV only after 15:00 close."""
 from __future__ import annotations
 
 import threading
 
 from ..store import load_settings, save_settings
-from .clock import configured_times, half_hour_slots, next_fire_time, normalize_times, should_fire
-from .live import sync_live
+from .clock import (
+    csv_write_slots,
+    half_hour_slots,
+    next_fire_time,
+    normalize_times,
+    should_fire,
+    should_write_csv,
+)
+from .live import sync_live, sync_quotes
 
 _stop = threading.Event()
 _thread: threading.Thread | None = None
@@ -25,7 +32,12 @@ def schedule_snapshot() -> dict:
         "timezone": "Asia/Shanghai",
         "next_run": nxt.strftime("%Y-%m-%d %H:%M") if enabled else "",
         "last_fired": settings.get("schedule_last_fired") or "",
-        "why": f"到点更新 data/csv 全股池日线，再按各 RULES 重扫。当前：{shown}（北京时间，工作日）。周六日不跑。",
+        "csv_slots": list(csv_write_slots(times)),
+        "why": (
+            f"工作日到点先拉最新价快照，RULES / RULES2 / RULES4 用这次价判当天试仓/退出。"
+            f"未收盘价不写 data/csv。15:00 收盘后已选的档位才写入正式日线（当前收盘档：{' / '.join(csv_write_slots(times)) or '无'}）。"
+            f"改时间点后，走最新价的规则自动跟。当前：{shown}（北京时间）。周六日不跑。"
+        ),
     }
 
 
@@ -40,15 +52,18 @@ def _loop() -> None:
         if key:
             save_settings({"schedule_last_fired": key})
             try:
-                sync_live(force_bars=False)
-                from ..jobs import run_rules_scan
+                if should_write_csv(times=times):
+                    sync_live(force_bars=False)
+                else:
+                    sync_quotes(force=True)
+                from ..jobs import run_all_rules_scans
                 from ..store import load_universe
                 from .cycles import cycles_page
                 from .emotions import build_emotions
                 from .rules_bind import parse_flags
                 from .rulesets import get_ruleset
 
-                run_rules_scan()
+                run_all_rules_scans()
                 try:
                     build_emotions(force=True)
                 except Exception:

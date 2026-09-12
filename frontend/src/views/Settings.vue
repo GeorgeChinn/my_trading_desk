@@ -17,7 +17,7 @@
     </div>
     <div class="card">
       <h3>定时更新</h3>
-      <p class="sub">{{ schedule.why }}</p>
+      <p class="sub">{{ schedule.why || "工作日到点拉最新价并重扫。未收盘价不写 csv。" }}</p>
       <label class="field">
         <span>交易日自动拉数</span>
         <select v-model="scheduleOn" @change="saveSchedule">
@@ -30,7 +30,7 @@
     </div>
     <div class="card" style="margin-top:14px">
       <h3>更新时间点</h3>
-      <p class="sub">一天 24 小时，每隔半小时。可多选。工作日到点自动拉数并重扫。</p>
+      <p class="sub">一天 24 小时，每隔半小时。可多选。到点拉最新价；RULES / RULES2 / RULES4 用这次价判当天试仓/退出。15:00 收盘后选中的档位才把正式日线写入 data/csv。改时间点后，走最新价的规则自动跟。</p>
       <div class="time-grid">
         <button
           type="button"
