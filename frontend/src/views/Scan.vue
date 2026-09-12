@@ -260,7 +260,7 @@ const isTrial = computed(() => {
   return e === "pullback_restart" || e === "test_repair";
 });
 const trialGate = computed(() => ((currentRuleset.value && currentRuleset.value.engine) === "test_repair" ? "试仓" : isPullback.value ? "试仓" : "买入"));
-const exitGate = computed(() => ((currentRuleset.value && currentRuleset.value.engine) === "test_repair" ? "退出" : isPullback.value ? "取关" : "卖出"));
+const exitGate = computed(() => (isPullback.value ? "取关" : "卖出"));
 const boards = computed(() => data.value.boards || []);
 const passedBoards = computed(() => boards.value.filter((b) => b.pass));
 const failedBoards = computed(() => boards.value.filter((b) => !b.pass));

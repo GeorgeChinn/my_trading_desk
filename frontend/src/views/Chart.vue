@@ -97,7 +97,7 @@ const nextStock = computed(() => {
 });
 const canBacktest = computed(() => {
   const st = scan.value && scan.value.status;
-  const ok = ["观察", "买入", "试仓", "持有", "退出"];
+  const ok = ["观察", "买入", "试仓", "持有", "卖出", "退出"];
   return ok.includes(poolGate.value) || ok.includes(st);
 });
 const closedCount = computed(() => segments.value.filter((s) => s.closed).length);
@@ -187,7 +187,7 @@ async function load() {
     await api.viewWatch(route.query.watch).catch(() => {});
   }
   const st = scan.value && scan.value.status;
-  const ok = ["观察", "买入", "试仓", "持有", "退出"];
+  const ok = ["观察", "买入", "试仓", "持有", "卖出", "退出"];
   const inPool = ok.includes(wantPool) || ok.includes(st);
   if (String(route.query.backtest || "") === "1" && inPool) {
     await loadBacktest();

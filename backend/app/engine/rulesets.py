@@ -55,7 +55,7 @@ def _engine_note(engine: str) -> str:
     if engine == ENGINE_MA20:
         return "扫描器已执行 RULES3 野人哥 20日线波段：先强 A（5～12日、≥12%）→ 缩量回踩 C（4～8日）→ 收盘不破 20 日线。判定只用已收盘日线，不吃未收盘价。买入不是下单。"
     if engine == ENGINE_TRS:
-        return "扫描器已执行 RULES4 Test+Repair（TRS-v1）：急杀/回撤 → 第一次 Repair → Twin 回踩 Test → Repair 试仓。判定用数据与设置到点最新价（含最新价止损）。不与金叉/低吸/20日线混池。试仓不是成交指令。"
+        return "扫描器已执行 RULES4 Test+Repair：急杀/回撤 → 放量修复 → 缩量回踩不破 → 再放量离开时试仓。判定用数据与设置最新一次更新（未收盘时收盘=该次最新价）。总闸排除→观察→试仓→持有→卖出。不与金叉/低吸/20日线混池。试仓不是成交指令。"
     return "本规则结构尚未写成扫描器。证据不足，不编造信号。"
 
 

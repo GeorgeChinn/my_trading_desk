@@ -448,7 +448,7 @@ def scan(ruleset: str = Query("rules")):
     if pullback:
         pool_note = "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 试仓 / 持有 / 取关。"
     elif trs:
-        pool_note = "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 试仓 / 持有 / 退出。不与金叉/低吸/20日线混池。"
+        pool_note = "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 试仓 / 持有 / 卖出。不与金叉/低吸/20日线混池。"
     else:
         pool_note = "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 买入 / 卖出。"
     boards = []
@@ -474,7 +474,7 @@ def scan(ruleset: str = Query("rules")):
             "总闸：排除 → 观察 → 试仓 → 持有 → 取关。试仓不是成交指令。"
             if pullback
             else (
-                "总闸：排除 → 观察 → 试仓 → 持有 → 退出。试仓不是成交指令。"
+                "总闸：排除 → 观察 → 试仓 → 持有 → 卖出。试仓不是成交指令。"
                 if trs
                 else "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令。"
             )

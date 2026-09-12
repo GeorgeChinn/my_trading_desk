@@ -30,7 +30,7 @@
     </div>
     <div class="card" style="margin-top:14px">
       <h3>更新时间点</h3>
-      <p class="sub">一天 24 小时，每隔半小时。可多选。到点拉最新价；RULES / RULES2 / RULES4 用这次价判当天试仓/退出。15:00 收盘后选中的档位才把正式日线写入 data/csv。改时间点后，走最新价的规则自动跟。</p>
+      <p class="sub">一天 24 小时，每隔半小时。可多选。到点拉最新价；RULES / RULES2 / RULES4 用这次价判当天试仓/卖出。15:00 收盘后选中的档位才把正式日线写入 data/csv。改时间点后，走最新价的规则自动跟。</p>
       <div class="time-grid">
         <button
           type="button"

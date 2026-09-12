@@ -34,7 +34,7 @@ def schedule_snapshot() -> dict:
         "last_fired": settings.get("schedule_last_fired") or "",
         "csv_slots": list(csv_write_slots(times)),
         "why": (
-            f"工作日到点先拉最新价快照，RULES / RULES2 / RULES4 用这次价判当天试仓/退出。"
+            f"工作日到点先拉最新价快照，RULES / RULES2 / RULES4 用这次价判当天试仓/卖出。"
             f"未收盘价不写 data/csv。15:00 收盘后已选的档位才写入正式日线（当前收盘档：{' / '.join(csv_write_slots(times)) or '无'}）。"
             f"改时间点后，走最新价的规则自动跟。当前：{shown}（北京时间）。周六日不跑。"
         ),

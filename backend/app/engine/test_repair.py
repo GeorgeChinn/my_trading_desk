@@ -1,4 +1,4 @@
-"""RULES4 Test+Repair（TRS-v1）。数字只来自 RULES4.MD 表。不与金叉/低吸/20日线混闸。"""
+"""RULES4 Test+Repair。数字和句子只来自 RULES4.MD，不另写门槛。"""
 from __future__ import annotations
 
 from ..config import CSV_DIR, GATES_TRS
@@ -15,7 +15,7 @@ R1 = 0.03
 R1V = 1.3
 TWIN_MIN = 3
 TWIN_MAX = 15
-R2 = 0.03
+LEAVE = 0.03
 STOP = 0.97
 HOLD_MIN = 3
 HOLD_MAX = 10
@@ -38,13 +38,28 @@ def _yang(row: dict) -> bool:
     return o is not None and c is not None and c > o
 
 
+def _close_ge_open(row: dict) -> bool:
+    o, c = row.get("open"), row.get("close")
+    return o is not None and c is not None and c >= o - 1e-12
+
+
 def _ret(bars: list[dict], i: int) -> float | None:
     if i < 1:
         return None
     a, b = bars[i - 1].get("close"), bars[i].get("close")
-    if not a or not b:
+    if a is None or b is None or not a:
         return None
     return b / a - 1.0
+
+
+def _px(row: dict | None, key: str = "close"):
+    if not row:
+        return None
+    try:
+        val = row.get(key)
+        return float(val) if val is not None else None
+    except (TypeError, ValueError):
+        return None
 
 
 def _limit_pct(code: str) -> float:
@@ -66,16 +81,6 @@ def _is_limit_up(bars: list[dict], i: int, code: str) -> bool:
     return (cur / prev - 1.0) >= _limit_pct(code) - 0.005
 
 
-def _is_limit_down(bars: list[dict], i: int, code: str) -> bool:
-    if i < 1:
-        return False
-    prev = bars[i - 1].get("close")
-    cur = bars[i].get("close")
-    if not prev or not cur:
-        return False
-    return (cur / prev - 1.0) <= -(_limit_pct(code) - 0.005)
-
-
 def _yi_zi(row: dict) -> bool:
     o, h, l, c = row.get("open"), row.get("high"), row.get("low"), row.get("close")
     if None in (o, h, l, c):
@@ -83,35 +88,30 @@ def _yi_zi(row: dict) -> bool:
     return abs(h - l) <= 1e-9 and abs(c - o) <= 1e-9
 
 
-def _vol_ma5(bars: list[dict], i: int, code: str) -> float | None:
-    """前5日均量。涨停天量不进均量，否则急杀前一天涨停会把 Repair 量条件卡死。"""
-    got: list[float] = []
-    j = i - 1
-    while j >= 1 and len(got) < 5:
-        if not _is_limit_up(bars, j, code):
-            got.append(_vol(bars[j]))
-        j -= 1
-    if len(got) < 3:
-        got = [_vol(bars[k]) for k in range(max(0, i - 5), i)]
-    if not got:
+def _vol_ma5(bars: list[dict], i: int) -> float | None:
+    """前 5 日均量。RULES4 未写剔除涨停。"""
+    if i < 5:
+        return None
+    got = [_vol(bars[j]) for j in range(i - 5, i)]
+    if len(got) < 5:
         return None
     return _mean(got)
 
 
-def _r1(bars: list[dict], i: int) -> bool:
+def _repair_day(bars: list[dict], i: int) -> bool:
     ret = _ret(bars, i)
-    return bool(ret is not None and ret >= R1 - 1e-12 and _yang(bars[i]))
-
-
-def _r1v(bars: list[dict], i: int, code: str) -> bool:
-    avg = _vol_ma5(bars, i, code)
-    if avg is None:
+    if ret is None or ret < R1 - 1e-12 or not _yang(bars[i]):
+        return False
+    avg = _vol_ma5(bars, i)
+    if avg is None or avg <= 0:
         return False
     return _vol(bars[i]) >= avg * R1V - 1e-12
 
 
-def _find_shock(bars: list[dict], end: int, code: str) -> dict | None:
-    start = max(1, end - L + 1)
+def _find_shock(bars: list[dict], start: int, end: int) -> dict | None:
+    """近窗里：单日最新价跌幅 ≥ 7%，或距近高回撤 ≥ 12%。取最近一次。"""
+    if end < start:
+        return None
     best = None
     win_hi = None
     for i in range(start, end + 1):
@@ -135,27 +135,26 @@ def _find_shock(bars: list[dict], end: int, code: str) -> dict | None:
     return best
 
 
-def _first_repair(bars: list[dict], shock_i: int, end: int, code: str) -> dict | None:
-    for i in range(shock_i + 1, end + 1):
-        if _r1(bars, i) and _r1v(bars, i, code):
-            return {
-                "idx": i,
-                "date": bars[i].get("date"),
-                "low": bars[i].get("low"),
-                "close": bars[i].get("close"),
-                "vol": _vol(bars[i]),
-            }
-    return None
+def _chased_boards(bars: list[dict], r1i: int, last: int, code: str) -> bool:
+    """修复后没有回踩，直接追连板。"""
+    streak = 0
+    for j in range(r1i + 1, last + 1):
+        if _is_limit_up(bars, j, code):
+            streak += 1
+            if streak >= 2:
+                return True
+        else:
+            streak = 0
+    return False
 
 
-def _platform_low(bars: list[dict], r1: int) -> float | None:
-    lo = None
-    for j in range(max(0, r1 - 5), r1):
-        x = bars[j].get("low")
-        if x is None:
-            continue
-        lo = x if lo is None else min(lo, x)
-    return lo
+def _typical(row: dict) -> float | None:
+    c = _px(row, "close")
+    if c is None:
+        return None
+    h = _px(row, "high")
+    lo = _px(row, "low")
+    return ((h if h is not None else c) + (lo if lo is not None else c) + c) / 3.0
 
 
 def find_setup(bars: list[dict], code: str = "") -> dict | None:
@@ -164,96 +163,121 @@ def find_setup(bars: list[dict], code: str = "") -> dict | None:
         return None
     last = n - 1
     code = ts_code(code or str(bars[last].get("code") or ""))
-    start = max(1, last - L + 1)
+    shock_from = max(1, last - L + 1)
     best = None
-    for r1i in range(last, start, -1):
-        if not (_r1(bars, r1i) and _r1v(bars, r1i, code)):
+    for r1i in range(last, shock_from, -1):
+        if not _repair_day(bars, r1i):
             continue
-        shock = _find_shock(bars, r1i - 1, code) if r1i > 1 else None
+        shock = _find_shock(bars, shock_from, r1i - 1)
         if not shock or shock["idx"] >= r1i:
             continue
-        r1 = {
-            "idx": r1i,
-            "date": bars[r1i].get("date"),
-            "low": bars[r1i].get("low"),
-            "close": bars[r1i].get("close"),
-            "vol": _vol(bars[r1i]),
-        }
+        support = _px(bars[r1i], "low")
+        if support is None:
+            continue
         twin_lo = r1i + TWIN_MIN
         twin_hi = min(last, r1i + TWIN_MAX)
         if twin_lo > last:
             continue
-        post_hi = r1["close"] or 0
+        post_hi = None
         for j in range(r1i, twin_lo):
-            c = bars[j].get("close")
-            if c is not None:
-                post_hi = max(post_hi, c)
-        test_end = None
+            h = _px(bars[j], "high")
+            c = _px(bars[j], "close")
+            for x in (h, c):
+                if x is not None:
+                    post_hi = x if post_hi is None else max(post_hi, x)
+        pull_idx: list[int] = []
         for t in range(twin_lo, twin_hi + 1):
-            close = bars[t].get("close")
-            low = bars[t].get("low")
+            close = _px(bars[t], "close")
+            low = _px(bars[t], "low")
             if close is None or low is None:
                 continue
-            if _r1(bars, t):
+            # 离开日不是回踩：涨幅≥3% 且收阳。
+            leave = _ret(bars, t)
+            if leave is not None and leave >= LEAVE - 1e-12 and _yang(bars[t]):
                 continue
-            pulled = close < post_hi - 1e-12 or low < post_hi - 1e-12
-            recovered = close >= (r1["low"] or close) - 1e-12
-            if pulled and recovered:
-                test_end = t
-        if test_end is None:
+            if close < support - 1e-12:
+                continue
+            pulled = post_hi is not None and (low < post_hi - 1e-12 or close < post_hi - 1e-12)
+            if not pulled:
+                continue
+            pull_idx.append(t)
+        if not pull_idx:
             continue
-        lows = [bars[j].get("low") for j in range(r1i + 1, test_end + 1) if bars[j].get("low") is not None]
-        caps = [bars[j].get("close") for j in range(r1i + 1, test_end + 1) if bars[j].get("close") is not None]
+        test_end = pull_idx[-1]
+        lows = [_px(bars[j], "low") for j in range(pull_idx[0], test_end + 1)]
+        lows = [x for x in lows if x is not None]
         if not lows:
             continue
-        support = r1["low"] or shock.get("low") or _platform_low(bars, r1i)
-        if support is None:
-            continue
-        test_vols = [_vol(bars[j]) for j in range(r1i + 1, test_end + 1)]
+        test_low = min(lows)
+        test_vols = [_vol(bars[j]) for j in range(pull_idx[0], test_end + 1)]
         best = {
             "shock": shock,
-            "r1": r1,
+            "r1": {
+                "idx": r1i,
+                "date": bars[r1i].get("date"),
+                "low": support,
+                "close": _px(bars[r1i], "close"),
+                "vol": _vol(bars[r1i]),
+            },
             "test_end": test_end,
             "test_date": bars[test_end].get("date"),
-            "test_low": min(lows),
-            "test_cap": max(caps) if caps else r1["close"],
+            "test_low": test_low,
             "support": support,
-            "tvol_ok": bool(test_vols) and _mean(test_vols) < r1["vol"],
             "test_vol_avg": _mean(test_vols),
         }
         break
     return best
 
 
-def _is_repair2(bars: list[dict], i: int, setup: dict) -> tuple[bool, list[str], list[str]]:
+def _probe_repair(bars: list[dict], code: str) -> tuple[dict | None, dict | None]:
+    last = len(bars) - 1
+    shock_from = max(1, last - L + 1)
+    shock = _find_shock(bars, shock_from, last)
+    if not shock:
+        return None, None
+    r1 = None
+    for i in range(shock["idx"] + 1, last + 1):
+        if _repair_day(bars, i):
+            r1 = {
+                "idx": i,
+                "date": bars[i].get("date"),
+                "low": _px(bars[i], "low"),
+                "close": _px(bars[i], "close"),
+            }
+            break
+    return shock, r1
+
+
+def _is_leave(bars: list[dict], i: int, setup: dict) -> tuple[bool, list[str], list[str]]:
+    """试仓：最新更新同时齐。"""
     hit, miss = [], []
     last = bars[i]
-    close = last.get("close")
+    close = _px(last, "close")
     support = setup["support"]
-    cap = setup["test_cap"]
-    yang = _yang(last)
-    above_cap = close is not None and close >= cap - 1e-12
-    above_sup_yang = close is not None and close > support and yang
-    if above_cap or above_sup_yang:
-        hit.append("收盘站上 Test 区间上沿（回踩段最高收盘，或支撑价上方且收阳）")
-    else:
-        miss.append("试仓：收盘未站上 Test 区间上沿")
+    test_low = setup["test_low"]
     ret = _ret(bars, i)
-    if ret is not None and ret >= R2 - 1e-12 and yang:
-        hit.append(f"R2：收盘涨幅 {ret * 100:.1f}% ≥ 3% 且收阳")
+    if ret is not None and ret >= LEAVE - 1e-12:
+        hit.append(f"最新价涨幅 {ret * 100:.1f}% ≥ 3%")
     else:
-        miss.append("试仓：未命中 R2（收盘涨幅≥3%且收阳）")
+        miss.append("试仓：最新价涨幅未到 3%")
+    if _close_ge_open(last):
+        hit.append("最新价 ≥ 开盘")
+    else:
+        miss.append("试仓：最新价 < 开盘")
     avg = setup.get("test_vol_avg") or 0.0
     if _vol(last) > avg + 1e-12:
-        hit.append(f"R2V：量 {_vol(last):.0f} > Test 段日均 {avg:.0f}")
+        hit.append(f"本次已成交量 {_vol(last):.0f} > 回踩段日均 {avg:.0f}")
     else:
-        miss.append("试仓：未命中 R2V（量 > Test 段日均量）")
-    if close is not None and close >= support - 1e-12:
-        hit.append(f"收盘未跌破支撑价 {support:.2f}")
+        miss.append("试仓：本次已成交量未大于回踩段日均量")
+    if close is not None and close >= float(support) - 1e-12:
+        hit.append(f"最新价站上支撑 {float(support):.2f}")
     else:
-        miss.append(f"试仓：收盘跌破支撑价 {support:.2f}")
-    ok = not miss
-    return ok, hit, miss
+        miss.append(f"试仓：最新价未站上支撑 {float(support):.2f}")
+    if close is not None and close >= float(test_low) - 1e-12:
+        hit.append(f"最新价未跌破 Test 低点 {float(test_low):.2f}")
+    else:
+        miss.append(f"试仓：最新价跌破 Test 低点 {float(test_low):.2f}")
+    return (not miss), hit, miss
 
 
 def evaluate_exit_trs(bars: list[dict], open_pos: dict | None, zone: dict | None) -> tuple[bool, str, str]:
@@ -267,23 +291,32 @@ def evaluate_exit_trs(bars: list[dict], open_pos: dict | None, zone: dict | None
             buy_i = i
             break
     last = bars[-1]
-    code = ts_code(str(last.get("code") or open_pos.get("code") or ""))
-    close = last.get("close")
-    low = last.get("low")
+    close = _px(last, "close")
     if close is None:
         return False, "", ""
     test_low = zone.get("test_low")
     support = zone.get("support")
-    stop = None
-    if test_low is not None:
-        stop = float(test_low) * STOP
-        if close < float(test_low) - 1e-12:
-            return True, "失败", f"收盘跌破 Test 低点 {float(test_low):.2f}"
-        px = close if low is None else min(close, float(low))
-        if px <= stop + 1e-12:
-            return True, "止损", f"最新价 {px:.2f} ≤ Test 低点×0.97（{stop:.2f}）"
+    buy_px = open_pos.get("buy_price")
+    try:
+        buy_px = float(buy_px) if buy_px not in (None, "") else None
+    except (TypeError, ValueError):
+        buy_px = None
+    stop = float(test_low) * STOP if test_low is not None else None
+    raised = False
+    if buy_px and stop is not None:
+        r_dist = buy_px - stop
+        if r_dist > 0 and close >= buy_px + r_dist - 1e-12:
+            raised = True
+        hi = max((_px(x, "close") or 0) for x in bars[buy_i:])
+        if r_dist > 0 and hi >= buy_px + r_dist - 1e-12:
+            raised = True
+    # 止损 / 失败优先。命中任一条当天走。
+    if raised and buy_px is not None and close <= buy_px + 1e-12:
+        return True, "止损", f"浮盈到过 1R 后止损已抬到成本 {buy_px:.2f}，最新价 {close:.2f} ≤ 成本"
+    if stop is not None and close <= stop + 1e-12:
+        return True, "止损", f"最新价 {close:.2f} ≤ Test 低点×0.97（{stop:.2f}）"
     if support is not None and close < float(support) - 1e-12:
-        return True, "失败", f"收盘跌破支撑价 {float(support):.2f} 且未收回"
+        return True, "失败", f"最新价 {close:.2f} 跌破支撑价 {float(support):.2f}"
     if buy_i == len(bars) - 2:
         trial = bars[buy_i]
         nxt = bars[buy_i + 1]
@@ -291,27 +324,16 @@ def evaluate_exit_trs(bars: list[dict], open_pos: dict | None, zone: dict | None
             t_o, t_c = trial.get("open"), trial.get("close")
             n_o, n_c = nxt.get("open"), nxt.get("close")
             if None not in (t_o, t_c, n_o, n_c) and n_o >= t_c - 1e-12 and n_c <= t_o + 1e-12:
-                return True, "失败", "试仓阳线被次日阴线实体吃掉"
-    count = 0
-    open_board = None
-    for j in range(buy_i, len(bars)):
-        if _is_limit_up(bars, j, code):
-            count += 1
-            continue
-        if count >= 2:
-            open_board = j
-            break
-        count = 0
-    last_i = len(bars) - 1
-    if open_board is not None and last_i > open_board:
-        return True, "失败", "连板后开板之后继续走弱，退出"
+                return True, "失败", "试仓阳线被下一根更新的阴线实体吃掉"
     held = len(bars) - 1 - buy_i
-    if held >= HOLD_MAX:
-        mid = lambda r: ((r.get("high") or 0) + (r.get("low") or 0) + (r.get("close") or 0)) / 3.0
-        early = [mid(x) for x in bars[buy_i : buy_i + 3] if x.get("close") is not None]
-        late = [mid(x) for x in bars[-3:] if x.get("close") is not None]
-        if early and late and _mean(late) <= _mean(early) + 1e-12:
-            return True, "失败", f"已到 Hold 上限 {HOLD_MAX} 日仍横着，重心不再抬"
+    if HOLD_MIN <= held <= HOLD_MAX:
+        trial_typ = _typical(bars[buy_i])
+        late = [_typical(x) for x in bars[-min(3, held + 1) :]]
+        late = [x for x in late if x is not None]
+        hi = max((_px(x, "close") or 0) for x in bars[buy_i:])
+        trial_c = _px(bars[buy_i], "close") or 0
+        if trial_typ is not None and late and _mean(late) <= trial_typ + 1e-12 and hi <= trial_c + 1e-12:
+            return True, "失败", f"试仓后 {held} 日仍横着、重心不抬"
     return False, "", ""
 
 
@@ -338,7 +360,7 @@ def classify_trs(
         "risk": [],
         "facts": {},
         "fact_note": FACT_NOTE,
-        "position_block": "总闸：排除 → 观察 → 试仓 → 持有 → 退出。试仓不是成交指令。当日本规则新开 ≤ 1 只。",
+        "position_block": "总闸：排除 → 观察 → 试仓 → 持有 → 卖出。买入 = 试仓条件齐，不是下单。当日本规则新开 ≤ 1 只。",
         "path_ready": False,
         "data_ok": False,
         "industry": meta.get("industry") or "",
@@ -353,12 +375,14 @@ def classify_trs(
         base["missing_rules"].append("池子：ST / *ST")
         return base
     if len(bars) < L:
-        base["missing_rules"].append(f"池子：日线不足 L={L} 根")
+        base["missing_rules"].append(f"池子：日线不足 {L} 根")
         return base
     if not any(_vol(x) > 0 for x in bars[-L:]):
-        base["missing_rules"].append("池子：近 L 日无成交量")
+        base["missing_rules"].append("池子：近 40 根无成交量")
         return base
     last = bars[-1]
+    last_i = len(bars) - 1
+    close = _px(last, "close")
     base["data_ok"] = True
     base["facts"]["date"] = last.get("date")
     base["facts"]["close"] = last.get("close")
@@ -370,10 +394,10 @@ def classify_trs(
         }
         hit, section, detail = evaluate_exit_trs(bars, open_pos, zone)
         if hit:
-            base["status"] = "退出"
-            base["gate"] = "退出"
-            base["summary_bucket"] = "退出"
-            base["hit_rules"].append(f"退出已见（{section}）：{detail}")
+            base["status"] = "卖出"
+            base["gate"] = "卖出"
+            base["summary_bucket"] = "卖出"
+            base["hit_rules"].append(f"卖出已见（{section}）：{detail}")
             return base
         base["status"] = "持有"
         base["gate"] = "持有"
@@ -385,78 +409,84 @@ def classify_trs(
             if str(row.get("date") or "")[:10] >= buy_date:
                 buy_i = i
                 break
-        held = len(bars) - 1 - buy_i
+        held = last_i - buy_i
         ma5 = sma([x.get("close") for x in bars], 5)
         trial_low = bars[buy_i].get("low")
         m5 = ma5[-1]
-        close = last.get("close")
         if ADD_MIN <= held <= ADD_MAX and m5 and close and trial_low:
             if close <= m5 + 1e-12 and (last.get("low") or close) >= trial_low - 1e-12:
-                base["hit_rules"].append("持有：回踩5日线且不破试仓阳线低点，可加到计划仓位的 70%。不再第三次加仓。")
+                base["hit_rules"].append("持有：回踩 5 日线且不破试仓阳线低点，可加到计划仓位的 70%。不再第三次加仓。")
         buy_px = open_pos.get("buy_price")
         test_low = zone.get("test_low")
         try:
             if buy_px and test_low:
-                r = float(buy_px) - float(test_low) * STOP
-                if r > 0 and close and close >= float(buy_px) + r - 1e-12:
-                    base["hit_rules"].append("浮盈到 1R，止损抬到成本")
+                r_dist = float(buy_px) - float(test_low) * STOP
+                if r_dist > 0 and close and close >= float(buy_px) + r_dist - 1e-12:
+                    base["hit_rules"].append("浮盈到 1R，止损抬到成本。R = 进场价到止损的距离。")
         except (TypeError, ValueError):
             pass
-        if held >= 2:
-            limits = sum(1 for j in range(buy_i, len(bars) - 1) if _is_limit_up(bars, j, code))
-            if limits >= 2 and not _is_limit_up(bars, len(bars) - 1, code):
-                prev_vols = [_vol(x) for x in bars[buy_i:-1]]
-                if prev_vols and _vol(last) > max(prev_vols) + 1e-12:
-                    base["hit_rules"].append("连板后开板且换手高于试仓以来，优先减半或清掉")
-        base["hit_rules"].append("持有：未到退出。试仓仓位 30%～40% 计划仓。")
+        base["hit_rules"].append("持有：未到卖出。试仓仓位 30%～40% 计划仓。观察池不得一次打满。")
         return base
 
     setup = find_setup(bars, code)
     if not setup:
-        shock = _find_shock(bars, len(bars) - 1, code)
+        shock, r1 = _probe_repair(bars, code)
         if not shock:
-            base["missing_rules"].append("观察：近 L 日未命中 D1（单日收跌≥7%）或 D2（近高回撤≥12%）")
+            base["missing_rules"].append("观察：近 40 根未出现单日最新价跌幅 ≥ 7%，也未距近高回撤 ≥ 12%")
             return base
-        r1 = _first_repair(bars, shock["idx"], len(bars) - 1, code)
         if not r1:
-            base["missing_rules"].append("否决：没有第一次 Repair，直接抄地")
+            base["missing_rules"].append("否决：没有过修复，直接抄地")
+            base["veto"].append("没有过修复，直接抄地")
             return base
-        base["missing_rules"].append("观察：第一次 Repair 后 Twin（3～15日）内没有合格回踩 Test")
+        if _chased_boards(bars, r1["idx"], last_i, code):
+            base["missing_rules"].append("否决：修复后没有回踩，直接追连板")
+            base["veto"].append("修复后没有回踩，直接追连板")
+            return base
+        base["missing_rules"].append("观察：修复后 3～15 个交易日尚未出现回踩（最低价靠近支撑，当时最新价不破支撑）")
         return base
 
     r1 = setup["r1"]
-    base["facts"]["support"] = round(float(setup["support"]), 3)
-    base["facts"]["test_low"] = round(float(setup["test_low"]), 3)
+    support = setup["support"]
+    test_low = setup["test_low"]
+    if support is None or test_low is None:
+        base["missing_rules"].append("否决：标不出支撑价和回踩低点两个数字")
+        base["veto"].append("标不出支撑价和回踩低点两个数字")
+        return base
+    if close is not None and close < float(support) - 1e-12:
+        base["missing_rules"].append(f"否决：最新价 {close:.2f} 跌破已标注支撑价 {float(support):.2f}，且未收回")
+        base["veto"].append("最新价跌破已标注的支撑价，且未收回")
+        return base
+
+    base["facts"]["support"] = round(float(support), 3)
+    base["facts"]["test_low"] = round(float(test_low), 3)
     base["facts"]["first_repair_date"] = r1["date"]
     base["facts"]["first_repair_low"] = r1["low"]
     base["facts"]["first_repair_close"] = r1["close"]
     base["facts"]["test_date"] = setup["test_date"]
-    base["facts"]["stop_price"] = round(float(setup["test_low"]) * STOP, 3)
-    base["key_price"] = round(float(setup["support"]), 3)
-    base["stop_price"] = round(float(setup["test_low"]) * STOP, 3)
+    base["facts"]["stop_price"] = round(float(test_low) * STOP, 3)
+    base["key_price"] = round(float(support), 3)
+    base["stop_price"] = round(float(test_low) * STOP, 3)
     base["hit_rules"].append(
-        f"观察四数：支撑价 {setup['support']:.2f} · Test低点 {setup['test_low']:.2f} · 第一次Repair {r1['date']} · Test {setup['test_date']}"
+        f"观察四数：支撑价 {float(support):.2f} · Test低点 {float(test_low):.2f} · 第一次Repair {r1['date']} · Test {setup['test_date']}"
     )
-    if setup.get("tvol_ok"):
-        base["hit_rules"].append("Test 缩量（佳）：回踩日均量 < 第一次 Repair 当日量")
-    last_i = len(bars) - 1
+
     after_test = last_i > setup["test_end"]
     if after_test:
-        ok, hits, miss = _is_repair2(bars, last_i, setup)
+        ok, hits, miss = _is_leave(bars, last_i, setup)
         if ok:
-            exec_note = ""
-            if _yi_zi(last) or _is_limit_up(bars, last_i, code):
-                exec_note = "执行差：板上/一字，试仓窗口差，不改用打板逻辑补进。"
+            if _yi_zi(last):
+                base["status"] = "观察"
+                base["gate"] = "观察"
+                base["summary_bucket"] = "观察"
+                base["hit_rules"].extend(hits)
+                base["hit_rules"].append("一字封死买不到 = 本轮作废，不改打板补进。")
+                return base
             base["status"] = "试仓"
             base["gate"] = "试仓"
             base["summary_bucket"] = "试仓"
             base["path_ready"] = True
             base["hit_rules"].extend(hits)
-            if exec_note:
-                base["hit_rules"].append(exec_note)
             base["hit_rules"].append("试仓仓位 30%～40% 计划仓。观察池不得一次打满。试仓不是成交指令。")
-            base["facts"]["support"] = round(float(setup["support"]), 3)
-            base["facts"]["test_low"] = round(float(setup["test_low"]), 3)
             return base
         base["status"] = "观察"
         base["gate"] = "观察"
@@ -466,7 +496,7 @@ def classify_trs(
     base["status"] = "观察"
     base["gate"] = "观察"
     base["summary_bucket"] = "观察"
-    base["missing_rules"].append("试仓：已在观察池，当日 R2/R2V 未齐")
+    base["missing_rules"].append("试仓：已在观察池。当日最新价离开条件未齐。")
     return base
 
 
@@ -480,7 +510,9 @@ def is_buy_trs(bars: list[dict], ctx: dict | None = None) -> bool:
     last_i = len(bars) - 1
     if last_i <= setup["test_end"]:
         return False
-    ok, _, _ = _is_repair2(bars, last_i, setup)
+    if _yi_zi(bars[last_i]):
+        return False
+    ok, _, _ = _is_leave(bars, last_i, setup)
     return ok
 
 
@@ -503,11 +535,14 @@ def walk_cycles_trs(bars: list[dict], ctx: dict | None = None) -> tuple[list[dic
                 setup = find_setup(sl, code)
                 if setup and setup["r1"]["idx"] > last_r1:
                     open_i = i
-                    zone = {"test_low": setup["test_low"], "support": setup["support"], "r1": setup["r1"]["idx"]}
+                    zone = {
+                        "test_low": setup["test_low"],
+                        "support": setup["support"],
+                        "r1": setup["r1"]["idx"],
+                    }
             continue
-        hit, section, detail = evaluate_exit_trs(
-            sl, {"buy_date": bars[open_i].get("date"), "code": code}, zone
-        )
+        pos = {"buy_date": bars[open_i].get("date"), "code": code, "buy_price": bars[open_i].get("close")}
+        hit, section, detail = evaluate_exit_trs(sl, pos, zone)
         if i > open_i and hit:
             cycles.append(_cycle_stats(bars, open_i, i, exit_section=section, exit_detail=detail))
             last_r1 = (zone or {}).get("r1", open_i)

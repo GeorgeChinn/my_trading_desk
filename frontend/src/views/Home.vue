@@ -179,7 +179,6 @@ const isTrial = computed(() => {
 });
 const exitLabel = computed(() => {
   const e = currentRuleset.value && currentRuleset.value.engine;
-  if (e === "test_repair") return "退出";
   if (e === "pullback_restart") return "取关";
   return "卖出";
 });

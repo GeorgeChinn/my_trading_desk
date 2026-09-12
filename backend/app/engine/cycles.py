@@ -699,7 +699,7 @@ def cycles_page(
     if engine == "ma20_swing":
         note = "RULES3 规则回测按 20 日线波段在全股池历史上回放买入到卖出。今日扫描买入是当前收盘同时齐的票，不是历史上唯一符合的。买入不是下单。"
     if engine == "test_repair":
-        note = "RULES4 规则回测按 Test+Repair 在全股池历史上回放试仓到退出。不与金叉/低吸/20日线混池。试仓不是成交指令。"
+        note = "RULES4 规则回测按 Test+Repair 在全股池历史上回放试仓到卖出。不与金叉/低吸/20日线混池。试仓不是成交指令。"
     if engine not in ("low_golden", "pullback_restart", "ma20_swing", "test_repair"):
         payload = {
             "fact_note": "这是事实记录",

@@ -138,15 +138,25 @@ def _eval_item(item: dict, engine: str) -> None:
         last = raw[-1]
     elif engine == "test_repair":
         from .test_repair import evaluate_exit_trs
+        from .bars import overlay_quote_bar
+        from ..store import load_quotes
 
+        bars = overlay_quote_bar(raw, code, load_quotes())
         zone = {
             "test_low": item.get("test_low"),
             "support": item.get("support"),
         }
         hit, section, detail = evaluate_exit_trs(
-            raw, {"date": buy_date, "code": code, "buy_date": buy_date}, zone
+            bars,
+            {
+                "date": buy_date,
+                "code": code,
+                "buy_date": buy_date,
+                "buy_price": item.get("buy_price"),
+            },
+            zone,
         )
-        last = raw[-1]
+        last = bars[-1] if bars else raw[-1]
     else:
         bars = attach_indicators(raw)
         from .cycles import _prefix_series
