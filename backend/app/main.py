@@ -241,7 +241,9 @@ def _scan_bundle(ruleset_id: str | None = None):
     asof = asof_date(settings.get("last_trade_date") or "")
     qmeta = load_quotes_meta()
     qstamp = qmeta.get("updated_at") or qmeta.get("trade_date") or ""
-    token = f"{bind.get('rules_hash')}:{asof}:{qstamp}:{rs.get('engine')}:{len(trades)}:session:{_engine_token()}"
+    from .engine.pool import csv_universe_count
+
+    token = f"{bind.get('rules_hash')}:{asof}:{qstamp}:{rs.get('engine')}:{len(trades)}:csv:{csv_universe_count()}:session:{_engine_token()}"
     cache_path = _scan_cache_path(rs["id"])
     cached = read_json(cache_path, {}) if cache_path.exists() else {}
     if (
@@ -756,7 +758,7 @@ def settings_get():
     from .engine.pool import ashare_pool_public, csv_universe_count, public_pool_snapshot
 
     csv_n = csv_universe_count()
-    public["csv_files"] = list_csv_files()
+    public["csv_files"] = []
     public["csv_dir"] = str(CSV_DIR)
     public["csv_count"] = csv_n
     public["pool_count"] = csv_n
