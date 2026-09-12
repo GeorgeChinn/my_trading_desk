@@ -18,7 +18,7 @@
     <p class="sub" v-if="currentRuleset">{{ currentRuleset.file }} · {{ currentRuleset.title }}</p>
     <div class="warn-banner">{{ data.note || "数据未变则读缓存。" }}</div>
     <div class="warn-banner" v-if="data.warming">
-      RULES2 回测首次计算中 {{ data.warm_done || 0 }}/{{ data.warm_total || "…" }}，请稍候，页面会自动刷新。
+      {{ (currentRuleset && currentRuleset.file) || "当前规则" }} 回测计算中 {{ data.warm_done || 0 }}/{{ data.warm_total || "…" }}，请稍候，页面会自动刷新。
     </div>
 
     <div class="grid cols-4" style="margin-bottom:16px">
@@ -149,7 +149,10 @@ const segments = computed(() =>
 );
 const pages = computed(() => data.value.pages || 1);
 const emptyText = computed(() => {
-  if (data.value.warming) return "RULES2 回测首次计算中，完成后自动出现。";
+  if (data.value.warming) {
+    const file = (currentRuleset.value && currentRuleset.value.file) || "当前规则";
+    return file + " 回测计算中，完成后自动出现。";
+  }
   if (currentRuleset.value && !currentRuleset.value.engine_ok) {
     return currentRuleset.value.engine_note || "本规则尚未写成扫描器，没有回测。";
   }
@@ -205,7 +208,8 @@ function payloadOf(id, payload) {
 }
 function switchRuleset(id) {
   page.value = 1;
-  showLoading(id === "rules2" ? "正在切换到 RULES2 回测…" : "正在切换规则回测…");
+  const rs = rulesets.value.find((r) => r.id === id);
+  showLoading("正在切换到 " + ((rs && rs.file) || id) + " 回测…");
   applyCache(id);
   router.replace({ path: "/cycles", query: { ruleset: id, tab: "all" } });
 }
@@ -231,7 +235,8 @@ async function load(silent = false) {
   const wantTab = tab.value;
   loading.value = !silent;
   if (!silent) {
-    setLoadingText(want === "rules2" ? "正在读取 RULES2 回测…" : "正在读取规则回测…");
+    const rs = rulesets.value.find((r) => r.id === want) || currentRuleset.value;
+    setLoadingText("正在读取 " + ((rs && rs.file) || want) + " 回测…");
   }
   try {
     const payload = await api.cycles(

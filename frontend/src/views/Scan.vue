@@ -241,7 +241,7 @@ const router = useRouter();
 const data = ref({ rows: [], summary: {}, by_gate: {}, names: {}, pool: {}, rulesets: [], boards: [] });
 const extraRulesets = ref([]);
 const cache = {};
-const filter = ref("观察");
+const filter = ref("在池");
 const q = ref("");
 const page = ref(1);
 const pageSize = 80;
@@ -437,16 +437,18 @@ function payloadOf(id, payload) {
   return payload && (!rid || rid === id);
 }
 function switchRuleset(id) {
-  filter.value = "观察";
+  filter.value = "在池";
   poolBacktest.value = null;
-  showLoading(id === "rules2" ? "正在切换到 RULES2…" : "正在切换规则…");
+  const rs = rulesets.value.find((r) => r.id === id);
+  showLoading("正在切换到 " + ((rs && rs.file) || id) + "…");
   applyCache(id);
   router.replace({ path: "/scan", query: { ruleset: id } });
 }
 async function load() {
   const want = rulesetId.value;
   loading.value = true;
-  setLoadingText(want === "rules2" ? "正在按 RULES2 先筛板块再扫个股…" : "正在按当前规则扫描…");
+  const rs = rulesets.value.find((r) => r.id === want) || currentRuleset.value;
+  setLoadingText("正在按 " + ((rs && rs.file) || want) + " 扫描…");
   try {
     const payload = await api.scan(want);
     if (!payloadOf(want, payload)) return;
@@ -454,6 +456,8 @@ async function load() {
     if (payload.rulesets && payload.rulesets.length) extraRulesets.value = payload.rulesets;
     if (rulesetId.value !== want) return;
     data.value = payload;
+    const watchN = (payload.by_gate && payload.by_gate.观察) || 0;
+    if (filter.value === "观察" && !watchN) filter.value = "在池";
   } finally {
     if (rulesetId.value === want) loading.value = false;
   }

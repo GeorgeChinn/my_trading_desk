@@ -224,8 +224,10 @@ async function switchRuleset(id) {
   const want = id;
   rulesetId.value = id;
   applyScanCache(id);
-  showLoading(id === "rules2" ? "正在按 RULES2 扫描…" : "正在加载扫描…");
-  setLoadingText(id === "rules2" ? "正在按 RULES2 扫描…" : "正在加载扫描…");
+  const rs = rulesets.value.find((r) => r.id === id);
+  const label = (rs && rs.file) || id;
+  showLoading("正在按 " + label + " 扫描…");
+  setLoadingText("正在按 " + label + " 扫描…");
   if (id === "rules") {
     const data = await api.home();
     if ((data.scan_ruleset || "rules") !== "rules") return;

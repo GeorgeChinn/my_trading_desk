@@ -182,8 +182,6 @@ def sync_buy_log(ruleset_id: str, engine: str, rows: list[dict]) -> dict:
             buy_price = 0.0
         if not buy_date or not buy_price:
             continue
-        if buy_date < since:
-            continue
         item = {
             "id": uuid.uuid4().hex[:12],
             "code": code,
@@ -202,9 +200,8 @@ def sync_buy_log(ruleset_id: str, engine: str, rows: list[dict]) -> dict:
             "closed": False,
             "exit_section": None,
             "exit_detail": None,
-            "buy_ma20": (facts.get("buy_ma20") or row.get("key_price")),
-            "stop_price": facts.get("stop_price") or row.get("stop_price"),
             "buy_ma20": facts.get("buy_ma20") or row.get("key_price"),
+            "stop_price": facts.get("stop_price") or row.get("stop_price"),
             "di_low": facts.get("di_low"),
             "di_close": facts.get("di_close"),
             "a_pre_close": facts.get("a_pre_close"),

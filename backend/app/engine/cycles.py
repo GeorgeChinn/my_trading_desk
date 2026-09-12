@@ -487,7 +487,10 @@ def _warm_cycles(scan_uni: list[dict], flags: dict, engine: str, rules_hash: str
             item_ctx["pe"] = meta.get("pe")
         if meta.get("float_mcap_yi") is not None:
             item_ctx["float_mcap_yi"] = meta.get("float_mcap_yi")
-        segs = walk_stock_segments(code, name, flags, engine=engine, ctx=item_ctx)
+        try:
+            segs = walk_stock_segments(code, name, flags, engine=engine, ctx=item_ctx)
+        except Exception:
+            segs = []
         codes[code] = {"last_date": _last_date(code), "segments": segs}
         if i == 1 or i % 20 == 0 or i == total:
             write_json(
@@ -602,7 +605,7 @@ def _cycles_page_s1(
     payload = {
         "fact_note": "这是事实记录",
         "note": (
-            f"RULES2 规则回测中 {done}/{all_n or '?'}，完成后自动刷新。买入不是成交指令。"
+            f"{(pub or {}).get('file') or '当前规则'} 回测计算中 {done}/{all_n or '?'}，完成后自动刷新。买入不是成交指令。"
             if warming
             else note
         ),
@@ -698,9 +701,16 @@ def cycles_page(
         }
         save_cycles(payload, ruleset_id)
         return payload
-    from .buy_log import overlay_cycles
+    from .buy_log import log_as_segments, overlay_cycles
 
     listed = _listed_scan_rows(ruleset_id)
+    seen = {ts_code(str(x.get("code") or "")) for x in listed}
+    for seg in log_as_segments(ruleset_id):
+        code = ts_code(str(seg.get("code") or ""))
+        if not code or code in seen:
+            continue
+        listed.append({"code": code, "name": seg.get("name") or code})
+        seen.add(code)
     path = _cache_path(ruleset_id)
     store = read_json(path, {}) if path.exists() else {}
     if not isinstance(store, dict):
@@ -743,7 +753,7 @@ def cycles_page(
     payload = {
         "fact_note": "这是事实记录",
         "note": (
-            f"规则回测计算中 {done}/{all_n or '?'}，完成后自动刷新。买入不是成交指令。"
+            f"{(pub or {}).get('file') or '当前规则'} 回测计算中 {done}/{all_n or '?'}，完成后自动刷新。买入不是成交指令。"
             if warming
             else note
         ),
