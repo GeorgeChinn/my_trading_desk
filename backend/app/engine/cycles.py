@@ -686,6 +686,8 @@ def cycles_page(
     ruleset_id = (ruleset or {}).get("id") or "rules"
     rules_hash = _rules_hash((ruleset or {}).get("text") or "")
     note = "规则回测 = 扫描剩下的观察/买入/试仓名单，按本规则回放买入到卖出。买入池记录优先。日线代理可回测，但不写入买入池。买入不是成交指令。"
+    if engine == "ma20_swing":
+        note = "RULES3 规则回测按 20 日线波段在全股池历史上回放买入到卖出。今日扫描买入是当前收盘同时齐的票，不是历史上唯一符合的。买入不是下单。"
     if engine not in ("low_golden", "pullback_restart", "ma20_swing"):
         payload = {
             "fact_note": "这是事实记录",
@@ -703,7 +705,12 @@ def cycles_page(
         return payload
     from .buy_log import log_as_segments, overlay_cycles
 
-    listed = _listed_scan_rows(ruleset_id)
+    if engine == "ma20_swing":
+        from .ma20_swing import list_ma20_cycle_universe
+
+        listed = list_ma20_cycle_universe()
+    else:
+        listed = _listed_scan_rows(ruleset_id)
     seen = {ts_code(str(x.get("code") or "")) for x in listed}
     for seg in log_as_segments(ruleset_id):
         code = ts_code(str(seg.get("code") or ""))

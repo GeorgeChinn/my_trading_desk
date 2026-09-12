@@ -1,9 +1,9 @@
 """RULES3 野人哥 20日线波段。数字只来自 RULES3.MD，不另写阈值。"""
 from __future__ import annotations
 
-from ..config import GATES
+from ..config import CSV_DIR, GATES
 from ..store import load_quotes, load_universe
-from .bars import bar_amount, load_bars, overlay_quote_bar, ts_code
+from .bars import bar_amount, load_bars, overlay_quote_bar, peek_last_bar, ts_code
 from .indicators import sma
 from .pool import is_st_name
 from .scanner import FACT_NOTE, dyn_pe_value
@@ -465,10 +465,34 @@ def classify_ma20(
 def is_buy_ma20(bars: list[dict], ctx: dict | None = None) -> bool:
     if not bars:
         return False
+    ctx = ctx or {}
+    last = bars[-1]
+    name = str(last.get("name") or ctx.get("name") or "")
+    if is_st_name(name):
+        return False
+    close = last.get("close")
+    if close is None or close < POOL_PRICE:
+        return False
+    amt = bar_amount(last)
+    if amt is None or amt < POOL_AMOUNT_YI * YI:
+        return False
+    pe = ctx.get("pe")
+    if pe is not None:
+        try:
+            if float(pe) <= 0:
+                return False
+        except (TypeError, ValueError):
+            pass
+    mcap = ctx.get("float_mcap_yi")
+    if mcap is not None:
+        try:
+            if float(mcap) < POOL_MCAP_YI:
+                return False
+        except (TypeError, ValueError):
+            pass
     setup = find_setup(bars)
     if not setup:
         return False
-    last = bars[-1]
     close = last.get("close")
     ma20 = setup["ma20"]
     if close is None or close < ma20 - 1e-12:
@@ -553,6 +577,30 @@ def classify_one_ma20(code: str, settings: dict, trades: list | None = None) -> 
     except Exception:
         pass
     return classify_ma20(meta, settings, trades, quotes=quotes, open_pos=open_pos)
+
+
+def list_ma20_cycle_universe() -> list[dict]:
+    """回测名单 = 全股池有日线的票，不按今日扫描截成两三只。"""
+    uni = {ts_code(str(x.get("code") or "")): x for x in load_universe()}
+    out = []
+    for path in CSV_DIR.glob("*.csv"):
+        code = ts_code(path.stem)
+        if not code:
+            continue
+        last = peek_last_bar(code)
+        if not last or last.get("close") is None:
+            continue
+        name = last.get("name") or (uni.get(code) or {}).get("name") or code
+        meta = uni.get(code) or {}
+        out.append(
+            {
+                "code": code,
+                "name": name,
+                "pe": meta.get("pe"),
+                "float_mcap_yi": meta.get("float_mcap_yi"),
+            }
+        )
+    return out
 
 
 def scan_ma20(settings: dict, trades: list | None = None) -> list[dict]:
