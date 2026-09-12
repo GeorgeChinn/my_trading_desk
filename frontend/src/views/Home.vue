@@ -80,18 +80,18 @@
           {{ rs.file }}
         </button>
       </div>
-      <p class="sub">{{ currentRuleset ? currentRuleset.file + " · " : "" }}买入 = 路径到达，不是成交指令。</p>
+      <p class="sub">{{ currentRuleset ? currentRuleset.file + " · " : "" }}{{ isPullback ? "试仓" : "买入" }} = 路径到达，不是成交指令。</p>
       <div class="grid cols-4">
-        <div class="stat"><div class="n">{{ scan.买入 ?? 0 }}</div><div class="k">买入</div></div>
+        <div class="stat"><div class="n">{{ isPullback ? (scan.试仓 ?? 0) : (scan.买入 ?? 0) }}</div><div class="k">{{ isPullback ? "试仓" : "买入" }}</div></div>
         <div class="stat"><div class="n">{{ scan.观察 ?? 0 }}</div><div class="k">观察</div></div>
-        <div class="stat"><div class="n">{{ scan.卖出 ?? 0 }}</div><div class="k">卖出</div></div>
+        <div class="stat"><div class="n">{{ isPullback ? (scan.取关 ?? 0) : (scan.卖出 ?? 0) }}</div><div class="k">{{ isPullback ? "取关" : "卖出" }}</div></div>
         <div class="stat"><div class="n">{{ scan.排除 ?? 0 }}</div><div class="k">排除</div></div>
       </div>
       <div class="overview" style="margin-top:14px">
         <div class="ov-block">
-          <div class="ov-title">买入池 <span>{{ buyNames.length }}</span></div>
+          <div class="ov-title">{{ isPullback ? "试仓池" : "买入池" }} <span>{{ buyNames.length }}</span></div>
           <div class="name-cloud" v-if="buyNames.length">
-            <router-link class="name-chip 买入" v-for="s in buyNames" :key="'hb'+s.code" :to="scanChart(s.code, '买入')">
+            <router-link class="name-chip 买入" v-for="s in buyNames" :key="'hb'+s.code" :to="scanChart(s.code, isPullback ? '试仓' : '买入')">
               {{ chipTitle(s) }} <em v-if="s.pe != null">PE {{ Number(s.pe).toFixed(1) }}</em>
             </router-link>
           </div>
@@ -158,11 +158,21 @@ const judgeCard = ref(null);
 const judgeStatus = ref("观察");
 const judgeNote = ref("");
 const statuses = STATUSES;
-const buyNames = computed(() => (names.value.买入 || []).filter((s) => !s.ruleset || s.ruleset === rulesetId.value));
+const buyNames = computed(() => {
+  const own = (s) => !s.ruleset || s.ruleset === rulesetId.value;
+  const out = [];
+  for (const k of ["买入", "试仓", "持有"]) {
+    for (const s of names.value[k] || []) {
+      if (own(s)) out.push(s);
+    }
+  }
+  return out;
+});
 const watchNames = computed(() => (names.value.观察 || []).filter((s) => !s.ruleset || s.ruleset === rulesetId.value));
 const rulesets = ref([]);
 const rulesetId = ref("rules");
 const currentRuleset = computed(() => rulesets.value.find((r) => r.id === rulesetId.value) || null);
+const isPullback = computed(() => (currentRuleset.value && currentRuleset.value.engine) === "pullback_restart");
 const scanCache = {};
 const emotion = ref({});
 

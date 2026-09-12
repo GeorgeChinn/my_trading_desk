@@ -2,7 +2,7 @@
   <div>
     <h1>规则回测</h1>
     <p class="sub">
-      规则回测只含规则扫描列入过买入/试仓池的票。列入日期 = 扫描列入日。记录从昨天起。不是成交指令。
+      规则回测按当前观察 / 买入 / 试仓名单回放买入到卖出。买入池记录优先。日线代理可回测，不写入买入池。买入不是成交指令。
     </p>
     <div class="tabs">
       <button
@@ -153,7 +153,7 @@ const emptyText = computed(() => {
   if (currentRuleset.value && !currentRuleset.value.engine_ok) {
     return currentRuleset.value.engine_note || "本规则尚未写成扫描器，没有回测。";
   }
-  return "还没有买入到卖出的回测段。";
+  return "当前观察/买入/试仓名单上，还没有回放出买入到卖出的段。先看规则扫描里剩下的票。";
 });
 
 function money(v) {

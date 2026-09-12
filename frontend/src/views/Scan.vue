@@ -4,7 +4,7 @@
       <div class="scan-head-left">
         <h1>规则扫描</h1>
         <p class="sub">
-          总闸：排除 → 观察 → 买入 → 卖出。买入 = 路径到达，不是成交指令。列入买入池后才开这段回测。
+          总闸：排除 → 观察 → 买入 → 卖出。买入 = 路径到达，不是成交指令。观察/买入/试仓名单可以做规则回测。
         </p>
         <p class="stamp" v-if="stamp.asof || stamp.scanned_at">
           总股池 {{ universeN }} 只
@@ -115,9 +115,9 @@
           <div>{{ isPullback ? "试仓池" : "买入池" }} <span>{{ buyNames.length }}</span></div>
           <button class="btn" :disabled="!buyNames.length" @click="runPoolBacktest(isPullback ? '试仓' : '买入')">规则回测</button>
         </div>
-        <p class="sub" style="margin:0 0 8px">{{ isPullback ? "试仓" : "买入" }} = 路径到达，不是成交指令。回测只跟列入过的票。</p>
+        <p class="sub" style="margin:0 0 8px">{{ isPullback ? "试仓" : "买入" }} = 路径到达，不是成交指令。回测按当前名单回放，不写成交指令。</p>
         <div class="name-cloud" v-if="buyNames.length">
-          <router-link class="name-chip 买入" v-for="s in buyNames" :key="'b'+s.code" :to="chartLink(s.code, '买入')">
+          <router-link class="name-chip 买入" v-for="s in buyNames" :key="'b'+s.code" :to="chartLink(s.code, isPullback ? '试仓' : '买入')">
             {{ stockTitle(s) }}
             <em v-if="s.pe != null">PE {{ pe(s.pe) }}</em>
           </router-link>

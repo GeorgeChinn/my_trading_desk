@@ -339,7 +339,14 @@ def cached_stock_segments(
     hit = codes.get(code) or {}
     if store.get("rules_hash") == rules_hash and hit.get("last_date") == last and isinstance(hit.get("segments"), list):
         return [{**dict(seg), "name": name} for seg in hit["segments"]]
-    return walk_stock_segments(code, name, flags, engine=engine)
+    segs = walk_stock_segments(code, name, flags, engine=engine)
+    codes[code] = {"last_date": last, "segments": segs}
+    store["codes"] = codes
+    store["rules_hash"] = rules_hash
+    store["asof"] = _asof()
+    store["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    write_json(path, store)
+    return segs
 
 
 def _empty_summary() -> dict:
@@ -606,6 +613,45 @@ def _cycles_page_s1(
     return payload
 
 
+def _listed_scan_rows(ruleset_id: str) -> list[dict]:
+    from ..config import SCAN_CACHE_DIR
+
+    blob = read_json(SCAN_CACHE_DIR / f"{ruleset_id}.json", {})
+    rows = blob.get("rows") if isinstance(blob, dict) else None
+    out = []
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        st = row.get("status") or row.get("gate") or "排除"
+        if st == "排除":
+            continue
+        out.append(row)
+    return out
+
+
+def _walk_listed_segments(
+    listed: list[dict],
+    flags: dict,
+    engine: str,
+    ruleset_id: str,
+    rules_hash: str,
+) -> list[dict]:
+    segments: list[dict] = []
+    for item in listed or []:
+        code = ts_code(str(item.get("code") or ""))
+        if not code:
+            continue
+        name = item.get("name") or code
+        segs = cached_stock_segments(code, name, flags, ruleset_id, rules_hash, engine=engine)
+        for seg in segs:
+            row = dict(seg)
+            row["code"] = code
+            row["name"] = name
+            row.setdefault("from_pool", False)
+            segments.append(row)
+    return segments
+
+
 def cycles_page(
     universe: list[dict],
     flags: dict | None = None,
@@ -618,7 +664,7 @@ def cycles_page(
     page_size: int = 40,
     warm: bool = False,
 ) -> dict:
-    """One segment = 买入条件日 → 卖出条件日. Cache by code + rules hash + last bar date."""
+    """当前观察/买入/试仓名单上，按规则回放买入→卖出。买入池记录优先。"""
     from .rulesets import ENGINE_LOW_GOLDEN, public_ruleset
 
     flags = flags or parse_flags()
@@ -626,7 +672,7 @@ def cycles_page(
     engine = (ruleset or {}).get("engine") or ENGINE_LOW_GOLDEN
     ruleset_id = (ruleset or {}).get("id") or "rules"
     rules_hash = _rules_hash((ruleset or {}).get("text") or "")
-    note = "规则回测只含规则扫描列入过买入/试仓池的票。列入日期=扫描列入日。记录从昨天起。买入/试仓不是成交指令。"
+    note = "规则回测 = 扫描剩下的观察/买入/试仓名单，按本规则回放买入到卖出。买入池记录优先。日线代理可回测，但不写入买入池。买入不是成交指令。"
     if engine not in ("low_golden", "pullback_restart"):
         payload = {
             "fact_note": "这是事实记录",
@@ -644,11 +690,53 @@ def cycles_page(
         return payload
     from .buy_log import overlay_cycles
 
-    segments = overlay_cycles([], ruleset_id)
+    listed = _listed_scan_rows(ruleset_id)
+    path = _cache_path(ruleset_id)
+    store = read_json(path, {}) if path.exists() else {}
+    if not isinstance(store, dict):
+        store = {}
+    asof = _asof()
+    hash_ok = store.get("rules_hash") == rules_hash
+    asof_ok = (not asof) or store.get("asof") == asof
+    codes = store.get("codes") if isinstance(store.get("codes"), dict) else {}
+    listed_codes = [ts_code(str(x.get("code") or "")) for x in listed]
+    listed_codes = [c for c in listed_codes if c]
+    have = sum(1 for c in listed_codes if isinstance((codes.get(c) or {}).get("segments"), list))
+    with _warm_lock:
+        in_flight = ruleset_id in _warming
+    warming = bool(in_flight) or (listed_codes and have < len(listed_codes))
+    if listed and not in_flight and (not hash_ok or not asof_ok or have < len(listed_codes)):
+        def boot():
+            try:
+                _warm_cycles(listed, flags, engine, rules_hash, ruleset_id)
+            finally:
+                with _warm_lock:
+                    _warming.discard(ruleset_id)
+
+        with _warm_lock:
+            if ruleset_id not in _warming:
+                _warming.add(ruleset_id)
+                threading.Thread(target=boot, daemon=True, name=f"cycles-{ruleset_id}").start()
+        warming = True
+    if warm and listed:
+        _warm_cycles(listed, flags, engine, rules_hash, ruleset_id)
+        store = read_json(path, {}) if path.exists() else {}
+        codes = store.get("codes") if isinstance(store.get("codes"), dict) else {}
+        warming = False
+    kept_codes = {c: codes[c] for c in listed_codes if c in codes} if listed_codes else codes
+    segments = _codes_to_segments(kept_codes)
+    segments = overlay_cycles(segments, ruleset_id)
+    segments = _stamp_segments(segments, ruleset or {})
     page_rows, total, size, cur, pages = _paginate(segments, tab, q, sort, order, page, page_size, False)
+    done = have
+    all_n = len(listed_codes)
     payload = {
         "fact_note": "这是事实记录",
-        "note": note,
+        "note": (
+            f"规则回测计算中 {done}/{all_n or '?'}，完成后自动刷新。买入不是成交指令。"
+            if warming
+            else note
+        ),
         "ruleset": pub,
         "segments": page_rows,
         "summary": summarize_segments(segments),
@@ -656,9 +744,11 @@ def cycles_page(
         "page_size": size,
         "pages": pages,
         "filtered": total,
-        "cached": True,
-        "warming": False,
-        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "cached": bool(codes) and not warming,
+        "warming": warming,
+        "warm_done": done,
+        "warm_total": all_n,
+        "updated_at": store.get("updated_at") or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
     save_cycles(payload, ruleset_id)
     return payload
@@ -684,7 +774,7 @@ def cycles_for_stock(code: str, name: str, ruleset: dict | None) -> dict:
 
     pub = public_ruleset(ruleset) if ruleset else None
     engine = (ruleset or {}).get("engine") or "low_golden"
-    note = "规则回测只含扫描列入过买入/试仓池的段。列入日期=扫描列入日。"
+    note = "按本规则回放这只股票的买入到卖出。买入池记录优先。日线代理可回测，不写入买入池。"
     if engine not in ("low_golden", "pullback_restart"):
         return {
             "code": ts_code(code),
@@ -695,13 +785,18 @@ def cycles_for_stock(code: str, name: str, ruleset: dict | None) -> dict:
             "note": (ruleset or {}).get("engine_note") or "本规则尚未写成扫描器，没有轨迹。",
             "fact_note": "这是事实记录",
         }
-    from .buy_log import log_as_segments
+    from .buy_log import overlay_cycles
+    from .rules_bind import parse_flags
 
     rid = (ruleset or {}).get("id") or "rules"
-    segs = [s for s in log_as_segments(rid) if ts_code(str(s.get("code") or "")) == ts_code(code)]
+    want = ts_code(code)
+    flags = parse_flags((ruleset or {}).get("text") or "")
+    walked = walk_stock_segments(want, name, flags, engine=engine)
+    segs = overlay_cycles(walked, rid)
+    segs = [s for s in segs if ts_code(str(s.get("code") or "")) == want]
     segs = _stamp_segments(segs, ruleset or {})
     return {
-        "code": ts_code(code),
+        "code": want,
         "name": name,
         "ruleset": pub,
         "segments": segs,
@@ -727,12 +822,23 @@ def cycles_for_pool(items: list[dict], ruleset: dict | None) -> dict:
             "fact_note": "这是事实记录",
             "pool_count": len(items or []),
         }
-    from .buy_log import log_as_segments
+    from .buy_log import overlay_cycles
+    from .rules_bind import parse_flags
 
     want = {ts_code(str((item or {}).get("code") or "")) for item in items or []}
     want.discard("")
     rid = (ruleset or {}).get("id") or "rules"
-    segments = [s for s in log_as_segments(rid) if ts_code(str(s.get("code") or "")) in want]
+    flags = parse_flags((ruleset or {}).get("text") or "")
+    rules_hash = _rules_hash((ruleset or {}).get("text") or "")
+    walked = []
+    for item in items or []:
+        code = ts_code(str((item or {}).get("code") or ""))
+        if not code:
+            continue
+        walked.extend(
+            cached_stock_segments(code, item.get("name") or code, flags, rid, rules_hash, engine=engine)
+        )
+    segments = [s for s in overlay_cycles(walked, rid) if ts_code(str(s.get("code") or "")) in want]
     segments = _stamp_segments(segments, ruleset or {})
     closed = [s for s in segments if s.get("closed")]
     opened = [s for s in segments if not s.get("closed")]

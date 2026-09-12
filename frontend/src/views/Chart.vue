@@ -77,7 +77,7 @@ const triggerDate = computed(() => route.query.trigger || "");
 const rulesetId = computed(() => String(route.query.ruleset || "rules"));
 const poolGate = computed(() => {
   const g = String(route.query.pool || "");
-  return g === "买入" || g === "观察" ? g : "";
+  return ["观察", "买入", "试仓", "持有", "取关", "卖出"].includes(g) ? g : "";
 });
 const rulesetTitle = ref("");
 const poolLabel = computed(() => (poolGate.value ? poolGate.value + "池" : ""));
@@ -97,7 +97,8 @@ const nextStock = computed(() => {
 });
 const canBacktest = computed(() => {
   const st = scan.value && scan.value.status;
-  return poolGate.value === "观察" || poolGate.value === "买入" || st === "观察" || st === "买入";
+  const ok = ["观察", "买入", "试仓", "持有"];
+  return ok.includes(poolGate.value) || ok.includes(st);
 });
 const closedCount = computed(() => segments.value.filter((s) => s.closed).length);
 const openCount = computed(() => segments.value.filter((s) => !s.closed).length);
@@ -186,7 +187,8 @@ async function load() {
     await api.viewWatch(route.query.watch).catch(() => {});
   }
   const st = scan.value && scan.value.status;
-  const inPool = wantPool === "观察" || wantPool === "买入" || st === "观察" || st === "买入";
+  const ok = ["观察", "买入", "试仓", "持有"];
+  const inPool = ok.includes(wantPool) || ok.includes(st);
   if (String(route.query.backtest || "") === "1" && inPool) {
     await loadBacktest();
   }

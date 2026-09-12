@@ -599,7 +599,7 @@ def classify_s1(
 
 
 def is_buy_s1(bars: list[dict], ctx: dict | None = None) -> bool:
-    """正式试仓才算买入。无分时时日线代理不得记成交。"""
+    """回测开段：正式试仓，或无分时的日线代理。代理不得写入买入池。"""
     if not bars:
         return False
     ctx = ctx or {}
@@ -621,7 +621,9 @@ def is_buy_s1(bars: list[dict], ctx: dict | None = None) -> bool:
         apply_quote=False,
         hs=ctx.get("hs"),
     )
-    return row.get("status") == "试仓" and not row.get("daily_proxy")
+    if row.get("status") == "试仓":
+        return True
+    return bool(row.get("daily_proxy"))
 
 
 def classify_one_s1(code: str, settings: dict, trades: list | None = None) -> dict:

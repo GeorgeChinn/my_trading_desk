@@ -215,15 +215,7 @@ def public_buy_log(ruleset_id: str) -> dict:
         ),
         reverse=True,
     )
-    if store.get("record_mode") != "scan_pool":
-        started = record_since()
-    else:
-        started = str(store.get("started_at") or record_since())[:10]
-    items = [
-        x
-        for x in items
-        if str(x.get("buy_date") or "")[:10] >= started or str(x.get("logged_at") or "")[:10] >= started
-    ]
+    started = str(store.get("started_at") or record_since())[:10]
     open_n = sum(1 for x in items if not x.get("closed"))
     closed_n = sum(1 for x in items if x.get("closed"))
     return {
@@ -234,7 +226,7 @@ def public_buy_log(ruleset_id: str) -> dict:
         "total": len(items),
         "updated_at": store.get("updated_at"),
         "started_at": started,
-        "note": f"记录从 {started}（昨天）起。只有规则扫描列入买入/试仓的票才开规则回测。列入日期=扫描列入日。",
+        "note": "买入池只记扫描列入的买入/试仓。日线代理观察不写入。列入日期=扫描列入日。",
     }
 
 
@@ -278,10 +270,9 @@ def log_as_segments(ruleset_id: str) -> list[dict]:
 
 
 def overlay_cycles(segments: list[dict], ruleset_id: str) -> list[dict]:
-    """规则回测只含扫描列入过买入/试仓池的票，不用理论回走段。"""
+    """正式买入/试仓记录优先；其余用观察名单上的规则回放。"""
     log_segs = log_as_segments(ruleset_id)
-    open_log = [s for s in log_segs if not s.get("closed")]
-    closed_log = [s for s in log_segs if s.get("closed")]
-    open_log.sort(key=lambda s: (s.get("buy_date") or "", s.get("code") or ""), reverse=True)
-    closed_log.sort(key=lambda s: (s.get("sell_date") or "", s.get("code") or ""), reverse=True)
-    return open_log + closed_log
+    log_codes = {ts_code(str(s.get("code") or "")) for s in log_segs}
+    log_codes.discard("")
+    kept = [s for s in segments or [] if ts_code(str(s.get("code") or "")) not in log_codes]
+    return list(log_segs) + kept

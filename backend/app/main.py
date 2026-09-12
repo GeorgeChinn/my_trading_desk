@@ -539,9 +539,10 @@ def _stamp_cycle_payload(payload: dict, rs: dict) -> dict:
 
 def _pool_gate_set(gate: str) -> set[str] | None:
     raw = (gate or "").strip()
+    listed = {"观察", "买入", "试仓", "持有", "卖出", "取关"}
     if raw == "在池":
-        return {"观察", "买入"}
-    if raw in ("观察", "买入"):
+        return {"观察", "买入", "试仓", "持有"}
+    if raw in listed:
         return {raw}
     return None
 
