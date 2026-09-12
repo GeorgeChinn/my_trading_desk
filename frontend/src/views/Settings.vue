@@ -119,7 +119,7 @@ function applySync(st) {
   syncText.value = st.message || "";
   barsDone.value = st.bars_done || 0;
   barsTotal.value = st.bars_total || 0;
-  if (st.pool_size) poolCount.value = st.pool_size;
+  if (st.pool_size && st.pool_size >= (poolCount.value || 0)) poolCount.value = st.pool_size;
 }
 async function poll() {
   try {

@@ -7,7 +7,7 @@
           总闸：排除 → 观察 → 买入 → 卖出。买入 = 路径到达，不是成交指令。列入买入池后才开这段回测。
         </p>
         <p class="stamp" v-if="stamp.asof || stamp.scanned_at">
-          总股池 {{ stamp.pool_n || data.pool && data.pool.count || 0 }} 只
+          总股池 {{ universeN }} 只
           · 数据日 {{ stamp.asof || "—" }}
           · 扫描 {{ stamp.scanned_at || "—" }}
         </p>
@@ -67,14 +67,14 @@
     </div>
     <p class="sub" v-if="currentRuleset && data.pool">
       {{ currentRuleset.file }} · {{ currentRuleset.title }}
-      · 总股池 {{ data.pool.count }} 只 · 排除 {{ (data.by_gate && data.by_gate.排除) || 0 }} · 剩下 {{ data.remain || 0 }}
+      · 总股池 {{ universeN }} 只 · 排除 {{ (data.by_gate && data.by_gate.排除) || 0 }} · 剩下 {{ data.remain || 0 }}
       · {{ data.pool.source }} {{ data.pool.trade_date }}
     </p>
     <div class="warn-banner" v-for="(r, i) in (data.reminders || [])" :key="'rm'+i">{{ r }}</div>
 
     <div class="grid cols-4" style="margin-bottom:14px">
       <div class="card stat">
-        <div class="n">{{ (data.pool && data.pool.count) || (data.rows || []).length }}</div>
+        <div class="n">{{ universeN }}</div>
         <div class="k">总股池</div>
       </div>
       <div class="card stat">
@@ -274,6 +274,17 @@ const buyNames = computed(() => {
 const watchNames = computed(() => ((data.value.names && data.value.names.观察) || []).filter(ownRow));
 const buyLog = computed(() => data.value.buy_log || { items: [], open: 0, closed: 0 });
 const stamp = computed(() => data.value.stamp || {});
+const universeN = computed(() => {
+  const s = data.value.stamp || {};
+  const p = data.value.pool || {};
+  const listed = Number((p.funnel && p.funnel.listed) || 0);
+  const csv = Number(s.csv_n || p.universe_count || p.total || 0);
+  if (csv > 0) return csv;
+  if (listed > 0) return listed;
+  const rows = (data.value.rows || []).length;
+  if (rows > listed && rows > 1000) return rows;
+  return Number(s.pool_n || p.count || rows || 0);
+});
 function signedPct(v) {
   if (v == null || Number.isNaN(Number(v))) return "—";
   const n = Number(v);

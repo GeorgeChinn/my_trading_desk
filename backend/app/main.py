@@ -188,15 +188,14 @@ def _scan_stamp(ruleset_id: str) -> dict:
     settings = load_settings()
     sync = load_sync_status()
     snap = load_pool_snapshot()
-    csv_n = sum(1 for _ in CSV_DIR.glob("*.csv"))
+    from .engine.pool import csv_universe_count
+
+    csv_n = csv_universe_count()
     asof = asof_date(settings.get("last_trade_date") or qmeta.get("trade_date") or snap.get("trade_date") or "")
     return {
         "asof": asof,
         "scanned_at": cached.get("updated_at") or "",
-        "quotes_at": qmeta.get("updated_at") or "",
-        "quotes_date": qmeta.get("trade_date") or asof,
-        "quotes_source": qmeta.get("source") or snap.get("source") or settings.get("data_source") or "",
-        "pool_n": csv_n or len(load_universe()),
+        "pool_n": csv_n,
         "csv_n": csv_n,
         "sync_at": sync.get("finished_at") or "",
         "note": "总股池 = data/csv 全部股票。规则门槛只在本页按各 RULES 排除。",
@@ -344,7 +343,7 @@ def health():
         "connected": bool(live) or len(load_universe()) > 0,
         "label": label,
         "csv_count": len(files),
-        "pool_count": len(load_universe()),
+        "pool_count": len(files),
         "data_source": source,
         "last_trade_date": asof_date(settings.get("last_trade_date") or ""),
         "person": "GeorgeChin",
@@ -376,6 +375,8 @@ def home():
                 "viewed": item.get("viewed", False),
             }
         )
+    from .engine.pool import csv_universe_count
+
     return {
         "health": health(),
         "path": "波段持有",
@@ -386,7 +387,7 @@ def home():
         "by_gate": summary["by_gate"],
         "names": summary.get("names") or {},
         "position_block": "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令",
-        "pool_count": len(load_universe()),
+        "pool_count": csv_universe_count(),
         "pool_trade_date": load_settings().get("last_trade_date") or "",
         "data_source": load_settings().get("data_source") or "csv",
         "reminders": funnel_reminders(load_settings()),
@@ -425,7 +426,9 @@ def scan(ruleset: str = Query("rules")):
         reminders.append(f"试仓池 {buy_n} 只。开几只由人定。试仓不是成交指令。")
     elif buy_n > 1 and not pullback:
         reminders.append(f"买入池 {buy_n} 只。当日全市场新开 ≤ 1 只试仓，禁止一次打满。")
-    pool_count = len(rows) if rows else len(load_universe())
+    from .engine.pool import csv_universe_count
+
+    pool_count = csv_universe_count()
     remain = int(tallied.get("remain") or 0)
     pool_note = (
         "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 试仓 / 持有 / 取关。"
@@ -464,6 +467,7 @@ def scan(ruleset: str = Query("rules")):
         "remain": remain,
         "pool": {
             "count": pool_count,
+            "universe_count": pool_count,
             "total": pool_count,
             "remain": remain,
             "excluded": int((tallied.get("by_gate") or {}).get("排除") or 0),
@@ -749,9 +753,11 @@ def settings_get():
     token = public.get("tushare_token") or ""
     public["tushare_configured"] = bool(token)
     public["tushare_token"] = "********" if token else ""
+    from .engine.pool import csv_universe_count
+
     public["csv_files"] = list_csv_files()
     public["csv_dir"] = str(CSV_DIR)
-    public["pool_count"] = len(load_universe())
+    public["pool_count"] = csv_universe_count()
     public["pool_snapshot"] = load_pool_snapshot()
     public["sync"] = load_sync_status()
     public["schedule"] = schedule_snapshot()
@@ -922,5 +928,5 @@ if DIST.exists():
             return FileResponse(candidate)
         index = DIST / "index.html"
         if index.exists():
-            return FileResponse(index)
+            return FileResponse(index, headers={"Cache-Control": "no-store"})
         raise HTTPException(404, "frontend dist missing")

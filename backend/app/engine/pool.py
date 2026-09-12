@@ -157,19 +157,22 @@ def build_universe_from_csv() -> tuple[list[dict], dict]:
     return out, funnel
 
 
+def csv_universe_count() -> int:
+    from ..config import CSV_DIR
+
+    return sum(1 for p in CSV_DIR.glob("*.csv") if p.is_file())
+
+
 def ashare_pool_public() -> dict:
     """A 股全股池：所有规则的扫描基准。"""
-    from ..config import CSV_DIR
-    from ..store import load_quotes_meta, load_settings, load_sync_status, load_universe
+    from ..store import load_quotes_meta, load_settings, load_sync_status
     from .clock import asof_date
 
-    uni = load_universe()
     qmeta = load_quotes_meta()
     settings = load_settings()
     sync = load_sync_status()
-    csv_n = sum(1 for _ in CSV_DIR.glob("*.csv"))
+    n = csv_universe_count()
     asof = asof_date(settings.get("last_trade_date") or qmeta.get("trade_date") or "")
-    n = csv_n or len(uni)
     return {
         "count": n,
         "asof": asof,
