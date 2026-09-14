@@ -99,7 +99,8 @@
       </div>
       <p class="sub" style="margin:0 0 8px">{{ data.sos.mainline_why || data.sos.note }}</p>
       <p class="sub" style="margin:0">
-        13:30 {{ data.sos.slot_1330 ? "有档" : "缺档" }}
+        T {{ data.sos.t_date || "—" }}
+        · 13:30 {{ data.sos.slot_1330 ? "有档" : "缺档" }}
         · 14:30 {{ data.sos.slot_1430 ? "有档" : "缺档" }}
         · 15:00 {{ data.sos.slot_1500 ? "有档" : "缺档" }}
         · {{ data.sos.in_window ? "现处于 13:30–14:30 试仓窗" : "现不在试仓窗" }}
@@ -223,8 +224,27 @@
             </div>
           </div>
         </div>
+        <div class="table-wrap" style="margin-top:10px" v-if="isSos && row.facts && row.facts.timeline && row.facts.timeline.length">
+          <table class="table">
+            <thead>
+              <tr><th>时序</th><th>日期</th><th>档</th><th>价格</th><th>涨幅</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in row.facts.timeline" :key="p.title">
+                <td>{{ p.title }}<div class="sub" style="margin:2px 0 0">{{ p.role }}</div></td>
+                <td>{{ p.date || "—" }}</td>
+                <td>{{ p.found ? (p.slot || "有") : (p.source === "close" ? "收盘" : "缺档") }}</td>
+                <td>{{ p.price == null ? "—" : money(p.price) }}</td>
+                <td>
+                  <span class="num" :class="pnlClass(p.pct)">{{ p.pct == null ? "—" : signedPct(p.pct) }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <p class="sub" style="margin:10px 0 0">
           {{ row.facts && row.facts.date }} 最新 {{ money(row.facts && row.facts.close) }}
+          <span v-if="row.facts && row.facts.pct != null"> · 当日 {{ signedPct(row.facts.pct) }}</span>
           <span v-if="row.facts && row.facts.dif != null"> · DIF {{ fmt(row.facts.dif) }}</span>
           <span v-if="row.key_kind"> · {{ row.key_kind }} 关键位 {{ money(row.key_price) }} 止损 {{ money(row.stop_price) }}</span>
         </p>

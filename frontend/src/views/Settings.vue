@@ -47,7 +47,7 @@
 
     <div class="card" style="margin-top:14px">
       <h3>已归档快照</h3>
-      <p class="sub">按日期 + 时间点存在 data/snapshots，各档互不覆盖。这里不是分时 K 线，data/csv 仍是 1 日 1 行。</p>
+      <p class="sub">到点按「更新时间点」把当时全 A 截面写入 data/snapshots。各档互不覆盖。不是分时 K 线，data/csv 仍是 1 日 1 行。</p>
       <table class="table" v-if="archives.length">
         <thead>
           <tr><th>日期</th><th>时间</th><th>股票条数</th><th>收盘档</th></tr>
@@ -72,6 +72,7 @@
         <button class="btn primary" :disabled="syncing" @click="sync(false)">现在更新实时数据</button>
         <button class="btn" :disabled="syncing" @click="sync(true)">强制重拉日线</button>
         <button class="btn" :disabled="syncing" @click="history">补全全A近3年日线</button>
+        <button class="btn" :disabled="syncing" @click="backfillSlots">补近30个交易日到点快照</button>
       </div>
       <table class="table" v-if="sources.length">
         <thead><tr><th>源</th><th>用途</th><th>状态</th><th>耗时</th><th>最近确认日</th></tr></thead>
@@ -186,6 +187,11 @@ async function sync(force) {
 }
 async function history() {
   const r = await api.startHistory();
+  syncText.value = r.message;
+  startPoll();
+}
+async function backfillSlots() {
+  const r = await api.startSnapshotBackfill("2026-09-14", 30);
   syncText.value = r.message;
   startPoll();
 }

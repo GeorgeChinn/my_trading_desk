@@ -63,6 +63,8 @@ export const api = {
   syncStatus: () => request("/api/sync"),
   startSync: (force = false) => request(`/api/sync?force=${force ? "true" : "false"}`, { method: "POST" }),
   startHistory: () => request("/api/sync/history", { method: "POST" }),
+  startSnapshotBackfill: (end = "2026-09-14", days = 30) =>
+    request(`/api/sync/snapshots?end=${encodeURIComponent(end)}&days=${days}`, { method: "POST" }),
   sources: () => request("/api/sources"),
   schedule: () => request("/api/schedule"),
   snapshots: (params = {}) => {

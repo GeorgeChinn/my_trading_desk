@@ -61,6 +61,9 @@ _SNAP: dict[tuple[str, str], dict | None] = {}
 _EVENTS: dict[str, dict | None] = {}
 _AMT: dict[str, float] = {}
 _INDEX: dict[str, dict[str, float]] = {}
+_BOARD: dict | None = None
+_IND: dict[str, str] = {}
+_RANKS: dict[str, dict] = {}
 
 
 def _num(value):
@@ -360,7 +363,7 @@ def _amount_map(last_n: int = 16, rebuild: bool = False, quotes: dict | None = N
         live = _quotes_amount(quotes)
         if live:
             _AMT[asof] = live
-    if _AMT and not rebuild:
+    if _AMT and (not rebuild or len(_AMT) >= 5):
         return _AMT
     if not rebuild:
         return _AMT
@@ -555,11 +558,35 @@ def classify_env(stats: dict, date: str, draft_1330: bool = False) -> dict:
     }
 
 
+def _board_blob() -> dict:
+    global _BOARD
+    if _BOARD is None:
+        _BOARD = load_board_daily() or {}
+    return _BOARD
+
+
+def _industry(code: str) -> str:
+    c = ts_code(code)
+    if not _IND:
+        from .boards import load_industry_blob, sw_maps
+
+        sw1, sw2 = sw_maps()
+        blob = load_industry_blob()
+        codes = blob.get("codes") if isinstance(blob.get("codes"), dict) else {}
+        for src in (codes, sw1, sw2):
+            for k, v in (src or {}).items():
+                if v:
+                    _IND[ts_code(str(k))] = str(v)
+        for k, v in (sw2 or {}).items():
+            if v:
+                _IND[ts_code(str(k))] = str(v)
+    return _IND.get(c) or industry_of(c) or ""
+
+
 def _board_row(industry: str | None, date: str) -> dict:
     if not industry:
         return {}
-    payload = load_board_daily()
-    rec = (payload.get("boards") or {}).get(industry) or {}
+    rec = (_board_blob().get("boards") or {}).get(industry) or {}
     return dict((rec.get("by_date") or {}).get(date) or {})
 
 
@@ -580,7 +607,7 @@ def _theme_zt(industry: str | None, date: str, slot: str | None = None) -> int |
             return None
         n = 0
         for code, rec in (snap.get("quotes") or {}).items():
-            if not isinstance(rec, dict) or industry_of(code) != industry:
+            if not isinstance(rec, dict) or _industry(code) != industry:
                 continue
             if _is_limit_quote(code, rec):
                 n += 1
@@ -588,7 +615,7 @@ def _theme_zt(industry: str | None, date: str, slot: str | None = None) -> int |
     events = _cached_events(date) or {}
     pool = events.get("limit_up") if isinstance(events, dict) else None
     if pool:
-        return sum(1 for rec in pool if industry_of(str(rec.get("code") or "")) == industry)
+        return sum(1 for rec in pool if _industry(str(rec.get("code") or "")) == industry)
     row = _board_row(industry, date)
     if not row:
         return None
@@ -603,7 +630,7 @@ def _theme_ret(industry: str | None, date: str) -> float | None:
 
 
 def _sh_ret(date: str) -> float | None:
-    series = ensure_index_daily().get("sh000001") or {}
+    series = ensure_index_daily(fetch=False).get("sh000001") or {}
     dates = [d for d in sorted(series) if d <= date]
     if len(dates) < 2:
         return None
@@ -613,21 +640,30 @@ def _sh_ret(date: str) -> float | None:
     return (b / a - 1.0) * 100.0
 
 
-def _rank_theme(date: str, industry: str | None) -> tuple:
-    ret = _theme_ret(industry, date)
-    payload = load_board_daily()
+def _rank_map(date: str) -> dict[str, tuple]:
+    if date in _RANKS:
+        return _RANKS[date]
     rets = []
-    for name, rec in (payload.get("boards") or {}).items():
+    for name, rec in (_board_blob().get("boards") or {}).items():
         row = (rec.get("by_date") or {}).get(date) or {}
         r = _num(row.get("ret_1d"))
         if r is not None:
             rets.append((name, r))
     rets.sort(key=lambda x: x[1], reverse=True)
-    if not rets or ret is None:
-        return None, ret, None
-    rank = next((i + 1 for i, (n, _) in enumerate(rets) if n == industry), None)
-    top_n = max(1, int(len(rets) * TOP_SHARE + 0.999))
-    return rank, ret, rank is not None and rank <= top_n
+    top_n = max(1, int(len(rets) * TOP_SHARE + 0.999)) if rets else 1
+    out = {}
+    for i, (name, r) in enumerate(rets, start=1):
+        out[name] = (i, r, i <= top_n)
+    _RANKS[date] = out
+    return out
+
+
+def _rank_theme(date: str, industry: str | None) -> tuple:
+    ranks = _rank_map(date)
+    if not industry or industry not in ranks:
+        return None, _theme_ret(industry, date), None
+    rank, ret, in_top = ranks[industry]
+    return rank, ret, in_top
 
 
 def _climax_zero(counts: list[int]) -> bool:
@@ -679,9 +715,9 @@ def theme_state(industry: str | None, date: str, slot: str | None = None) -> dic
 
 
 def pick_mainline(date: str, slot: str | None = None) -> dict | None:
-    payload = load_board_daily()
+    ranks = _rank_map(date)
     best = None
-    for name in (payload.get("boards") or {}):
+    for name in ranks:
         st = theme_state(name, date, slot=slot)
         if not st.get("live"):
             continue
@@ -839,6 +875,83 @@ def other_rules_holds() -> set[str]:
     except Exception:
         pass
     return codes
+
+
+def _pct_vs(px, pre):
+    if px is None or not pre:
+        return None
+    return round((px / pre - 1.0) * 100.0, 2)
+
+
+def _slot_line(code: str, date: str, slot: str, title: str, role: str, pre) -> dict:
+    q = slot_quote(date, slot, code)
+    if not q:
+        return {
+            "title": title,
+            "role": role,
+            "date": date,
+            "slot": slot,
+            "found": False,
+            "source": "",
+            "price": None,
+            "pct": None,
+            "open": None,
+            "high": None,
+            "low": None,
+        }
+    px = _px(q, "close")
+    pct = _num(q.get("pct"))
+    if pct is None:
+        pct = _pct_vs(px, pre)
+    else:
+        pct = round(pct, 2)
+    return {
+        "title": title,
+        "role": role,
+        "date": date,
+        "slot": slot,
+        "found": True,
+        "source": slot,
+        "price": px,
+        "pct": pct,
+        "open": _px(q, "open"),
+        "high": _px(q, "high"),
+        "low": _px(q, "low"),
+    }
+
+
+def _close_line(row: dict | None, date: str, title: str, role: str, pre) -> dict:
+    px = _px(row, "close")
+    return {
+        "title": title,
+        "role": role,
+        "date": date,
+        "slot": "close",
+        "found": px is not None,
+        "source": "close",
+        "price": px,
+        "pct": _pct_vs(px, pre),
+        "open": _px(row, "open"),
+        "high": _px(row, "high"),
+        "low": _px(row, "low"),
+    }
+
+
+def build_timeline(code: str, bars: list[dict], t_i: int, t1_i: int) -> list[dict]:
+    """T 时序价格/涨幅。缺档为空，禁止用更晚档填更早档。收盘另列，供缺档回测续走。"""
+    t_date = str(bars[t_i].get("date") or "")[:10]
+    t1_date = str(bars[t1_i].get("date") or "")[:10]
+    pre_t1 = _px(bars[t1_i - 1], "close") if t1_i >= 1 else None
+    pre_t = _px(bars[t1_i], "close")
+    return [
+        _slot_line(code, t1_date, SLOT_LIVE, "T-1 13:30", "POOL_LIVE 草稿", pre_t1),
+        _slot_line(code, t1_date, SLOT_FINAL, "T-1 15:00", "POOL_FINAL", pre_t1),
+        _close_line(bars[t1_i], t1_date, "T-1 收盘", "缺档时回测用此收盘", pre_t1),
+        _slot_line(code, t_date, SLOT_LIVE, "T 13:30", "刷新主题 / 试仓窗开", pre_t),
+        _slot_line(code, t_date, SLOT_BUY_END, "T 14:30", "试仓窗关，此后禁止新开", pre_t),
+        _slot_line(code, t_date, SLOT_FINAL, "T 15:00", "收盘档", pre_t),
+        _close_line(bars[t_i], t_date, "T 收盘", "缺档时回测用此收盘", pre_t),
+    ]
 
 
 def _price_view(bars: list[dict], i: int, code: str, slot: str | None) -> tuple[dict, bool, str]:
@@ -1002,7 +1115,7 @@ def evaluate_exit_sos(bars: list[dict], open_pos: dict | None, zone: dict | None
     code = ts_code(str(open_pos.get("code") or last.get("code") or ""))
     if close is None or buy_px is None:
         return False, "", ""
-    industry = (zone or {}).get("industry") or industry_of(code)
+    industry = (zone or {}).get("industry") or _industry(code)
     asof = str(last.get("date") or "")[:10]
     if close <= buy_px * FAIL_PCT + 1e-12:
         return True, "失败", f"最新价 {close:.2f} ≤ 买入价×0.95（{buy_px * FAIL_PCT:.2f}）"
@@ -1055,13 +1168,13 @@ def _leaders_n(date: str, industry: str, quotes: dict, bars_by_code=None) -> int
     events = _cached_events(date) or {}
     for rec in events.get("limit_up") or []:
         c = ts_code(str(rec.get("code") or ""))
-        if industry_of(c) == industry:
+        if _industry(c) == industry:
             n += 1
     if n >= LEADERS:
         return n
     extra = 0
     for code, q in (quotes or {}).items():
-        if industry_of(code) != industry:
+        if _industry(code) != industry:
             continue
         pct = _num(q.get("pct"))
         if pct is not None and pct >= LEAD_PCT * 100:
@@ -1126,7 +1239,16 @@ def classify_sos(
     base["data_ok"] = True
     base["facts"]["date"] = asof
     base["facts"]["close"] = last.get("close")
-    base["industry"] = industry_of(code) or meta.get("industry") or ""
+    t1_i = last_i - 1 if last_i >= 1 else last_i
+    t1_date = str(bars[t1_i].get("date") or "")[:10]
+    pre_t = _px(bars[t1_i], "close")
+    base["facts"]["t_date"] = asof
+    base["facts"]["t1_date"] = t1_date
+    base["facts"]["preclose"] = pre_t
+    base["facts"]["pct"] = _pct_vs(_px(last, "close"), pre_t)
+    base["facts"]["ma20"] = _ma20(bars, last_i)
+    base["facts"]["timeline"] = build_timeline(code, bars, last_i, t1_i)
+    base["industry"] = _industry(code) or meta.get("industry") or ""
     env = ctx.get("env") or classify_env(market_stats_at(asof, None), asof)
     theme = ctx.get("theme_by_ind", {}).get(base["industry"]) or theme_state(base["industry"], asof)
     mainline = ctx.get("mainline") or {}
@@ -1198,8 +1320,6 @@ def classify_sos(
         base["veto"].append("与 RULES1–4 已持仓同一只票")
         return base
 
-    t1_i = last_i - 1 if last_i >= 1 else last_i
-    t1_date = str(bars[t1_i].get("date") or "")[:10]
     px_final, found_final, _src = _price_view(bars, t1_i, code, SLOT_FINAL)
     fails = pool_fail(bars, t1_i, code, name, meta, px_final if found_final else None, found_final)
     kick = _kick_final(bars, t1_i, code, theme_state(base["industry"], t1_date), px_final if found_final else bars[t1_i], found_final)
@@ -1286,9 +1406,9 @@ def classify_sos(
     return base
 
 
-def _build_ctx(quotes: dict, asof: str, live: bool = True) -> dict:
-    ensure_index_daily()
-    _amount_map()
+def _build_ctx(quotes: dict, asof: str, live: bool = True, heavy: bool = False) -> dict:
+    ensure_index_daily(fetch=heavy)
+    _amount_map(rebuild=heavy, quotes=quotes, asof=asof)
     stats_close = market_stats_at(asof, None)
     stats_1330 = market_stats_at(asof, SLOT_LIVE)
     env = classify_env(stats_close, asof, draft_1330=False)
@@ -1328,7 +1448,8 @@ def _build_ctx(quotes: dict, asof: str, live: bool = True) -> dict:
         "slot_1430": bool(_cached_snap(asof, SLOT_BUY_END)),
         "slot_1500": bool(_cached_snap(asof, SLOT_FINAL)),
         "in_window": in_window,
-        "note": "缺档字段空着，不拿更晚的快照填更早的档。回测缺档按收盘价继续。",
+        "note": "缺档字段空着，不拿更晚的快照填更早的档。回测缺档按收盘价继续。龙虎榜无数据，该否决不卡。",
+        "t_date": asof,
     }
     SosScan.market = {"env": env.get("label"), "mainline": (mainline or {}).get("industry")}
     SosScan.funnel = [mainline] if mainline else []
@@ -1356,17 +1477,19 @@ def classify_one_sos(code: str, settings: dict, trades: list | None = None) -> d
     except Exception:
         pass
     asof = session_trading_date().isoformat()
-    ctx = _build_ctx(quotes, asof, live=True)
+    ctx = _build_ctx(quotes, asof, live=True, heavy=False)
     return classify_sos(meta, settings, trades, quotes=quotes, open_pos=open_pos, ctx=ctx)
 
 
 def scan_sos(settings: dict, trades: list | None = None) -> list[dict]:
-    from .eastmoney import hydrate_universe
+    items = load_universe()
+    if len(items) < 200:
+        from .eastmoney import hydrate_universe
 
-    items = hydrate_universe()
+        items = hydrate_universe()
     quotes = load_quotes()
     asof = session_trading_date().isoformat()
-    ctx = _build_ctx(quotes, asof, live=True)
+    ctx = _build_ctx(quotes, asof, live=True, heavy=True)
     opens = {}
     try:
         from .buy_log import load_buy_log
@@ -1435,7 +1558,7 @@ def is_buy_sos(bars: list[dict], ctx: dict | None = None) -> bool:
     t1 = i - 1
     asof = str(bars[i].get("date") or "")[:10]
     t1_date = str(bars[t1].get("date") or "")[:10]
-    industry = industry_of(code) or str(ctx.get("industry") or "")
+    industry = _industry(code) or str(ctx.get("industry") or "")
     env = classify_env(market_stats_at(asof, None), asof)
     if env.get("label") == "ENV_OFF":
         return False
@@ -1478,7 +1601,7 @@ def walk_cycles_sos(bars: list[dict], ctx: dict | None = None) -> tuple[list[dic
         return [], None
     code = ts_code(str(ctx.get("code") or bars[-1].get("code") or ""))
     ctx["code"] = code
-    ctx["industry"] = industry_of(code) or ""
+    ctx["industry"] = _industry(code) or ""
     cycles = []
     open_i = None
     zone = None

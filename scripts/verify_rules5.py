@@ -14,6 +14,7 @@ from app.engine.theme_sos import (  # noqa: E402
     SLOT_LIVE,
     _SNAP,
     _price_view,
+    build_timeline,
     slot_quote,
 )
 
@@ -71,6 +72,22 @@ def main() -> int:
     assert buy_minutes(SLOT_LIVE) == 150
     assert buy_minutes(SLOT_BUY_END) == 210
 
+    _SNAP.clear()
+    _SNAP[("2026-09-14", "15:30")] = {"quotes": {"600000": {"code": "600000", "close": 15.3, "pct": 5.0}}}
+    _SNAP[("2026-09-11", "15:00")] = {"quotes": {"600000": {"code": "600000", "close": 9.5, "pct": -0.5}}}
+    bars = [
+        _bar("2026-09-10", 9.0),
+        _bar("2026-09-11", 9.6),
+        _bar("2026-09-14", 10.0),
+    ]
+    tl = build_timeline("600000", bars, 2, 1)
+    by = {x["title"]: x for x in tl}
+    assert by["T 13:30"]["found"] is False and by["T 13:30"]["price"] is None
+    assert by["T 14:30"]["found"] is False
+    assert by["T 15:00"]["found"] is False
+    assert by["T 收盘"]["price"] == 10.0
+    assert by["T-1 15:00"]["found"] is True and by["T-1 15:00"]["price"] == 9.5
+    assert 15.3 not in [x.get("price") for x in tl]
     print("ok")
     return 0
 

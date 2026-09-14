@@ -1,3 +1,424 @@
 {
-  "items": []
+  "items": [
+    {
+      "trade_date": "2026-09-14",
+      "slot": "16:30",
+      "captured_at": "2026-09-14 16:30:00",
+      "quote_n": 2002,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-14",
+      "slot": "15:30",
+      "captured_at": "2026-09-14 15:30:00",
+      "quote_n": 2002,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-11",
+      "slot": "16:30",
+      "captured_at": "2026-09-11 16:30:00",
+      "quote_n": 5187,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-11",
+      "slot": "15:30",
+      "captured_at": "2026-09-11 15:30:00",
+      "quote_n": 5187,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-10",
+      "slot": "16:30",
+      "captured_at": "2026-09-10 16:30:00",
+      "quote_n": 5187,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-10",
+      "slot": "15:30",
+      "captured_at": "2026-09-10 15:30:00",
+      "quote_n": 5187,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-09",
+      "slot": "16:30",
+      "captured_at": "2026-09-09 16:30:00",
+      "quote_n": 5189,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-09",
+      "slot": "15:30",
+      "captured_at": "2026-09-09 15:30:00",
+      "quote_n": 5189,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-08",
+      "slot": "16:30",
+      "captured_at": "2026-09-08 16:30:00",
+      "quote_n": 5190,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-08",
+      "slot": "15:30",
+      "captured_at": "2026-09-08 15:30:00",
+      "quote_n": 5190,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-07",
+      "slot": "16:30",
+      "captured_at": "2026-09-07 16:30:00",
+      "quote_n": 5190,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-07",
+      "slot": "15:30",
+      "captured_at": "2026-09-07 15:30:00",
+      "quote_n": 5190,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-04",
+      "slot": "16:30",
+      "captured_at": "2026-09-04 16:30:00",
+      "quote_n": 5197,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-04",
+      "slot": "15:30",
+      "captured_at": "2026-09-04 15:30:00",
+      "quote_n": 5197,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-03",
+      "slot": "16:30",
+      "captured_at": "2026-09-03 16:30:00",
+      "quote_n": 5199,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-03",
+      "slot": "15:30",
+      "captured_at": "2026-09-03 15:30:00",
+      "quote_n": 5199,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-02",
+      "slot": "16:30",
+      "captured_at": "2026-09-02 16:30:00",
+      "quote_n": 5198,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-02",
+      "slot": "15:30",
+      "captured_at": "2026-09-02 15:30:00",
+      "quote_n": 5198,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-01",
+      "slot": "16:30",
+      "captured_at": "2026-09-01 16:30:00",
+      "quote_n": 5198,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-09-01",
+      "slot": "15:30",
+      "captured_at": "2026-09-01 15:30:00",
+      "quote_n": 5198,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-31",
+      "slot": "16:30",
+      "captured_at": "2026-08-31 16:30:00",
+      "quote_n": 5199,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-31",
+      "slot": "15:30",
+      "captured_at": "2026-08-31 15:30:00",
+      "quote_n": 5199,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-28",
+      "slot": "16:30",
+      "captured_at": "2026-08-28 16:30:00",
+      "quote_n": 5201,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-28",
+      "slot": "15:30",
+      "captured_at": "2026-08-28 15:30:00",
+      "quote_n": 5201,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-27",
+      "slot": "16:30",
+      "captured_at": "2026-08-27 16:30:00",
+      "quote_n": 5202,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-27",
+      "slot": "15:30",
+      "captured_at": "2026-08-27 15:30:00",
+      "quote_n": 5202,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-26",
+      "slot": "16:30",
+      "captured_at": "2026-08-26 16:30:00",
+      "quote_n": 5202,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-26",
+      "slot": "15:30",
+      "captured_at": "2026-08-26 15:30:00",
+      "quote_n": 5202,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-25",
+      "slot": "16:30",
+      "captured_at": "2026-08-25 16:30:00",
+      "quote_n": 5201,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-25",
+      "slot": "15:30",
+      "captured_at": "2026-08-25 15:30:00",
+      "quote_n": 5201,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-24",
+      "slot": "16:30",
+      "captured_at": "2026-08-24 16:30:00",
+      "quote_n": 5201,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-24",
+      "slot": "15:30",
+      "captured_at": "2026-08-24 15:30:00",
+      "quote_n": 5201,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-21",
+      "slot": "16:30",
+      "captured_at": "2026-08-21 16:30:00",
+      "quote_n": 5199,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-21",
+      "slot": "15:30",
+      "captured_at": "2026-08-21 15:30:00",
+      "quote_n": 5199,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-20",
+      "slot": "16:30",
+      "captured_at": "2026-08-20 16:30:00",
+      "quote_n": 5198,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-20",
+      "slot": "15:30",
+      "captured_at": "2026-08-20 15:30:00",
+      "quote_n": 5198,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-19",
+      "slot": "16:30",
+      "captured_at": "2026-08-19 16:30:00",
+      "quote_n": 5199,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-19",
+      "slot": "15:30",
+      "captured_at": "2026-08-19 15:30:00",
+      "quote_n": 5199,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-18",
+      "slot": "16:30",
+      "captured_at": "2026-08-18 16:30:00",
+      "quote_n": 5200,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-18",
+      "slot": "15:30",
+      "captured_at": "2026-08-18 15:30:00",
+      "quote_n": 5200,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-17",
+      "slot": "16:30",
+      "captured_at": "2026-08-17 16:30:00",
+      "quote_n": 5200,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-17",
+      "slot": "15:30",
+      "captured_at": "2026-08-17 15:30:00",
+      "quote_n": 5200,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-14",
+      "slot": "16:30",
+      "captured_at": "2026-08-14 16:30:00",
+      "quote_n": 5202,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-14",
+      "slot": "15:30",
+      "captured_at": "2026-08-14 15:30:00",
+      "quote_n": 5202,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-13",
+      "slot": "16:30",
+      "captured_at": "2026-08-13 16:30:00",
+      "quote_n": 5202,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-13",
+      "slot": "15:30",
+      "captured_at": "2026-08-13 15:30:00",
+      "quote_n": 5202,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-12",
+      "slot": "16:30",
+      "captured_at": "2026-08-12 16:30:00",
+      "quote_n": 5201,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-12",
+      "slot": "15:30",
+      "captured_at": "2026-08-12 15:30:00",
+      "quote_n": 5201,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-11",
+      "slot": "16:30",
+      "captured_at": "2026-08-11 16:30:00",
+      "quote_n": 5202,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-11",
+      "slot": "15:30",
+      "captured_at": "2026-08-11 15:30:00",
+      "quote_n": 5202,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-10",
+      "slot": "16:30",
+      "captured_at": "2026-08-10 16:30:00",
+      "quote_n": 5204,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-10",
+      "slot": "15:30",
+      "captured_at": "2026-08-10 15:30:00",
+      "quote_n": 5204,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-07",
+      "slot": "16:30",
+      "captured_at": "2026-08-07 16:30:00",
+      "quote_n": 5201,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-07",
+      "slot": "15:30",
+      "captured_at": "2026-08-07 15:30:00",
+      "quote_n": 5201,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-06",
+      "slot": "16:30",
+      "captured_at": "2026-08-06 16:30:00",
+      "quote_n": 5199,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-06",
+      "slot": "15:30",
+      "captured_at": "2026-08-06 15:30:00",
+      "quote_n": 5199,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-05",
+      "slot": "16:30",
+      "captured_at": "2026-08-05 16:30:00",
+      "quote_n": 5198,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-05",
+      "slot": "15:30",
+      "captured_at": "2026-08-05 15:30:00",
+      "quote_n": 5198,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-04",
+      "slot": "16:30",
+      "captured_at": "2026-08-04 16:30:00",
+      "quote_n": 5196,
+      "market_closed": true
+    },
+    {
+      "trade_date": "2026-08-04",
+      "slot": "15:30",
+      "captured_at": "2026-08-04 15:30:00",
+      "quote_n": 5196,
+      "market_closed": true
+    }
+  ]
 }

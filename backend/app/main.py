@@ -948,6 +948,28 @@ def sync_history():
     return {"ok": True, "started": True, "message": "已开始补全全 A 近 3 年确认日线。不改规则扫描池。可在本页看进度。"}
 
 
+@app.post("/api/sync/snapshots")
+def sync_snapshots(end: str = Query("2026-09-14"), days: int = Query(30)):
+    global _sync_thread
+    current = load_sync_status()
+    if current.get("state") == "running" and _sync_thread and _sync_thread.is_alive():
+        return {"ok": True, "started": False, "message": "同步已在进行", "status": current}
+
+    def run():
+        with _sync_lock:
+            from .engine.slot_backfill import backfill_slot_snapshots
+
+            backfill_slot_snapshots(end=end, days=days)
+
+    _sync_thread = threading.Thread(target=run, daemon=True, name="slot-snapshots")
+    _sync_thread.start()
+    return {
+        "ok": True,
+        "started": True,
+        "message": f"已开始按已选时间点补 {days} 个交易日到点快照（截止 {end}）。不写 data/csv。完成后会重扫 RULES5。",
+    }
+
+
 @app.get("/api/ideas")
 def ideas():
     return {"items": load_ideas()}

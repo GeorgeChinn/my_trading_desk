@@ -1,7 +1,7 @@
 {
   "trade_date": "2026-09-14",
-  "slot": "20:46",
-  "updated_at": "2026-09-14 20:48:03",
+  "slot": "backfill",
+  "updated_at": "2026-09-15 00:04:27",
   "limit_up": [
     {
       "code": "000981",

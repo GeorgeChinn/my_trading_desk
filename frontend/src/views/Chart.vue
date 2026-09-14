@@ -10,6 +10,27 @@
     </div>
     <div class="warn-banner" v-if="scan.position_block || scan.status">{{ scan.position_block || "总闸" }} · {{ scan.status }}</div>
     <p class="sub" v-if="scan.key_kind">{{ scan.key_kind }} 关键位 {{ n2(scan.key_price) }} · 止损 {{ n2(scan.stop_price) }}</p>
+    <div class="card table-wrap" style="margin-bottom:14px" v-if="(scan.facts && scan.facts.timeline || []).length">
+      <div class="ov-title">RULES5 T 时序</div>
+      <p class="sub" style="margin:0 0 8px">缺档为空，不拿更晚的价填更早的档。回测缺档按收盘价继续。</p>
+      <table class="table">
+        <thead>
+          <tr><th>时序</th><th>日期</th><th>档</th><th>开</th><th>高</th><th>低</th><th>价格</th><th>涨幅</th></tr>
+        </thead>
+        <tbody>
+          <tr v-for="p in scan.facts.timeline" :key="p.title">
+            <td>{{ p.title }}<div class="sub" style="margin:2px 0 0">{{ p.role }}</div></td>
+            <td>{{ p.date || "—" }}</td>
+            <td>{{ p.found ? (p.slot || "有") : (p.source === "close" ? "收盘" : "缺档") }}</td>
+            <td>{{ n2(p.open) }}</td>
+            <td>{{ n2(p.high) }}</td>
+            <td>{{ n2(p.low) }}</td>
+            <td>{{ n2(p.price) }}</td>
+            <td>{{ p.pct == null ? "—" : (p.pct > 0 ? "+" : "") + Number(p.pct).toFixed(2) + "%" }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     <div class="card" style="margin-bottom:14px">
       <KlineChart :bars="bars" :trigger-date="triggerDate" :segments="backtestOn ? segments : []" @pick="picked = $event" />
     </div>

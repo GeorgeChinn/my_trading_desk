@@ -124,7 +124,8 @@ def fetch_index_codes(node: str) -> set[str]:
     return out
 
 
-def fetch_kline_em(code: str, limit: int = 180) -> list[dict]:
+def fetch_bars_em(code: str, limit: int = 180, klt: int = 101) -> list[dict]:
+    """East Money kline. klt=101 daily, 30 = 30-minute. Slot only on minute bars."""
     sess = _session()
     sess.headers["Referer"] = "https://quote.eastmoney.com/"
     last_exc = None
@@ -135,7 +136,7 @@ def fetch_kline_em(code: str, limit: int = 180) -> list[dict]:
                 url,
                 {
                     "secid": secid(code),
-                    "klt": "101",
+                    "klt": str(klt),
                     "fqt": "0",
                     "lmt": str(limit),
                     "end": "20500101",
@@ -150,10 +151,14 @@ def fetch_kline_em(code: str, limit: int = 180) -> list[dict]:
                 parts = str(line).split(",")
                 if len(parts) < 6:
                     continue
+                raw = str(parts[0])
+                date = raw[:10]
+                stamp = raw[11:16] if len(raw) >= 16 and raw[10] == " " else ""
                 amount = float(parts[6]) if len(parts) > 6 else 0.0
                 rows.append(
                     {
-                        "date": parts[0][:10],
+                        "date": date,
+                        "slot": stamp,
                         "open": float(parts[1]),
                         "close": float(parts[2]),
                         "high": float(parts[3]),
@@ -170,6 +175,10 @@ def fetch_kline_em(code: str, limit: int = 180) -> list[dict]:
     if last_exc:
         raise last_exc
     return []
+
+
+def fetch_kline_em(code: str, limit: int = 180) -> list[dict]:
+    return fetch_bars_em(code, limit=limit, klt=101)
 
 
 def fetch_kline_sina(code: str, limit: int = 180) -> list[dict]:
@@ -228,6 +237,53 @@ def fetch_kline_tencent(code: str, limit: int = 180) -> list[dict]:
             }
         )
     return rows
+
+
+def fetch_index_bars_em(secid_s: str, limit: int = 280, klt: int = 30) -> list[dict]:
+    sess = _session()
+    sess.headers["Referer"] = "https://quote.eastmoney.com/"
+    last_exc = None
+    for url in KLINE_URLS:
+        try:
+            payload = _get_json(
+                sess,
+                url,
+                {
+                    "secid": secid_s,
+                    "klt": str(klt),
+                    "fqt": "0",
+                    "lmt": str(limit),
+                    "end": "20500101",
+                    "fields1": "f1,f2,f3,f4,f5,f6",
+                    "fields2": "f51,f52,f53,f54,f55,f56,f57",
+                },
+                timeout=20,
+            )
+            klines = ((payload or {}).get("data") or {}).get("klines") or []
+            rows = []
+            for line in klines:
+                parts = str(line).split(",")
+                if len(parts) < 5:
+                    continue
+                raw = str(parts[0])
+                rows.append(
+                    {
+                        "date": raw[:10],
+                        "slot": raw[11:16] if len(raw) >= 16 and raw[10] == " " else "",
+                        "open": float(parts[1]),
+                        "close": float(parts[2]),
+                        "high": float(parts[3]),
+                        "low": float(parts[4]),
+                    }
+                )
+            if rows:
+                return rows
+        except Exception as exc:
+            last_exc = exc
+            continue
+    if last_exc:
+        raise last_exc
+    return []
 
 
 def fetch_index_kline(symbol: str, limit: int = 8) -> list[dict]:
