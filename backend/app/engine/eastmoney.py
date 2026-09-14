@@ -253,6 +253,109 @@ def fetch_index_kline(symbol: str, limit: int = 8) -> list[dict]:
     return rows
 
 
+INDEX_SPOT_SECIDS = (
+    ("sh000001", "1.000001"),
+    ("sz399006", "0.399006"),
+    ("sh000300", "1.000300"),
+)
+_INDEX_CODE_TO_KEY = {"000001": "sh000001", "399006": "sz399006", "000300": "sh000300"}
+
+
+def _empty_index_spot() -> dict:
+    blank = {"open": None, "high": None, "low": None, "close": None, "pct": None}
+    return {key: dict(blank) for key, _secid in INDEX_SPOT_SECIDS}
+
+
+def _px(val):
+    try:
+        if val is None or val == "" or val == "-":
+            return None
+        num = float(val)
+        if num != num:
+            return None
+        return num
+    except (TypeError, ValueError):
+        return None
+
+
+def fetch_index_spot() -> dict:
+    """Live index OHLC + pct for snapshot archive. Never writes data/csv."""
+    out = _empty_index_spot()
+    sess = _session()
+    sess.headers["Referer"] = "https://quote.eastmoney.com/"
+    try:
+        payload = _get_json(
+            sess,
+            "https://push2.eastmoney.com/api/qt/ulist.np/get",
+            {
+                "fltt": 2,
+                "invt": 2,
+                "secids": ",".join(secid for _key, secid in INDEX_SPOT_SECIDS),
+                "fields": "f2,f3,f12,f14,f15,f16,f17,f18",
+            },
+            timeout=10,
+        )
+        diff = ((payload or {}).get("data") or {}).get("diff") or []
+        if isinstance(diff, dict):
+            diff = list(diff.values())
+        hit = 0
+        for rec in diff:
+            if not isinstance(rec, dict):
+                continue
+            code = str(rec.get("f12") or "").zfill(6)
+            key = _INDEX_CODE_TO_KEY.get(code)
+            if not key:
+                continue
+            close = _px(rec.get("f2"))
+            pre = _px(rec.get("f18"))
+            pct = _px(rec.get("f3"))
+            if pct is None and close and pre:
+                pct = (close / pre - 1.0) * 100.0
+            out[key] = {
+                "open": _px(rec.get("f17")),
+                "high": _px(rec.get("f15")),
+                "low": _px(rec.get("f16")),
+                "close": close,
+                "pct": round(pct, 3) if pct is not None else None,
+            }
+            hit += 1
+        if hit:
+            return out
+    except Exception:
+        pass
+    try:
+        sess.headers["Referer"] = "https://finance.sina.com.cn/"
+        resp = sess.get(
+            "https://hq.sinajs.cn/list=sh000001,sz399006,sh000300",
+            timeout=10,
+        )
+        resp.raise_for_status()
+        text = resp.content.decode("gbk", errors="ignore")
+        for line in text.splitlines():
+            if "hq_str_" not in line or "=" not in line:
+                continue
+            left, _, right = line.partition("=")
+            key = left.split("hq_str_")[-1].strip()
+            if key not in out:
+                continue
+            body = right.strip().strip(";").strip('"')
+            parts = body.split(",")
+            if len(parts) < 6:
+                continue
+            open_px, pre, close, high, low = (_px(parts[i]) for i in (1, 2, 3, 4, 5))
+            pct = (close / pre - 1.0) * 100.0 if close and pre else None
+            out[key] = {
+                "open": open_px,
+                "high": high,
+                "low": low,
+                "close": close,
+                "pct": round(pct, 3) if pct is not None else None,
+            }
+    except Exception:
+        pass
+    return out
+
+
 def fetch_industry_boards() -> list[dict]:
     """East Money 行业板块. f127 is 近3日涨跌幅 %."""
     sess = _session()
@@ -410,7 +513,36 @@ def fetch_stock_industry(code: str) -> str | None:
     return None
 
 
-def _em_pool(url: str, date: str) -> list[dict]:
+def _fmt_fbt(raw):
+    """Keep raw fbt; also HH:MM:SS when the number is seconds-from-midnight or HHMMSS."""
+    if raw is None or raw == "":
+        return None, None
+    try:
+        n = int(float(raw))
+    except (TypeError, ValueError):
+        text = str(raw).strip()
+        return text or None, None
+    if n <= 0:
+        return n, None
+    if n >= 1_000_000_000:
+        try:
+            from datetime import datetime as _dt
+
+            return n, _dt.fromtimestamp(n).strftime("%H:%M:%S")
+        except (OSError, OverflowError, ValueError):
+            return n, None
+    if n >= 10_000:
+        hour, minute, sec = n // 10000, (n // 100) % 100, n % 100
+        if 0 <= hour <= 23 and 0 <= minute <= 59 and 0 <= sec <= 59:
+            return n, f"{hour:02d}:{minute:02d}:{sec:02d}"
+        return n, None
+    if n < 86400:
+        hour, minute, sec = n // 3600, (n % 3600) // 60, n % 60
+        return n, f"{hour:02d}:{minute:02d}:{sec:02d}"
+    return n, None
+
+
+def _em_pool(url: str, date: str, sort: str = "fbt:asc") -> list[dict]:
     sess = _session()
     sess.headers["Referer"] = "https://quote.eastmoney.com/"
     ymd = str(date or "").replace("-", "")[:8]
@@ -423,14 +555,18 @@ def _em_pool(url: str, date: str) -> list[dict]:
                 "dpt": "wz.ztzt",
                 "Pageindex": 0,
                 "pagesize": 200,
-                "sort": "fbt:asc",
+                "sort": sort,
                 "date": ymd,
             },
             timeout=15,
         )
     except Exception:
+        if sort == "fbt:asc":
+            return _em_pool(url, date, sort="amount:desc")
         return []
     rows = ((payload or {}).get("data") or {}).get("pool") or []
+    if not rows and sort == "fbt:asc":
+        return _em_pool(url, date, sort="amount:desc")
     out = []
     for rec in rows:
         if not isinstance(rec, dict):
@@ -438,10 +574,18 @@ def _em_pool(url: str, date: str) -> list[dict]:
         code = ts_code(str(rec.get("c") or rec.get("code") or ""))
         if not code:
             continue
+        raw_time = rec.get("fbt")
+        if raw_time in (None, ""):
+            raw_time = rec.get("first_time")
+        if raw_time in (None, ""):
+            raw_time = rec.get("lbt")
+        fbt_raw, fbt_hms = _fmt_fbt(raw_time)
         out.append(
             {
                 "code": code,
                 "name": str(rec.get("n") or rec.get("name") or code),
+                "fbt": fbt_raw,
+                "fbt_hms": fbt_hms,
                 "lbc": rec.get("lbc") or rec.get("height") or 0,
                 "zbc": rec.get("zbc") or rec.get("zbtimes") or 0,
                 "industry": rec.get("hybk") or rec.get("industry") or "",
@@ -456,6 +600,10 @@ def fetch_limit_pool(date: str) -> list[dict]:
 
 def fetch_fail_pool(date: str) -> list[dict]:
     return _em_pool("https://push2ex.eastmoney.com/getTopicZBPool", date)
+
+
+def fetch_down_pool(date: str) -> list[dict]:
+    return _em_pool("https://push2ex.eastmoney.com/getTopicDTPool", date, sort="amount:desc")
 
 
 KLINE_CHAIN = (
@@ -603,7 +751,7 @@ def fetch_em_clist(log=None) -> list[dict]:
                         "invt": 2,
                         "fid": "f12",
                         "fs": EM_CLIST_FS,
-                        "fields": "f12,f14,f2,f3,f9,f20,f21,f6,f15,f16,f17,f18,f100,f127",
+                        "fields": "f12,f14,f2,f3,f5,f6,f8,f9,f15,f16,f17,f18,f20,f21,f100,f127",
                     },
                     timeout=20,
                 )
@@ -665,6 +813,8 @@ def quotes_from_em_clist(rows: list[dict]) -> dict:
             "low": _fnum(rec.get("f16")),
             "preclose": _fnum(rec.get("f18")),
             "pct": _round_or_none(_fnum(rec.get("f3")), 3),
+            "volume": _fnum(rec.get("f5")),
+            "turnover": _round_or_none(_fnum(rec.get("f8")), 3),
             "industry": str(rec.get("f100") or rec.get("f127") or "").strip() or None,
             "trade_date": asof,
         }

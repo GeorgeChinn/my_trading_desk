@@ -30,7 +30,8 @@
     </div>
     <div class="card" style="margin-top:14px">
       <h3>更新时间点</h3>
-      <p class="sub">一天 24 小时，每隔半小时。可多选。到点拉最新价；RULES / RULES2 / RULES4 用这次价判当天试仓/卖出。15:00 收盘后选中的档位才把正式日线写入 data/csv。改时间点后，走最新价的规则自动跟。</p>
+      <p class="sub">到点拉最新价，并按 HH:MM 归档到 data/snapshots，供盘中规则回放。未收盘价不写 data/csv。15:00 后已选档才写入正式日线（1日1行）。</p>
+      <p class="sub" style="margin-top:6px">一天 24 小时，每隔半小时，可多选。扫描器口径不变：最新价规则读 quotes.json，日线规则读 csv。</p>
       <div class="time-grid">
         <button
           type="button"
@@ -42,6 +43,25 @@
         >{{ t }}</button>
       </div>
       <p class="sub" style="margin-top:10px">已选 {{ pickedList }}</p>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>已归档快照</h3>
+      <p class="sub">按日期 + 时间点存在 data/snapshots，各档互不覆盖。这里不是分时 K 线，data/csv 仍是 1 日 1 行。</p>
+      <table class="table" v-if="archives.length">
+        <thead>
+          <tr><th>日期</th><th>时间</th><th>股票条数</th><th>收盘档</th></tr>
+        </thead>
+        <tbody>
+          <tr v-for="a in archives" :key="(a.trade_date || '') + (a.slot || '')">
+            <td>{{ a.trade_date || "—" }}</td>
+            <td>{{ a.slot || "—" }}</td>
+            <td>{{ a.quote_n == null ? "—" : a.quote_n }}</td>
+            <td>{{ a.market_closed ? "是" : "否" }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="sub" v-else style="margin-top:10px">还没有归档快照。选中时间点到点后会出现在这里。</p>
     </div>
 
     <div class="card" style="margin-top:14px">
@@ -94,6 +114,7 @@ const sources = ref([]);
 const schedule = ref({});
 const scheduleOn = ref(true);
 const picked = ref(["15:30", "16:30"]);
+const archives = ref([]);
 const slots = computed(() => schedule.value.slots || defaultSlots());
 const pickedList = computed(() => [...picked.value].sort().join(" / ") || "（未选）");
 let timer = null;
@@ -120,6 +141,7 @@ async function load() {
   schedule.value = s.schedule || {};
   scheduleOn.value = schedule.value.enabled !== false;
   picked.value = schedule.value.times && schedule.value.times.length ? [...schedule.value.times] : ["15:30", "16:30"];
+  archives.value = s.snapshot_archive || [];
   applySync(s.sync || {});
 }
 function applySync(st) {

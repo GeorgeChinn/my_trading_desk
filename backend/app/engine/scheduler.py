@@ -34,9 +34,11 @@ def schedule_snapshot() -> dict:
         "last_fired": settings.get("schedule_last_fired") or "",
         "csv_slots": list(csv_write_slots(times)),
         "why": (
-            f"工作日到点先拉最新价快照，RULES / RULES2 / RULES4 用这次价判当天试仓/卖出。"
-            f"未收盘价不写 data/csv。15:00 收盘后已选的档位才写入正式日线（当前收盘档：{' / '.join(csv_write_slots(times)) or '无'}）。"
-            f"改时间点后，走最新价的规则自动跟。当前：{shown}（北京时间）。周六日不跑。"
+            f"到点拉最新价，并按 HH:MM 归档到 data/snapshots，供盘中规则回放。"
+            f"未收盘价不写 data/csv。15:00 后已选档才写入正式日线（1日1行）。"
+            f"当前收盘档：{' / '.join(csv_write_slots(times)) or '无'}。"
+            f"RULES / RULES2 / RULES4 仍用 quotes.json 最新价；日线规则仍读 csv。"
+            f"当前：{shown}（北京时间）。周六日不跑。"
         ),
     }
 
@@ -51,11 +53,21 @@ def _loop() -> None:
         key = should_fire(last_fired=settings.get("schedule_last_fired") or "", times=times)
         if key:
             save_settings({"schedule_last_fired": key})
+            trade_date, slot = key[:10], key[11:]
             try:
                 if should_write_csv(times=times):
                     sync_live(force_bars=False)
                 else:
                     sync_quotes(force=True)
+            except Exception:
+                pass
+            try:
+                from .snapshots import archive_slot
+
+                archive_slot(trade_date=trade_date, slot=slot)
+            except Exception:
+                pass
+            try:
                 from ..jobs import run_all_rules_scans
                 from ..store import load_universe
                 from .cycles import cycles_page

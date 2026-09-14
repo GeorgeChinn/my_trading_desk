@@ -23,6 +23,10 @@ SECTOR_PATH = DATA_DIR / "sector_snap.json"
 EMOTIONS_PATH = DATA_DIR / "emotions.json"
 BOARD_DAILY_PATH = DATA_DIR / "board_daily.json"
 HS300_PATH = DATA_DIR / "hs300.json"
+INDEX_DAILY_PATH = DATA_DIR / "index_daily.json"
+MARKET_AMOUNT_PATH = DATA_DIR / "market_amount.json"
+SNAPSHOTS_DIR = DATA_DIR / "snapshots"
+EVENTS_DIR = DATA_DIR / "events"
 
 # RULES.md numbers — read-only copies for the engine. Do not invent new ones.
 MACD_FAST = 7
@@ -43,6 +47,7 @@ ALLOWED_STATUS = ("排除", "观察", "买入", "卖出", "试仓", "持有", "�
 GATES = ("排除", "观察", "买入", "卖出")
 GATES_S1 = ("排除", "观察", "试仓", "持有", "取关")
 GATES_TRS = ("排除", "观察", "试仓", "持有", "卖出")
+GATES_SOS = ("排除", "观察", "试仓", "持有", "卖出")
 SCAN_SUMMARY_BUCKETS = ("买入", "观察", "排除", "卖出")
 OPEN_SCAN = {"买入", "试仓", "持有"}
 CYCLE_CACHE_DIR = DATA_DIR / "cycle_cache"
@@ -68,3 +73,5 @@ def ensure_dirs() -> None:
     CYCLE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     SCAN_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     BUY_LOG_DIR.mkdir(parents=True, exist_ok=True)
+    SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+    EVENTS_DIR.mkdir(parents=True, exist_ok=True)

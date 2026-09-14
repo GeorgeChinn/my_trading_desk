@@ -150,6 +150,10 @@ def walk_cycles(
         from .test_repair import walk_cycles_trs
 
         return walk_cycles_trs(bars, ctx)
+    if engine == "theme_sos":
+        from .theme_sos import walk_cycles_sos
+
+        return walk_cycles_sos(bars, ctx)
     flags = flags or parse_flags()
     if len(bars) < 50:
         return [], None
@@ -292,6 +296,12 @@ def walk_stock_segments(
         n = 160 if last_n is None else last_n
         bars = load_bars(code) if n <= 0 else load_bars(code, last_n=n)
         closed, live = walk_cycles_trs(bars, ctx)
+    elif engine == "theme_sos":
+        from .theme_sos import walk_cycles_sos
+
+        n = 160 if last_n is None else last_n
+        bars = load_bars(code) if n <= 0 else load_bars(code, last_n=n)
+        closed, live = walk_cycles_sos(bars, ctx)
     else:
         bars = attach_indicators(load_bars(code))
         closed, live = walk_cycles(bars, flags, engine=engine, ctx=ctx)
@@ -314,7 +324,7 @@ def _engine_fingerprint() -> str:
 
     here = Path(__file__).resolve().parent
     parts = []
-    for name in ("cycles.py", "structure_one.py", "ma20_swing.py", "test_repair.py", "scanner.py", "exits.py", "boards.py"):
+    for name in ("cycles.py", "structure_one.py", "ma20_swing.py", "test_repair.py", "theme_sos.py", "scanner.py", "exits.py", "boards.py"):
         path = here / name
         if path.exists():
             parts.append(path.read_bytes())
@@ -700,7 +710,9 @@ def cycles_page(
         note = "RULES3 规则回测按 20 日线波段在全股池历史上回放买入到卖出。今日扫描买入是当前收盘同时齐的票，不是历史上唯一符合的。买入不是下单。"
     if engine == "test_repair":
         note = "RULES4 规则回测按 Test+Repair 在全股池历史上回放试仓到卖出。不与金叉/低吸/20日线混池。试仓不是成交指令。"
-    if engine not in ("low_golden", "pullback_restart", "ma20_swing", "test_repair"):
+    if engine == "theme_sos":
+        note = "RULES5 规则回测按主题 SOS 补涨回放试仓到卖出。13:30/14:30/15:00 有快照用快照；缺档字段空着，按收盘价继续，不用更晚档填更早档。试仓不是成交指令。"
+    if engine not in ("low_golden", "pullback_restart", "ma20_swing", "test_repair", "theme_sos"):
         payload = {
             "fact_note": "这是事实记录",
             "note": (ruleset or {}).get("engine_note") or note,
@@ -725,6 +737,10 @@ def cycles_page(
         from .test_repair import list_trs_cycle_universe
 
         listed = list_trs_cycle_universe()
+    elif engine == "theme_sos":
+        from .theme_sos import list_sos_cycle_universe
+
+        listed = list_sos_cycle_universe()
     else:
         listed = _listed_scan_rows(ruleset_id)
     seen = {ts_code(str(x.get("code") or "")) for x in listed}
@@ -818,7 +834,7 @@ def cycles_for_stock(code: str, name: str, ruleset: dict | None) -> dict:
     pub = public_ruleset(ruleset) if ruleset else None
     engine = (ruleset or {}).get("engine") or "low_golden"
     note = "按本规则回放这只股票的买入到卖出。买入池记录优先。日线代理可回测，不写入买入池。"
-    if engine not in ("low_golden", "pullback_restart", "ma20_swing", "test_repair"):
+    if engine not in ("low_golden", "pullback_restart", "ma20_swing", "test_repair", "theme_sos"):
         return {
             "code": ts_code(code),
             "name": name,
@@ -856,7 +872,7 @@ def cycles_for_pool(items: list[dict], ruleset: dict | None) -> dict:
     pub = public_ruleset(ruleset) if ruleset else None
     engine = (ruleset or {}).get("engine") or "low_golden"
     note = "只回放这些代码里、扫描列入过买入/试仓池的段。"
-    if engine not in ("low_golden", "pullback_restart", "ma20_swing", "test_repair"):
+    if engine not in ("low_golden", "pullback_restart", "ma20_swing", "test_repair", "theme_sos"):
         return {
             "ruleset": pub,
             "segments": [],

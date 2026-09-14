@@ -157,6 +157,27 @@ def _eval_item(item: dict, engine: str) -> None:
             zone,
         )
         last = bars[-1] if bars else raw[-1]
+    elif engine == "theme_sos":
+        from .theme_sos import evaluate_exit_sos
+        from .bars import overlay_quote_bar
+        from ..store import load_quotes
+
+        bars = overlay_quote_bar(raw, code, load_quotes())
+        zone = {
+            "industry": item.get("industry"),
+            "buy_ma20": item.get("buy_ma20"),
+        }
+        hit, section, detail = evaluate_exit_sos(
+            bars,
+            {
+                "date": buy_date,
+                "code": code,
+                "buy_date": buy_date,
+                "buy_price": item.get("buy_price"),
+            },
+            zone,
+        )
+        last = bars[-1] if bars else raw[-1]
     else:
         bars = attach_indicators(raw)
         from .cycles import _prefix_series
@@ -230,6 +251,8 @@ def sync_buy_log(ruleset_id: str, engine: str, rows: list[dict]) -> dict:
             "c_vol_avg": facts.get("c_vol_avg"),
             "test_low": facts.get("test_low"),
             "support": facts.get("support"),
+            "industry": facts.get("theme") or row.get("industry"),
+            "buy_kind": facts.get("buy_kind"),
             "logged_at": _now(),
             "from_pool": True,
         }

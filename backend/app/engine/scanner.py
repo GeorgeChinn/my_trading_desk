@@ -6,6 +6,7 @@ from ..config import (
     DIF_LOOKBACK,
     GATES,
     GATES_S1,
+    GATES_SOS,
     GATES_TRS,
     KDJ_LOW,
     POOL_AMOUNT_YI,
@@ -600,6 +601,13 @@ def scan_universe(
 
         rows = scan_trs(settings, trades)
         order = {name: i for i, name in enumerate(GATES_TRS)}
+        rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))
+        return rows
+    if engine == "theme_sos":
+        from .theme_sos import scan_sos
+
+        rows = scan_sos(settings, trades)
+        order = {name: i for i, name in enumerate(GATES_SOS)}
         rows.sort(key=lambda item: (order.get(item["status"], 9), item["code"]))
         return rows
     if engine != "low_golden":

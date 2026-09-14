@@ -65,6 +65,15 @@ export const api = {
   startHistory: () => request("/api/sync/history", { method: "POST" }),
   sources: () => request("/api/sources"),
   schedule: () => request("/api/schedule"),
+  snapshots: (params = {}) => {
+    const q = new URLSearchParams(params);
+    const suffix = q.toString() ? `?${q.toString()}` : "";
+    return request(`/api/snapshots${suffix}`);
+  },
+  events: (date = "") => {
+    const q = date ? `?date=${encodeURIComponent(date)}` : "";
+    return request(`/api/events${q}`);
+  },
   emotions: (params = {}, silent = false) => {
     const q = new URLSearchParams(params);
     const suffix = q.toString() ? `?${q.toString()}` : "";

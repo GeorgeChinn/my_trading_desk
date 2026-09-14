@@ -9,9 +9,10 @@ ENGINE_LOW_GOLDEN = "low_golden"
 ENGINE_PULLBACK = "pullback_restart"
 ENGINE_MA20 = "ma20_swing"
 ENGINE_TRS = "test_repair"
+ENGINE_SOS = "theme_sos"
 ENGINE_UNIMPLEMENTED = "unimplemented"
-ENGINE_OK = (ENGINE_LOW_GOLDEN, ENGINE_PULLBACK, ENGINE_MA20, ENGINE_TRS)
-LATEST_QUOTE_ENGINES = (ENGINE_LOW_GOLDEN, ENGINE_PULLBACK, ENGINE_TRS)
+ENGINE_OK = (ENGINE_LOW_GOLDEN, ENGINE_PULLBACK, ENGINE_MA20, ENGINE_TRS, ENGINE_SOS)
+LATEST_QUOTE_ENGINES = (ENGINE_LOW_GOLDEN, ENGINE_PULLBACK, ENGINE_TRS, ENGINE_SOS)
 
 _TITLE_MARK = re.compile(r"本规则只做\s*\*\*(.+?)\*\*")
 
@@ -30,6 +31,8 @@ def _title(text: str, fallback: str) -> str:
 def _engine(text: str) -> str:
     title = _title(text, "")
     raw = text or ""
+    if "SOS" in title or "主题SOS" in title or "活主线里的 SOS" in raw:
+        return ENGINE_SOS
     if "Test+Repair" in title or "支撑测试后的修复试仓" in title or "支撑测试后的修复试仓" in raw:
         return ENGINE_TRS
     if "20日线波段" in title or "20日线波段" in raw:
@@ -56,6 +59,8 @@ def _engine_note(engine: str) -> str:
         return "扫描器已执行 RULES3 野人哥 20日线波段：先强 A（5～12日、≥12%）→ 缩量回踩 C（4～8日）→ 收盘不破 20 日线。判定只用已收盘日线，不吃未收盘价。买入不是下单。"
     if engine == ENGINE_TRS:
         return "扫描器已执行 RULES4 Test+Repair：急杀/回撤 → 放量修复 → 缩量回踩不破 → 再放量离开时试仓。判定用数据与设置最新一次更新（未收盘时收盘=该次最新价）。总闸排除→观察→试仓→持有→卖出。不与金叉/低吸/20日线混池。试仓不是成交指令。"
+    if engine == ENGINE_SOS:
+        return "扫描器已执行 RULES5 主题SOS补涨：活主线里 SOS 首板或中军补涨。13:30 草稿池、15:00 终版池，T 日 13:30–14:30 才试仓。缺档快照字段空着，回测按收盘价继续，不用更晚档填更早档。不与金叉/低吸/20日线/Test+Repair 混池。试仓不是成交指令。"
     return "本规则结构尚未写成扫描器。证据不足，不编造信号。"
 
 

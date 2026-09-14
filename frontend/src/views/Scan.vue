@@ -92,6 +92,19 @@
       </div>
     </div>
 
+    <div class="card" style="margin-bottom:14px" v-if="isSos && data.sos">
+      <div class="ov-title">
+        RULES5 活主线
+        <span>{{ data.sos.env || "—" }} · {{ data.sos.mainline || "无" }}</span>
+      </div>
+      <p class="sub" style="margin:0 0 8px">{{ data.sos.mainline_why || data.sos.note }}</p>
+      <p class="sub" style="margin:0">
+        13:30 {{ data.sos.slot_1330 ? "有档" : "缺档" }}
+        · 14:30 {{ data.sos.slot_1430 ? "有档" : "缺档" }}
+        · 15:00 {{ data.sos.slot_1500 ? "有档" : "缺档" }}
+        · {{ data.sos.in_window ? "现处于 13:30–14:30 试仓窗" : "现不在试仓窗" }}
+      </p>
+    </div>
     <div class="card" style="margin-bottom:14px" v-if="isPullback && data.mainline">
       <div class="ov-title">
         主线
@@ -257,9 +270,10 @@ const currentRuleset = computed(() => rulesets.value.find((r) => r.id === rulese
 const isPullback = computed(() => (currentRuleset.value && currentRuleset.value.engine) === "pullback_restart");
 const isTrial = computed(() => {
   const e = currentRuleset.value && currentRuleset.value.engine;
-  return e === "pullback_restart" || e === "test_repair";
+  return e === "pullback_restart" || e === "test_repair" || e === "theme_sos";
 });
-const trialGate = computed(() => ((currentRuleset.value && currentRuleset.value.engine) === "test_repair" ? "试仓" : isPullback.value ? "试仓" : "买入"));
+const isSos = computed(() => (currentRuleset.value && currentRuleset.value.engine) === "theme_sos");
+const trialGate = computed(() => (isTrial.value ? "试仓" : "买入"));
 const exitGate = computed(() => (isPullback.value ? "取关" : "卖出"));
 const boards = computed(() => data.value.boards || []);
 const passedBoards = computed(() => boards.value.filter((b) => b.pass));

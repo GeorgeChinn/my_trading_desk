@@ -175,7 +175,7 @@ const currentRuleset = computed(() => rulesets.value.find((r) => r.id === rulese
 const isPullback = computed(() => (currentRuleset.value && currentRuleset.value.engine) === "pullback_restart");
 const isTrial = computed(() => {
   const e = currentRuleset.value && currentRuleset.value.engine;
-  return e === "pullback_restart" || e === "test_repair";
+  return e === "pullback_restart" || e === "test_repair" || e === "theme_sos";
 });
 const exitLabel = computed(() => {
   const e = currentRuleset.value && currentRuleset.value.engine;

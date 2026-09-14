@@ -20,6 +20,7 @@ from .config import (
     CSV_DIR,
     GATES,
     GATES_S1,
+    GATES_SOS,
     GATES_TRS,
     LAST_SCAN_PATH,
     PROFILE_PATH,
@@ -171,7 +172,7 @@ def _engine_token() -> str:
 
     here = Path(__file__).resolve().parent / "engine"
     parts = []
-    for name in ("scanner.py", "structure_one.py", "ma20_swing.py", "test_repair.py", "exits.py", "boards.py", "cycles.py"):
+    for name in ("scanner.py", "structure_one.py", "ma20_swing.py", "test_repair.py", "theme_sos.py", "exits.py", "boards.py", "cycles.py"):
         path = here / name
         if path.exists():
             parts.append(path.read_bytes())
@@ -259,6 +260,12 @@ def _scan_bundle(ruleset_id: str | None = None):
 
             s1_scan.funnel = cached.get("boards") or []
             s1_scan.market = cached.get("market")
+        if rs.get("engine") == "theme_sos":
+            from .engine.theme_sos import SosScan
+
+            SosScan.sos = cached.get("sos")
+            SosScan.funnel = cached.get("boards") or []
+            SosScan.market = cached.get("market")
         from .engine.buy_log import sync_buy_log
 
         sync_buy_log(rs["id"], rs.get("engine") or "", rows)
@@ -285,6 +292,12 @@ def _scan_bundle(ruleset_id: str | None = None):
 
         payload["boards"] = list(getattr(s1_scan, "funnel", None) or [])
         payload["market"] = getattr(s1_scan, "market", None)
+    if rs.get("engine") == "theme_sos":
+        from .engine.theme_sos import SosScan
+
+        payload["sos"] = getattr(SosScan, "sos", None)
+        payload["boards"] = list(getattr(SosScan, "funnel", None) or [])
+        payload["market"] = getattr(SosScan, "market", None)
     write_json(cache_path, payload)
     from .engine.buy_log import sync_buy_log
 
@@ -414,11 +427,12 @@ def scan(ruleset: str = Query("rules")):
     eng = rs.get("engine")
     pullback = eng == "pullback_restart"
     trs = eng == "test_repair"
-    trial = pullback or trs
+    sos = eng == "theme_sos"
+    trial = pullback or trs or sos
     if pullback:
         gates = list(GATES_S1)
-    elif trs:
-        gates = list(GATES_TRS)
+    elif trs or sos:
+        gates = list(GATES_TRS if trs else GATES_SOS)
     else:
         gates = list(GATES)
     grouped = {key: [] for key in gates}
@@ -437,6 +451,8 @@ def scan(ruleset: str = Query("rules")):
         reminders.append(f"试仓池 {buy_n} 只。开几只由人定。试仓不是成交指令。")
     elif buy_n > 1 and trs:
         reminders.append(f"试仓池 {buy_n} 只。当日本规则新开 ≤ 1 只。仓位 30%～40% 计划仓。试仓不是成交指令。")
+    elif buy_n > 1 and sos:
+        reminders.append(f"试仓池 {buy_n} 只。当日本规则新开 ≤ 3 只。ENV_OK 合计 ≤ 40%，ENV_WEAK ≤ 20%。试仓不是成交指令。")
     elif buy_n > 1 and rs.get("engine") == "ma20_swing":
         reminders.append(f"买入池 {buy_n} 只。当日全账户新开 ≤ 1 只。仓位 10%～15%，突破当天不重仓。")
     elif buy_n > 1 and not pullback:
@@ -449,6 +465,8 @@ def scan(ruleset: str = Query("rules")):
         pool_note = "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 试仓 / 持有 / 取关。"
     elif trs:
         pool_note = "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 试仓 / 持有 / 卖出。不与金叉/低吸/20日线混池。"
+    elif sos:
+        pool_note = "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 试仓 / 持有 / 卖出。只做一条活主线的 SOS/补涨，不与 RULES1–4 混池。"
     else:
         pool_note = "总股池 = data/csv 有效日线。本规则在总股池上再排除 / 观察 / 买入 / 卖出。"
     boards = []
@@ -460,6 +478,19 @@ def scan(ruleset: str = Query("rules")):
         market = getattr(s1_scan, "market", None)
         passed_n = sum(1 for b in boards if b.get("pass"))
         reminders.append(f"主线：过关 {passed_n} / {len(boards)} 个申万二级（缺则一级）。先强段内相对沪深300+3pct且累计涨停≥6；买入日近3日≥沪深300且至少1只涨停。")
+    sos_info = None
+    if sos:
+        from .engine.theme_sos import SosScan
+
+        sos_info = getattr(SosScan, "sos", None)
+        if isinstance(sos_info, dict):
+            reminders.append(
+                f"RULES5 主线 {sos_info.get('mainline') or '无'} · {sos_info.get('env') or 'ENV'}。"
+                f"13:30 档{'有' if sos_info.get('slot_1330') else '缺'} · "
+                f"14:30 档{'有' if sos_info.get('slot_1430') else '缺'} · "
+                f"15:00 档{'有' if sos_info.get('slot_1500') else '缺'}。"
+                "缺档字段空着，回测按收盘价继续。"
+            )
     from .engine.buy_log import public_buy_log
 
     buy_log = public_buy_log(rs["id"])
@@ -475,7 +506,7 @@ def scan(ruleset: str = Query("rules")):
             if pullback
             else (
                 "总闸：排除 → 观察 → 试仓 → 持有 → 卖出。试仓不是成交指令。"
-                if trs
+                if trs or sos
                 else "总闸：排除 → 观察 → 买入 → 卖出。买入不是成交指令。"
             )
         ),
@@ -499,6 +530,7 @@ def scan(ruleset: str = Query("rules")):
         },
         "stamp": _scan_stamp(rs["id"]),
         "buy_log": buy_log,
+        "sos": sos_info,
     }
 
 
@@ -516,6 +548,10 @@ def _classify_for(code: str, ruleset_id: str | None = None) -> dict:
         from .engine.test_repair import classify_one_trs
 
         row = classify_one_trs(code, load_settings(), load_trades())
+    elif rs and rs.get("engine") == "theme_sos":
+        from .engine.theme_sos import classify_one_sos
+
+        row = classify_one_sos(code, load_settings(), load_trades())
     elif rs and rs.get("engine") == "low_golden":
         from .engine.eastmoney import apply_quote_fields
 
@@ -793,6 +829,12 @@ def settings_get():
     public["sync"] = _public_sync(load_sync_status(), csv_n)
     public["schedule"] = schedule_snapshot()
     public["ashare_pool"] = ashare_pool_public()
+    try:
+        from .engine.snapshots import list_recent_snapshots
+
+        public["snapshot_archive"] = list_recent_snapshots(16)
+    except Exception:
+        public["snapshot_archive"] = []
     return public
 
 
@@ -876,6 +918,12 @@ def sync_start(force: bool = Query(False)):
                 sync_live(force_bars=force)
             else:
                 sync_quotes(force=True)
+            try:
+                from .engine.snapshots import archive_slot
+
+                archive_slot()
+            except Exception:
+                pass
 
     _sync_thread = threading.Thread(target=run, daemon=True)
     _sync_thread.start()
@@ -937,6 +985,53 @@ def schedule_get():
     snap = schedule_snapshot()
     snap["slots"] = half_hour_slots()
     return snap
+
+
+@app.get("/api/snapshots")
+def snapshots_get(date: str = Query(""), slot: str = Query("")):
+    from .engine.snapshots import empty_snapshot, list_recent_snapshots, list_snapshots_for_date, load_snapshot
+
+    day = (date or "").strip()
+    stamp = (slot or "").strip()
+    if day and stamp:
+        item = load_snapshot(day, stamp)
+        if not item:
+            return empty_snapshot(day, stamp)
+        return {
+            "ok": True,
+            "found": True,
+            "trade_date": item.get("trade_date") or day,
+            "slot": item.get("slot") or stamp,
+            "item": item,
+            "quotes": item.get("quotes") or {},
+            "index": item.get("index") or {},
+            "stats": item.get("stats") or {},
+        }
+    if day and not stamp:
+        return {"ok": True, "items": list_snapshots_for_date(day)}
+    return {"ok": True, "items": list_recent_snapshots(24)}
+
+
+@app.get("/api/events")
+def events_get(date: str = Query("")):
+    from .engine.clock import session_trading_date
+    from .engine.snapshots import load_events
+
+    day = (date or "").strip() or session_trading_date().isoformat()
+    item = load_events(day)
+    if not item:
+        return {
+            "ok": True,
+            "found": False,
+            "trade_date": day,
+            "limit_up": [],
+            "fail": [],
+            "limit_down": [],
+        }
+    out = dict(item)
+    out["ok"] = True
+    out["found"] = True
+    return out
 
 
 @app.get("/api/emotions")
