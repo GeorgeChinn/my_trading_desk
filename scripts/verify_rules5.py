@@ -37,7 +37,7 @@ def main() -> int:
     assert rs, "RULES5.MD not discovered"
     assert rs["engine"] == ENGINE_SOS, rs["engine"]
     assert rs["engine_ok"]
-    assert "SOS" in rs["title"] or "补涨" in rs["title"]
+    assert "SOS" in rs["title"] or "补涨" in rs["title"] or "利弗莫尔" in rs["title"]
 
     _SNAP.clear()
     _SNAP[("2026-09-14", "15:30")] = {
@@ -88,6 +88,20 @@ def main() -> int:
     assert by["T 收盘"]["price"] == 10.0
     assert by["T-1 15:00"]["found"] is True and by["T-1 15:00"]["price"] == 9.5
     assert 15.3 not in [x.get("price") for x in tl]
+
+    from app.engine.theme_sos import CALIB_9_7, calib_signals, classify_env, market_stats_at
+
+    env = classify_env(market_stats_at("2026-09-07", None), "2026-09-07")
+    assert env["label"] != "ENV_OFF", env
+    assert env.get("e_sos") or env.get("e_index"), env
+    got = calib_signals("2026-09-07")
+    missing = []
+    for code, name, expect in CALIB_9_7:
+        kind = got.get(code)
+        if kind != expect:
+            missing.append(f"{code} {name} want {expect} got {kind}")
+    assert not missing, "校准 8/8 失败: " + "; ".join(missing)
+
     print("ok")
     return 0
 

@@ -1,18 +1,19 @@
-"""RULES5 主题 SOS 补涨。数字和句子只来自 RULES5.MD，不另写门槛。
+"""RULES5 利弗莫尔领先股 × 威科夫 SOS/LPS。数字和句子只来自 RULES5.MD。
 
-主题 = 申万二级（缺则一级）。不与 RULES1–4 混池。
+可买前缀 000/001/002/003/600/601/603/605；排除 300/688/北证/ST。
+T-1 硬条件入池，T 日在池内判 BUY_A / BUY_B。禁止双均线一票否决。
 13:30 / 14:30 / 15:00 有快照用快照；缺档字段空着，回测按收盘价继续。禁止用更晚档填更早档。
+回测不扫全市场 ~5000；按交易日只对可买范围内 T-1 过硬条件的票判信号。
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from ..config import CSV_DIR, GATES_SOS, INDEX_DAILY_PATH, MARKET_AMOUNT_PATH
 from ..store import load_quotes, load_universe, read_json, write_json
-from .bars import bar_amount, load_bars, overlay_quote_bar, peek_last_bar, ts_code
+from .bars import bar_amount, load_bars, overlay_quote_bar, ts_code
 from .boards import industry_of, is_limit_up, load_board_daily
 from .clock import now_sh, session_trading_date
-from .indicators import sma
 from .pool import is_st_name
 from .scanner import FACT_NOTE
 
@@ -21,41 +22,56 @@ LISTED_DAYS = 60
 PRICE_MIN = 3.0
 MCAP_LO = 20.0
 MCAP_HI = 800.0
-MA20_BAND = 0.99
-DD60 = 0.35
-RUN20 = 0.40
-TURN3 = 20.0
-TURN1 = 25.0
+MA20_BAND = 0.97
+DD60 = 0.40
+TURN3 = 25.0
+TURN_CLIMAX = 30.0
 TURN_LIMIT = 18.0
-POOL_LIVE_N = 15
-OPEN_MAX = 3
-BUY_A_VR = 1.5
-BUY_B_VR = 1.2
-BUY_B_LO = 0.03
-BUY_B_HI = 0.07
-FLOOR = 0.97
-FAIL_PCT = 0.95
-WIN_PCT = 0.12
-GIVEBACK = 0.05
-AMT_RATIO = 0.85
-ZT_OK = 40
-ZT_WEAK = 25
-SEAL_OK = 60.0
-SEAL_1330 = 55.0
-HEIGHT_MAX = 7
-DOWN_MAX = 0.80
-EXCESS = 1.5
-TH_ZT = 3
-TH3_SUM = 5
-LEADERS = 2
-LEAD_PCT = 0.05
-TOP_SHARE = 0.15
-SIZE_A_OK = "12%–18%"
-SIZE_A_WEAK = "6%–9%"
-SIZE_B = "8%–12%"
+POOL_MAX = 20
+THEME_MAX = 3
+A_PCT_MIN = 6.0
+A_VOL_RATIO = 1.2
+B_VOL_RATIO_MAX = 0.85
+B_TURN_RATIO = 0.85
+B_TURN_ABS = 5.0
+B1_DD20_LO = 0.03
+B1_DD20_HI = 0.18
+B_PCT_LO = -3.0
+B_PCT_HI = 3.0
+B2_DD20_MAX = 0.02
+B2_PCT_LO = 0.5
+B2_PCT_HI = 4.0
+B_BREAK_VOL = 1.3
+STOP_MA = 0.97
+GIVEBACK = 0.08
+ZT_SOS_MIN = 40
+SEAL_SOS_MIN = 0.60
+CYB_SOS_PCT = 2.0
+UP_SHARE_OFF = 0.35
+DT_OFF_MIN = 15
+IDX_BREAK = 0.98
+ZT_WEAK = 50
+SEAL_WEAK = 0.55
+TH1_MIN = 3
+TH3_MIN = 5
+STREAK_POOL_BAN = 3
+SIZE_A = "10%"
+SIZE_A_WEAK = "5%"
+SIZE_B = "7%"
+BUYABLE_PREFIX = ("000", "001", "002", "003", "600", "601", "603", "605")
 SLOT_LIVE = "13:30"
 SLOT_BUY_END = "14:30"
 SLOT_FINAL = "15:00"
+CALIB_9_7 = (
+    ("603042", "华脉科技", "BUY_A"),
+    ("000759", "中百集团", "BUY_A"),
+    ("603186", "华正新材", "BUY_A"),
+    ("000523", "红棉股份", "BUY_A"),
+    ("002790", "瑞尔特", "BUY_B1"),
+    ("002349", "精华制药", "BUY_B1"),
+    ("605198", "安德利", "BUY_B1"),
+    ("605077", "华康股份", "BUY_B2"),
+)
 
 _SNAP: dict[tuple[str, str], dict | None] = {}
 _EVENTS: dict[str, dict | None] = {}
@@ -89,6 +105,7 @@ def _vol(row: dict | None) -> float:
 
 
 def _mean(xs: list[float]) -> float:
+    xs = [x for x in xs if x is not None]
     return sum(xs) / len(xs) if xs else 0.0
 
 
@@ -106,6 +123,19 @@ def _is_bj(code: str) -> bool:
     return c.startswith(("8", "4")) and not c.startswith("68")
 
 
+def buyable(code: str, name: str = "", meta: dict | None = None) -> bool:
+    c = ts_code(code)
+    if len(c) < 6 or not c.startswith(BUYABLE_PREFIX):
+        return False
+    if c.startswith(("300", "688")):
+        return False
+    if _is_bj(c):
+        return False
+    if is_st_name(name) or (meta or {}).get("is_st"):
+        return False
+    return True
+
+
 def _yi_zi(row: dict | None) -> bool:
     if not row:
         return False
@@ -115,20 +145,11 @@ def _yi_zi(row: dict | None) -> bool:
     return abs(h - l) <= 1e-9 and abs(c - o) <= 1e-9
 
 
-def _is_limit_bar(bars: list[dict], i: int, code: str) -> bool:
+def _is_limit_bar(bars: list[dict], i: int, code: str, row: dict | None = None) -> bool:
     if i < 1:
         return False
-    return is_limit_up(bars[i - 1].get("close"), bars[i].get("close"), code)
-
-
-def _touch_limit(bars: list[dict], i: int, code: str) -> bool:
-    if i < 1:
-        return False
-    prev = _px(bars[i - 1], "close")
-    high = _px(bars[i], "high")
-    if not prev or not high:
-        return False
-    return (high / prev - 1.0) >= _limit_pct(code) - 0.005
+    close = _px(row or bars[i], "close")
+    return is_limit_up(bars[i - 1].get("close"), close, code)
 
 
 def _streak(bars: list[dict], i: int, code: str) -> int:
@@ -244,6 +265,8 @@ def _turnover(row: dict | None, mcap_yi=None):
     if t is not None:
         return t
     amt = _num(row.get("amount"))
+    if amt is None:
+        amt = bar_amount(row)
     mcap = _num(mcap_yi if mcap_yi is not None else row.get("float_mcap_yi"))
     if amt and mcap and mcap > 0:
         return amt / (mcap * 100_000_000.0) * 100.0
@@ -301,21 +324,24 @@ def _index_ma20(sym: str, date: str) -> tuple:
     return close, ma
 
 
-def e1_ok(date: str) -> tuple[bool, str]:
-    sh_c, sh_ma = _index_ma20("sh000001", date)
-    cy_c, cy_ma = _index_ma20("sz399006", date)
-    sh_ok = bool(sh_c and sh_ma and sh_c >= sh_ma - 1e-12)
-    cy_ok = bool(cy_c and cy_ma and cy_c >= cy_ma - 1e-12)
-    if sh_ok or cy_ok:
-        bits = []
-        if sh_ok:
-            bits.append(f"上证 {sh_c:.2f} ≥ MA20 {sh_ma:.2f}")
-        if cy_ok:
-            bits.append(f"创业板 {cy_c:.2f} ≥ MA20 {cy_ma:.2f}")
-        return True, "；".join(bits)
-    if sh_c is None and cy_c is None:
-        return False, "E1 指数日线证据不足"
-    return False, "E1：上证与创业板都破 MA20"
+def _index_pct(sym: str, date: str):
+    series = (ensure_index_daily(fetch=False).get(sym) or {})
+    dates = [d for d in sorted(series) if d <= date]
+    if len(dates) < 2 or dates[-1] != date:
+        return None
+    prev, last = series.get(dates[-2]), series.get(dates[-1])
+    if not prev or not last:
+        return None
+    return (last / prev - 1.0) * 100.0
+
+
+def _seal_frac(seal) -> float | None:
+    if seal is None:
+        return None
+    val = float(seal)
+    if val > 1.5:
+        return val / 100.0
+    return val
 
 
 def _quotes_amount(quotes: dict | None) -> float | None:
@@ -454,107 +480,58 @@ def market_stats_at(date: str, slot: str | None) -> dict:
 
 
 def classify_env(stats: dict, date: str, draft_1330: bool = False) -> dict:
-    e1, e1_why = e1_ok(date)
+    sh_c, sh_ma = _index_ma20("sh000001", date)
+    cy_c, cy_ma = _index_ma20("sz399006", date)
+    e_index = bool(
+        (sh_c is not None and sh_ma is not None and sh_c >= sh_ma - 1e-12)
+        or (cy_c is not None and cy_ma is not None and cy_c >= cy_ma - 1e-12)
+    )
     zt = stats.get("limit_up_n")
-    seal = stats.get("seal_rate")
-    height = stats.get("max_board")
-    down_n = stats.get("down_n")
+    seal_f = _seal_frac(stats.get("seal_rate"))
     up_n = stats.get("up_n")
-    tot = stats.get("total") or ((up_n or 0) + (down_n or 0))
-    down_pct = (down_n / tot) if tot and down_n is not None else None
-    amt = stats.get("amount")
-    avg5 = stats.get("amount_avg5")
-    e2 = False
-    e2_why = "E2 证据不足"
-    if draft_1330:
-        ok_zt = zt is not None and zt >= ZT_WEAK
-        ok_seal = seal is not None and seal >= SEAL_1330
-        ok_h = height is None or height <= HEIGHT_MAX
-        e2 = bool(ok_zt and ok_seal and ok_h)
-        e2_why = (
-            f"13:30 草稿：涨停 {zt} 封板率 {seal} 最高连板 {height}"
-            if e2
-            else f"13:30 草稿环境未过：涨停 {zt} / 封板率 {seal} / 高度 {height}"
-        )
-    else:
-        parts = []
-        ok = True
-        if zt is None:
-            ok = False
-            parts.append("涨停家数空")
-        elif zt < ZT_OK:
-            ok = False
-            parts.append(f"涨停 {zt} < {ZT_OK}")
-        else:
-            parts.append(f"涨停 {zt}")
-        if seal is None:
-            ok = False
-            parts.append("封板率空")
-        elif seal < SEAL_OK:
-            ok = False
-            parts.append(f"封板率 {seal}% < {SEAL_OK}%")
-        else:
-            parts.append(f"封板率 {seal}%")
-        if height is None:
-            parts.append("连板高度空")
-        elif height > HEIGHT_MAX:
-            ok = False
-            parts.append(f"最高连板 {height} > {HEIGHT_MAX}")
-        else:
-            parts.append(f"最高连板 {height}")
-        e2 = ok
-        e2_why = "E2：" + "，".join(parts)
-    e3 = down_pct is not None and down_pct <= DOWN_MAX
-    e3_why = (
-        f"E3：下跌占比 {down_pct * 100:.1f}%"
-        if down_pct is not None
-        else "E3：下跌家数空"
+    down_n = stats.get("down_n")
+    dt = stats.get("limit_down_n") or 0
+    cy_pct = _index_pct("sz399006", date)
+    up_gt_down = up_n is not None and down_n is not None and up_n > down_n
+    e_sos = bool(
+        (zt is not None and seal_f is not None and zt >= ZT_SOS_MIN and seal_f >= SEAL_SOS_MIN and up_gt_down)
+        or (cy_pct is not None and cy_pct >= CYB_SOS_PCT and up_gt_down)
     )
-    e4 = bool(amt and avg5 and amt >= avg5 * AMT_RATIO)
-    e4_why = (
-        f"E4：成交额 {amt / 1e8:.0f} 亿 / 5日均 {avg5 / 1e8:.0f} 亿"
-        if amt and avg5
-        else "E4：两市成交额空"
+    tot = (up_n or 0) + (down_n or 0)
+    up_share = (up_n / tot) if tot and up_n is not None else None
+    e_off = bool(
+        up_share is not None
+        and up_share < UP_SHARE_OFF
+        and dt >= DT_OFF_MIN
+        and sh_c is not None
+        and sh_ma is not None
+        and sh_c < sh_ma * IDX_BREAK
+        and cy_c is not None
+        and cy_ma is not None
+        and cy_c < cy_ma * IDX_BREAK
     )
-    if draft_1330:
-        e3_use = None
-        e4_use = None
-        passed_tail = int(bool(e2))
-        label = "ENV_OK" if e1 and e2 else ("ENV_OFF" if not e1 else "ENV_WEAK")
-        if e1 and zt is not None and ZT_WEAK <= zt < ZT_OK:
-            label = "ENV_WEAK"
-        return {
-            "label": label if e1 else "ENV_OFF",
-            "e1": e1,
-            "e2": e2,
-            "e3": e3_use,
-            "e4": e4_use,
-            "why": [e1_why, e2_why, "13:30 不卡死全日下跌家数、全日成交额"],
-            "zt": zt,
-            "draft": True,
-        }
-    tail = [e2, e3, e4]
-    n_tail = sum(1 for x in tail if x)
-    weak_zt = zt is not None and ZT_WEAK <= zt < ZT_OK
-    if not e1:
+    why = [
+        f"E_index={'是' if e_index else '否'} 上证 {sh_c}/{sh_ma} 创业板 {cy_c}/{cy_ma}",
+        f"E_sos={'是' if e_sos else '否'} 涨停 {zt} 封板 {None if seal_f is None else round(seal_f * 100, 1)}% 创业板 {None if cy_pct is None else round(cy_pct, 2)}%",
+        f"ENV_OFF闸={'是' if e_off else '否'}",
+    ]
+    if e_off or not (e_index or e_sos):
         label = "ENV_OFF"
-    elif n_tail >= 2 and not weak_zt:
-        label = "ENV_OK"
-    elif n_tail >= 1 or weak_zt:
+    elif zt is not None and (zt < ZT_WEAK or (seal_f is not None and seal_f < SEAL_WEAK)):
         label = "ENV_WEAK"
     else:
-        label = "ENV_OFF"
+        label = "ENV_OK"
     return {
         "label": label,
-        "e1": e1,
-        "e2": e2,
-        "e3": e3,
-        "e4": e4,
-        "why": [e1_why, e2_why, e3_why, e4_why],
+        "e_index": e_index,
+        "e_sos": e_sos,
+        "e1": e_index,
+        "e2": e_sos,
+        "why": why,
         "zt": zt,
-        "draft": False,
-        "down_pct": None if down_pct is None else round(down_pct * 100.0, 1),
-        "n_tail": n_tail,
+        "draft": draft_1330,
+        "cy_pct": None if cy_pct is None else round(cy_pct, 2),
+        "seal": None if seal_f is None else round(seal_f * 100.0, 1),
     }
 
 
@@ -629,17 +606,6 @@ def _theme_ret(industry: str | None, date: str) -> float | None:
     return _num(row.get("ret_1d"))
 
 
-def _sh_ret(date: str) -> float | None:
-    series = ensure_index_daily(fetch=False).get("sh000001") or {}
-    dates = [d for d in sorted(series) if d <= date]
-    if len(dates) < 2:
-        return None
-    a, b = series.get(dates[-2]), series.get(dates[-1])
-    if not a or not b:
-        return None
-    return (b / a - 1.0) * 100.0
-
-
 def _rank_map(date: str) -> dict[str, tuple]:
     if date in _RANKS:
         return _RANKS[date]
@@ -647,32 +613,16 @@ def _rank_map(date: str) -> dict[str, tuple]:
     for name, rec in (_board_blob().get("boards") or {}).items():
         row = (rec.get("by_date") or {}).get(date) or {}
         r = _num(row.get("ret_1d"))
-        if r is not None:
-            rets.append((name, r))
-    rets.sort(key=lambda x: x[1], reverse=True)
-    top_n = max(1, int(len(rets) * TOP_SHARE + 0.999)) if rets else 1
+        if r is None:
+            continue
+        rets.append((r, name))
+    rets.sort(reverse=True)
+    n = len(rets) or 1
     out = {}
-    for i, (name, r) in enumerate(rets, start=1):
-        out[name] = (i, r, i <= top_n)
+    for i, (r, name) in enumerate(rets, start=1):
+        out[name] = (i, r, i / n <= 0.15)
     _RANKS[date] = out
     return out
-
-
-def _rank_theme(date: str, industry: str | None) -> tuple:
-    ranks = _rank_map(date)
-    if not industry or industry not in ranks:
-        return None, _theme_ret(industry, date), None
-    rank, ret, in_top = ranks[industry]
-    return rank, ret, in_top
-
-
-def _climax_zero(counts: list[int]) -> bool:
-    if len(counts) < 2:
-        return False
-    for i in range(len(counts) - 1):
-        if counts[i] >= TH3_SUM and counts[i + 1] == 0:
-            return True
-    return False
 
 
 def theme_state(industry: str | None, date: str, slot: str | None = None) -> dict:
@@ -680,33 +630,24 @@ def theme_state(industry: str | None, date: str, slot: str | None = None) -> dic
         return {"live": False, "dead": True, "why": "无主题", "industry": ""}
     zt = _theme_zt(industry, date, slot=slot)
     ret = _theme_ret(industry, date)
-    rank, _, in_top = _rank_theme(date, industry)
-    sh = _sh_ret(date)
-    excess = (ret - sh) if ret is not None and sh is not None else None
     dates = _trading_dates(date, 4)
     counts = []
     for d in dates:
         n = _theme_zt(industry, d)
         counts.append(0 if n is None else n)
-    th3_sum = sum(counts[-3:]) if len(counts) >= 3 else sum(counts)
-    th1 = zt is not None and zt >= TH_ZT
-    th2 = bool(in_top) or (excess is not None and excess >= EXCESS)
-    th3 = th3_sum >= TH3_SUM and not _climax_zero(counts[-3:] if len(counts) >= 3 else counts)
-    live = bool(th1 and (th2 or th3))
-    green = ret is not None and ret < 0
-    dead = (zt is not None and zt < TH_ZT and green) or (zt is not None and zt < TH_ZT and ret is not None and ret < 0)
-    why = (
-        f"{industry} 涨停 {zt} · 涨幅 {ret} 排名 {rank} · 超额 {None if excess is None else round(excess, 2)} · 近3日涨停 {th3_sum}"
-    )
+    th3_sum = sum(counts[-3:]) if counts else 0
+    th1 = zt is not None and zt >= TH1_MIN
+    th3 = th3_sum >= TH3_MIN
+    live = bool(th1 or th3)
+    dead = (not live) and zt is not None and zt < TH1_MIN and ret is not None and ret < 0
+    why = f"{industry} 涨停 {zt} · 近3日涨停 {th3_sum} · 当天可点火"
     return {
         "live": live,
-        "dead": bool(dead and not live),
+        "dead": bool(dead),
         "th1": th1,
-        "th2": th2,
         "th3": th3,
         "zt": zt,
         "ret": ret,
-        "rank": rank,
         "industry": industry,
         "why": why,
         "slot": slot,
@@ -714,17 +655,21 @@ def theme_state(industry: str | None, date: str, slot: str | None = None) -> dic
     }
 
 
-def pick_mainline(date: str, slot: str | None = None) -> dict | None:
+def pick_themes(date: str, slot: str | None = None, n: int = THEME_MAX) -> list[dict]:
     ranks = _rank_map(date)
-    best = None
+    live = []
     for name in ranks:
         st = theme_state(name, date, slot=slot)
         if not st.get("live"):
             continue
-        key = (st.get("zt") or 0, st.get("ret") or -999)
-        if best is None or key > best[0]:
-            best = (key, st)
-    return None if best is None else best[1]
+        live.append(st)
+    live.sort(key=lambda s: (s.get("zt") or 0, s.get("ret") or -999), reverse=True)
+    return live[:n]
+
+
+def pick_mainline(date: str, slot: str | None = None) -> dict | None:
+    themes = pick_themes(date, slot=slot, n=1)
+    return themes[0] if themes else None
 
 
 def _hhv(bars: list[dict], i: int, n: int):
@@ -732,15 +677,6 @@ def _hhv(bars: list[dict], i: int, n: int):
     highs = [_px(bars[j], "high") for j in range(lo, i + 1)]
     highs = [x for x in highs if x]
     return max(highs) if highs else None
-
-
-def _ret_n(bars: list[dict], i: int, n: int):
-    if i < n:
-        return None
-    a, b = _px(bars[i - n], "close"), _px(bars[i], "close")
-    if not a or not b:
-        return None
-    return b / a - 1.0
 
 
 def _ma20(bars: list[dict], i: int):
@@ -764,6 +700,28 @@ def _listed_ok(bars: list[dict], asof: str) -> bool:
     return (d1 - d0).days >= LISTED_DAYS
 
 
+def _vol_ratio_5d(bars: list[dict], i: int, row: dict | None = None, minutes: int = 240):
+    if i < 5:
+        return None
+    prev = [_vol(bars[j]) for j in range(i - 5, i)]
+    avg = _mean([v for v in prev if v > 0])
+    today = _vol(row or bars[i])
+    if not avg or avg <= 0 or today <= 0:
+        return None
+    if minutes and 0 < minutes < 240:
+        today = today / (minutes / 240.0)
+    return today / avg
+
+
+def _mean_turn(bars: list[dict], lo: int, hi: int, mcap) -> float | None:
+    xs = []
+    for j in range(max(0, lo), hi + 1):
+        t = _turnover(bars[j], mcap)
+        if t is not None:
+            xs.append(t)
+    return _mean(xs) if xs else None
+
+
 def pool_fail(
     bars: list[dict],
     i: int,
@@ -774,10 +732,18 @@ def pool_fail(
     slot_found: bool,
 ) -> list[str]:
     fail = []
-    if is_st_name(name) or meta.get("is_st"):
-        fail.append("ST")
-    if _is_bj(code):
-        fail.append("北证")
+    if not buyable(code, name, meta):
+        if is_st_name(name) or (meta or {}).get("is_st"):
+            fail.append("ST")
+        elif ts_code(code).startswith("300"):
+            fail.append("创业板")
+        elif ts_code(code).startswith("688"):
+            fail.append("科创板")
+        elif _is_bj(code):
+            fail.append("北证")
+        else:
+            fail.append("不在可买前缀")
+        return fail
     if i + 1 < L:
         fail.append(f"日线不足 {L} 根")
         return fail
@@ -798,83 +764,192 @@ def pool_fail(
         fail.append(f"流通市值 {mcap:.0f} 亿不在 20–800")
     ma = _ma20(bars, i)
     if close is not None and ma is not None and close < ma * MA20_BAND - 1e-12:
-        fail.append(f"现价未站上 MA20×0.99（{ma * MA20_BAND:.2f}）")
+        fail.append(f"现价未站上 MA20×0.97（{ma * MA20_BAND:.2f}）")
     elif close is not None and ma is None:
         fail.append("MA20 不足")
     hh = _hhv(bars, i, 60)
     dd = ((hh - close) / hh) if hh and close else None
-    r20 = _ret_n(bars, i, 20)
-    a = dd is not None and dd <= DD60
-    b = r20 is not None and r20 < RUN20
-    if dd is None and r20 is None:
-        fail.append("60日高回撤 / 20日涨幅证据不足")
-    elif not a and not b:
-        fail.append("距近 60 日高回撤 > 35% 且近 20 日涨幅 ≥ 40%")
-    turns = []
-    for j in range(max(0, i - 2), i + 1):
-        t = _turnover(bars[j] if j != i else row, mcap)
-        if t is not None:
-            turns.append(t)
-    if turns and _mean(turns) > TURN3:
-        fail.append(f"近 3 日换手均值 {_mean(turns):.1f}% > 20%")
-    t1 = _turnover(row, mcap)
-    if t1 is not None and t1 > TURN1:
-        fail.append(f"单日换手 {t1:.1f}% > 25%")
+    if dd is None:
+        fail.append("60日高回撤证据不足")
+    elif dd > DD60 + 1e-12:
+        fail.append(f"距近 60 日高回撤 {dd * 100:.1f}% > 40%")
+    t3 = _mean_turn(bars, i - 2, i, mcap)
+    if t3 is not None and t3 > TURN3:
+        fail.append(f"近 3 日换手均值 {t3:.1f}% > 25%")
     streak = _streak(bars, i, code)
-    if streak >= 3:
+    if streak >= STREAK_POOL_BAN:
         fail.append("已 3 连板及以上")
-    if streak >= 2:
-        fail.append("龙头 2 板不进新开")
-    if _is_limit_bar(bars, i, code) and t1 is not None and t1 > TURN_LIMIT:
+    t1 = _turnover(row, mcap)
+    if _is_limit_bar(bars, i, code, row) and t1 is not None and t1 > TURN_LIMIT:
         fail.append("当日已涨停且换手 > 18%，次日不得新开")
-    if not slot_found and px_row is None:
-        pass
     return fail
 
 
-def _kick_final(bars: list[dict], i: int, code: str, theme: dict, px_row: dict | None, slot_found: bool) -> str:
-    row = px_row or bars[i]
-    mcap = _num((px_row or {}).get("float_mcap_yi"))
-    t1 = _turnover(row, mcap)
-    if t1 is not None and t1 > 20:
-        return "尾盘换手 > 20%，踢出终版"
-    if theme.get("ret") is not None and theme.get("ret") < 0:
-        return "所属主题尾盘翻绿，踢出终版"
-    if not slot_found:
-        return ""
-    vwap = _vwap(px_row)
+def loc_upper_third(row: dict) -> bool:
+    close, high, low = _px(row, "close"), _px(row, "high"), _px(row, "low")
+    if close is None or high is None or low is None:
+        return False
+    return close >= high - (high - low) / 3.0 - 1e-12
+
+
+def _pct(bars: list[dict], i: int, row: dict | None = None):
+    close = _px(row or bars[i], "close")
+    pre = _px(bars[i - 1], "close") if i >= 1 else None
+    if close is None or not pre:
+        return None
+    return (close / pre - 1.0) * 100.0
+
+
+def vol_ok_A(lu: bool, vr) -> bool:
+    return bool(lu or (vr is not None and vr >= A_VOL_RATIO - 1e-12))
+
+
+def vol_ok_B(vr, turn, turn5) -> tuple[bool, str]:
+    if vr is not None and vr <= B_VOL_RATIO_MAX + 1e-12:
+        return True, f"量比 {vr:.2f} ≤ 0.85"
+    if turn is not None and turn5 and turn <= turn5 * B_TURN_RATIO + 1e-12:
+        return True, f"换手 {turn:.2f}% ≤ 5日均 {turn5:.2f}% × 0.85"
+    if turn is not None and turn <= B_TURN_ABS + 1e-12:
+        return True, f"换手 {turn:.2f}% ≤ 5%"
+    return False, "量能未缩（量比>0.85 且换手未≤5日均×0.85 且换手>5%）"
+
+
+def evaluate_buy_a(
+    bars: list[dict],
+    i: int,
+    code: str,
+    row: dict,
+    minutes: int,
+    theme: dict,
+    slot_found: bool,
+) -> tuple[bool, list[str], list[str]]:
+    hit, miss = [], []
+    pct = _pct(bars, i, row)
+    lu = _is_limit_bar(bars, i, code, row)
+    if (pct is not None and pct >= A_PCT_MIN - 1e-12) or lu:
+        hit.append("涨停" if lu else f"涨幅 {pct:.2f}% ≥ 6%")
+    else:
+        miss.append(f"涨幅未达 6% 且未涨停（{None if pct is None else round(pct, 2)}%）")
+    vr = _vol_ratio_5d(bars, i, row, minutes=minutes or 240)
+    if vol_ok_A(lu, vr):
+        if lu:
+            hit.append(f"涨停视为量能满足（量比 {None if vr is None else round(vr, 2)}）")
+        else:
+            hit.append(f"量比 {vr:.2f} ≥ 1.2")
+    else:
+        miss.append(f"量比 {None if vr is None else round(vr, 2)} < 1.2 且未涨停")
+    if loc_upper_third(row):
+        hit.append("收盘在当日振幅上 1/3")
+    else:
+        miss.append("收盘不在当日振幅上 1/3")
+    self_sos = ((pct is not None and pct >= A_PCT_MIN - 1e-12) or lu) and vol_ok_A(lu, vr)
+    if theme.get("live") or self_sos:
+        hit.append("主题活" if theme.get("live") else "个股自身 SOS（当天可点火）")
+    else:
+        miss.append("主题未活且自身 SOS 不足")
+    return (not miss), hit, miss
+
+
+def evaluate_buy_b(
+    bars: list[dict],
+    i: int,
+    code: str,
+    row: dict,
+    minutes: int,
+    theme: dict,
+    leaders_n: int,
+    env_label: str,
+    mcap=None,
+) -> tuple[bool, list[str], list[str], str]:
+    hit, miss = [], []
+    kind = ""
     close = _px(row, "close")
-    open_px = _px(row, "open")
-    high = _px(row, "high")
-    low = _px(row, "low")
-    if vwap is None or close is None or open_px is None:
-        return ""
-    body_lo = min(open_px, close)
-    body_hi = max(open_px, close)
-    lower_third = body_hi != body_lo and close <= body_lo + (body_hi - body_lo) / 3.0 + 1e-12
-    vol_up = False
-    if i >= 1:
-        vol_up = _vol(row) > _vol(bars[i - 1])
-    if vol_up and close < vwap - 1e-12 and lower_third:
-        return "13:30 后放量跌破分时均价并收在实体下 1/3，踢出终版"
-    return ""
+    ma = _ma20(bars, i)
+    if close is None or ma is None or close < ma - 1e-12:
+        miss.append("收盘未站上 MA20")
+        return False, hit, miss, kind
+    hit.append("收盘 ≥ MA20")
+    vr = _vol_ratio_5d(bars, i, row, minutes=minutes or 240)
+    turn = _turnover(row, mcap)
+    turn5 = _mean_turn(bars, i - 5, i - 1, mcap)
+    ok_v, why_v = vol_ok_B(vr, turn, turn5)
+    if ok_v:
+        hit.append(why_v)
+    else:
+        miss.append(why_v)
+    if close < ma * MA20_BAND - 1e-12 and vr is not None and vr >= B_BREAK_VOL - 1e-12:
+        miss.append("回踩失败：收盘 < MA20×0.97 且量比 ≥ 1.3")
+        return False, hit, miss, kind
+    hh20 = _hhv(bars, i, 20)
+    dd20 = ((hh20 - close) / hh20) if hh20 and close else None
+    pct = _pct(bars, i, row)
+    b1 = (
+        dd20 is not None
+        and B1_DD20_LO - 1e-12 <= dd20 <= B1_DD20_HI + 1e-12
+        and pct is not None
+        and B_PCT_LO - 1e-12 <= pct <= B_PCT_HI + 1e-12
+    )
+    b2 = (
+        dd20 is not None
+        and dd20 <= B2_DD20_MAX + 1e-12
+        and pct is not None
+        and B2_PCT_LO - 1e-12 <= pct <= B2_PCT_HI + 1e-12
+    )
+    if b1:
+        kind = "BUY_B1"
+        hit.append(f"B1 回踩 dd20 {dd20 * 100:.1f}% 涨跌 {pct:.2f}%")
+    elif b2:
+        kind = "BUY_B2"
+        hit.append(f"B2 爬升 dd20 {dd20 * 100:.2f}% 涨幅 {pct:.2f}%")
+    else:
+        miss.append(
+            f"非 B1/B2（dd20={None if dd20 is None else round(dd20 * 100, 2)}% pct={None if pct is None else round(pct, 2)}%）"
+        )
+    return (not miss), hit, miss, kind
 
 
-def other_rules_holds() -> set[str]:
-    codes: set[str] = set()
-    try:
-        from .buy_log import load_buy_log
-
-        for rid in ("rules", "rules2", "rules3", "rules4"):
-            for item in load_buy_log(rid).get("items") or []:
-                if item.get("closed"):
-                    continue
-                c = ts_code(str(item.get("code") or ""))
-                if c:
-                    codes.add(c)
-    except Exception:
-        pass
-    return codes
+def evaluate_exit_sos(bars: list[dict], open_pos: dict | None, zone: dict | None = None) -> tuple[bool, str, str]:
+    if not bars or not open_pos:
+        return False, "", ""
+    buy_date = str(open_pos.get("buy_date") or open_pos.get("date") or "")[:10]
+    buy_i = 0
+    for i, row in enumerate(bars):
+        if str(row.get("date") or "")[:10] >= buy_date:
+            buy_i = i
+            break
+    last_i = len(bars) - 1
+    last = bars[last_i]
+    close = _px(last, "close")
+    buy_px = _num(open_pos.get("buy_price")) or _px(bars[buy_i], "close")
+    code = ts_code(str(open_pos.get("code") or last.get("code") or ""))
+    if close is None or buy_px is None:
+        return False, "", ""
+    industry = (zone or {}).get("industry") or _industry(code)
+    asof = str(last.get("date") or "")[:10]
+    ma = _ma20(bars, last_i)
+    vr = _vol_ratio_5d(bars, last_i, last, minutes=240)
+    if ma and close < ma * STOP_MA - 1e-12 and vr is not None and vr >= B_BREAK_VOL - 1e-12:
+        return True, "失败", f"收盘 {close:.2f} < MA20×0.97 且量比 {vr:.2f} ≥ 1.3"
+    peak = max((_px(x, "high") or _px(x, "close") or 0) for x in bars[buy_i : last_i + 1])
+    if peak and (peak - close) / peak >= GIVEBACK - 1e-12:
+        return True, "失败", f"从持仓最高回撤 {(peak - close) / peak * 100:.1f}% ≥ 8%"
+    if industry:
+        dates = _trading_dates(asof, 12)
+        zts = [_theme_zt(industry, d) for d in dates]
+        zts = [0 if z is None else z for z in zts]
+        peak_z = max(zts) if zts else 0
+        today_z = zts[-1] if zts else 0
+        yin = _px(last, "close") is not None and _px(last, "open") is not None and _px(last, "close") < _px(last, "open")
+        if peak_z >= 4 and today_z <= peak_z / 2 + 1e-12 and vr is not None and vr >= 1.5 and yin:
+            return True, "失败", f"主题涨停从峰值 {peak_z} 腰斩到 {today_z}，量比 {vr:.2f} 收阴"
+    env = classify_env(market_stats_at(asof, None), asof)
+    if env.get("label") == "ENV_OFF":
+        kind = str((zone or {}).get("buy_kind") or open_pos.get("buy_kind") or "")
+        if kind.startswith("BUY_B"):
+            return True, "失败", "ENV_OFF 当日 B 类全出"
+        if kind.startswith("BUY_A") and not _is_limit_bar(bars, last_i, code):
+            return True, "失败", "ENV_OFF 当日 A 类未封死减半/出"
+    return False, "", ""
 
 
 def _pct_vs(px, pre):
@@ -973,215 +1048,6 @@ def buy_minutes(slot_found: str) -> int:
     return 240
 
 
-def _vol_ratio(row: dict, prev_amt, minutes: int) -> float | None:
-    amt = _num(row.get("amount"))
-    if amt is None:
-        amt = bar_amount(row)
-    if not amt or not prev_amt or prev_amt <= 0 or minutes <= 0:
-        return None
-    folded = amt / (minutes / 240.0)
-    return folded / prev_amt
-
-
-def _prev_amount(bars: list[dict], i: int):
-    if i < 1:
-        return None
-    return bar_amount(bars[i - 1])
-
-
-def evaluate_buy_a(bars: list[dict], i: int, code: str, row: dict, minutes: int, theme: dict, slot_found: bool) -> tuple[bool, list[str], list[str]]:
-    hit, miss = [], []
-    px = _px(row, "close")
-    prev_high = _px(bars[i - 1], "high") if i >= 1 else None
-    hh10 = _hhv(bars, i - 1, 10) if i >= 1 else None
-    brk = False
-    if px is not None and prev_high and px > prev_high + 1e-12:
-        brk = True
-        hit.append(f"现价突破昨高 {prev_high:.2f}")
-    elif px is not None and hh10 and px > hh10 + 1e-12:
-        brk = True
-        hit.append(f"现价突破近 10 日高 {hh10:.2f}")
-    else:
-        miss.append("现价未突破昨高或近 10 日高")
-    vr = _vol_ratio(row, _prev_amount(bars, i), minutes)
-    if vr is not None and vr >= BUY_A_VR:
-        hit.append(f"折算量比 {vr:.2f} ≥ 1.5")
-    elif vr is None:
-        miss.append("折算量比证据不足")
-    else:
-        miss.append(f"折算量比 {vr:.2f} < 1.5")
-    vwap = _vwap(row)
-    if vwap is None:
-        if not slot_found:
-            hit.append("分时均价空（缺档，不卡）")
-        else:
-            miss.append("分时均价空")
-    elif px is not None and px > vwap + 1e-12:
-        hit.append(f"现价 > 分时均价 {vwap:.2f}")
-    else:
-        miss.append("现价未站上分时均价")
-    open_px = _px(row, "open")
-    pre = _px(bars[i - 1], "close") if i >= 1 else None
-    floor_base = None
-    if open_px is not None and pre is not None:
-        floor_base = min(open_px, pre)
-    elif open_px is not None:
-        floor_base = open_px
-    elif pre is not None:
-        floor_base = pre
-    if px is not None and floor_base:
-        if px >= floor_base * FLOOR - 1e-12:
-            hit.append(f"未跌破开盘与昨收较低者的 97%（{floor_base * FLOOR:.2f}）")
-        else:
-            miss.append("跌破开盘与昨收较低者的 97%")
-    else:
-        miss.append("开盘/昨收证据不足")
-    if theme.get("live"):
-        hit.append("所属主题 13:30 仍活" if theme.get("slot") == SLOT_LIVE else "所属主题仍活")
-    else:
-        miss.append("所属主题未活")
-    streak = _streak(bars, i - 1, code) if i >= 1 else 0
-    if streak >= 3:
-        miss.append("3 连板不得新开")
-    else:
-        hit.append("不是 3 连板")
-    t = _turnover(row)
-    minutes = minutes or 240
-    t_fold = t / (minutes / 240.0) if t is not None and minutes else t
-    if t_fold is None and not slot_found:
-        hit.append("折算换手空（缺档，不卡）")
-    elif t_fold is not None and t_fold <= TURN_LIMIT:
-        hit.append(f"实时折算换手 {t_fold:.1f}% ≤ 18%")
-    else:
-        miss.append("实时折算换手 > 18% 或证据不足")
-    if _yi_zi(row) and _touch_limit(bars, i, code):
-        miss.append("一字封死买不到 = 本轮作废")
-    return (not miss), hit, miss
-
-
-def evaluate_buy_b(bars: list[dict], i: int, code: str, row: dict, minutes: int, theme: dict, leaders_n: int, env_label: str) -> tuple[bool, list[str], list[str]]:
-    hit, miss = [], []
-    if env_label != "ENV_OK":
-        miss.append("BUY_B 仅 ENV_OK，ENV_WEAK 关闭")
-        return False, hit, miss
-    if leaders_n < LEADERS:
-        miss.append(f"同主题领先股不足 {LEADERS} 只")
-    else:
-        hit.append(f"同主题已有 {leaders_n} 只领先股")
-    px = _px(row, "close")
-    pre = _px(bars[i - 1], "close") if i >= 1 else None
-    pct = ((px / pre) - 1.0) if px and pre else None
-    if pct is None:
-        miss.append("当日涨幅证据不足")
-    elif BUY_B_LO - 1e-12 <= pct <= BUY_B_HI + 1e-12:
-        hit.append(f"当日涨幅 {pct * 100:.2f}% 在 3%–7%")
-    else:
-        miss.append(f"当日涨幅不在 3%–7%（{None if pct is None else round(pct * 100, 2)}%）")
-    if i >= 1 and _is_limit_bar(bars, i, code):
-        miss.append("本票已涨停，不得 BUY_B")
-    vr = _vol_ratio(row, _prev_amount(bars, i), minutes)
-    if vr is not None and vr >= BUY_B_VR:
-        hit.append(f"量比 {vr:.2f} ≥ 1.2")
-    elif vr is None:
-        miss.append("量比证据不足")
-    else:
-        miss.append(f"量比 {vr:.2f} < 1.2")
-    ma = _ma20(bars, i)
-    close = _px(row, "close")
-    if close is not None and ma is not None and close >= ma - 1e-12:
-        hit.append("收盘结构未破 MA20")
-    else:
-        miss.append("收盘结构已破 MA20 或均线不足")
-    if not theme.get("live"):
-        miss.append("所属主题未活")
-    if _yi_zi(row) and _touch_limit(bars, i, code):
-        miss.append("一字封死买不到 = 本轮作废")
-    return (not miss), hit, miss
-
-
-def evaluate_exit_sos(bars: list[dict], open_pos: dict | None, zone: dict | None = None) -> tuple[bool, str, str]:
-    if not bars or not open_pos:
-        return False, "", ""
-    buy_date = str(open_pos.get("buy_date") or open_pos.get("date") or "")[:10]
-    buy_i = 0
-    for i, row in enumerate(bars):
-        if str(row.get("date") or "")[:10] >= buy_date:
-            buy_i = i
-            break
-    last_i = len(bars) - 1
-    last = bars[last_i]
-    close = _px(last, "close")
-    buy_px = _num(open_pos.get("buy_price")) or _px(bars[buy_i], "close")
-    code = ts_code(str(open_pos.get("code") or last.get("code") or ""))
-    if close is None or buy_px is None:
-        return False, "", ""
-    industry = (zone or {}).get("industry") or _industry(code)
-    asof = str(last.get("date") or "")[:10]
-    if close <= buy_px * FAIL_PCT + 1e-12:
-        return True, "失败", f"最新价 {close:.2f} ≤ 买入价×0.95（{buy_px * FAIL_PCT:.2f}）"
-    buy_ma20 = _num((zone or {}).get("buy_ma20")) or _ma20(bars, buy_i)
-    avg5 = None
-    if last_i >= 5:
-        avg5 = _mean([_vol(bars[j]) for j in range(last_i - 5, last_i)])
-    if buy_ma20 and close < buy_ma20 - 1e-12 and avg5 and _vol(last) >= avg5 - 1e-12:
-        return True, "失败", f"收盘跌破买入日 MA20 {buy_ma20:.2f}，且量 ≥ 近 5 日均量"
-    held = last_i - buy_i
-    if held >= 3:
-        above = False
-        for j in range(buy_i + 1, last_i + 1):
-            c = _px(bars[j], "close")
-            if c is not None and c >= buy_px - 1e-12:
-                above = True
-                break
-        if not above:
-            return True, "失败", "买入后 3 个交易日从未收在成本上"
-    dates = _trading_dates(asof, 3)
-    if industry and len(dates) >= 2:
-        z1 = _theme_zt(industry, dates[-1])
-        z0 = _theme_zt(industry, dates[-2])
-        if z1 is not None and z0 is not None and z1 < TH_ZT and z0 < TH_ZT:
-            return True, "失败", f"所属主题涨停数连续 2 日 < 3（{z0}→{z1}）"
-    peak = max((_px(x, "high") or _px(x, "close") or 0) for x in bars[buy_i : last_i + 1])
-    ret = close / buy_px - 1.0
-    if ret >= WIN_PCT - 1e-12 and peak and (peak - close) / peak >= GIVEBACK - 1e-12:
-        return True, "获利", f"相对买入价 {ret * 100:.1f}% ≥ 12%，且从持仓最高回撤 ≥ 5%"
-    if last_i >= buy_i + 1 and _is_limit_bar(bars, last_i - 1, code) and not _is_limit_bar(bars, last_i, code):
-        vols = [_vol(x) for x in bars[buy_i : last_i + 1]]
-        ranked = sorted(vols, reverse=True)
-        if vols and vols[-1] in ranked[:2]:
-            ev = _cached_events(asof) or {}
-            still = {ts_code(str(x.get("code") or "")) for x in (ev.get("limit_up") or [])}
-            seal_gone = code not in still
-            if ev.get("limit_up") is None:
-                seal_gone = True
-            if seal_gone:
-                return True, "获利", "收盘涨停次日开板，量列买入以来前 2 名，封单消失"
-    streak_now = _streak(bars, last_i, code)
-    streak_prev = _streak(bars, last_i - 1, code) if last_i >= 1 else 0
-    if streak_prev >= 3 and streak_now < 3:
-        return True, "获利", "变成 3 连板后开板，本规则清"
-    return False, "", ""
-
-
-def _leaders_n(date: str, industry: str, quotes: dict, bars_by_code=None) -> int:
-    n = 0
-    events = _cached_events(date) or {}
-    for rec in events.get("limit_up") or []:
-        c = ts_code(str(rec.get("code") or ""))
-        if _industry(c) == industry:
-            n += 1
-    if n >= LEADERS:
-        return n
-    extra = 0
-    for code, q in (quotes or {}).items():
-        if _industry(code) != industry:
-            continue
-        pct = _num(q.get("pct"))
-        if pct is not None and pct >= LEAD_PCT * 100:
-            extra += 1
-    return max(n, extra)
-
-
 class SosScan:
     funnel = []
     market = None
@@ -1195,7 +1061,7 @@ def _base_row(code: str, name: str) -> dict:
         "status": "排除",
         "gate": "排除",
         "summary_bucket": "排除",
-        "path": "主题SOS补涨",
+        "path": "RULES5 SOS/LPS",
         "hit_rules": [],
         "missing_rules": [],
         "reminders": [],
@@ -1203,11 +1069,52 @@ def _base_row(code: str, name: str) -> dict:
         "risk": [],
         "facts": {},
         "fact_note": FACT_NOTE,
-        "position_block": "总闸：排除 → 观察 → 试仓 → 持有 → 卖出。买入 = 试仓条件齐，不是下单。当日本规则新开 ≤ 3 只。",
+        "position_block": "总闸：排除 → 观察 → 试仓 → 持有 → 卖出。买入 = 试仓条件齐，不是下单。",
         "path_ready": False,
         "data_ok": False,
         "key_kind": "买入价",
     }
+
+
+def _pool_rank_key(bars: list[dict], i: int, mcap) -> tuple:
+    close = _px(bars[i], "close")
+    ma = _ma20(bars, i)
+    dist = abs(close / ma - 1.0) if close and ma else 9.0
+    hh = _hhv(bars, i, 60)
+    dd = ((hh - close) / hh) if hh and close else 1.0
+    vr = _vol_ratio_5d(bars, i, bars[i], minutes=240)
+    return (dist, dd, 9.0 if vr is None else vr)
+
+
+def signal_on_bar(
+    bars: list[dict],
+    i: int,
+    code: str,
+    name: str,
+    meta: dict,
+    theme: dict | None = None,
+    env_label: str = "ENV_OK",
+    minutes: int = 240,
+    row: dict | None = None,
+    slot_found: bool = False,
+) -> tuple[str | None, list[str], list[str]]:
+    """T 日信号。调用方保证 T-1 已过池、ENV 不是 OFF。"""
+    if i < 1:
+        return None, [], ["日线不足"]
+    row = row or bars[i]
+    industry = _industry(code) or (meta or {}).get("industry") or ""
+    theme = theme or theme_state(industry, str(bars[i].get("date") or "")[:10])
+    mcap = _num((meta or {}).get("float_mcap_yi") or row.get("float_mcap_yi"))
+    turn = _turnover(row, mcap)
+    if turn is not None and turn > TURN_CLIMAX:
+        return None, [], [f"当日换手 {turn:.1f}% > 30% 高潮板"]
+    ok_a, hit_a, miss_a = evaluate_buy_a(bars, i, code, row, minutes, theme, slot_found)
+    if ok_a:
+        return "BUY_A", hit_a, []
+    ok_b, hit_b, miss_b, kind = evaluate_buy_b(bars, i, code, row, minutes, theme, 0, env_label, mcap=mcap)
+    if ok_b:
+        return kind or "BUY_B1", hit_b, []
+    return None, [], (miss_a[:3] + miss_b[:2])
 
 
 def classify_sos(
@@ -1224,11 +1131,17 @@ def classify_sos(
     quotes = quotes if quotes is not None else load_quotes()
     bars = overlay_quote_bar(load_bars(code), code, quotes)
     ctx = ctx or {}
-    if is_st_name(name) or meta.get("is_st"):
-        base["missing_rules"].append("池子：ST / *ST")
-        return base
-    if _is_bj(code):
-        base["missing_rules"].append("池子：北证")
+    if not buyable(code, name, meta):
+        if is_st_name(name) or meta.get("is_st"):
+            base["missing_rules"].append("池子：ST / *ST")
+        elif code.startswith("300"):
+            base["missing_rules"].append("池子：创业板")
+        elif code.startswith("688"):
+            base["missing_rules"].append("池子：科创板")
+        elif _is_bj(code):
+            base["missing_rules"].append("池子：北证")
+        else:
+            base["missing_rules"].append("池子：不在可买前缀 000/001/002/003/600/601/603/605")
         return base
     if len(bars) < L:
         base["missing_rules"].append(f"池子：日线不足 {L} 根")
@@ -1251,7 +1164,6 @@ def classify_sos(
     base["industry"] = _industry(code) or meta.get("industry") or ""
     env = ctx.get("env") or classify_env(market_stats_at(asof, None), asof)
     theme = ctx.get("theme_by_ind", {}).get(base["industry"]) or theme_state(base["industry"], asof)
-    mainline = ctx.get("mainline") or {}
     base["facts"]["env"] = env.get("label")
     base["facts"]["theme"] = base["industry"]
     base["facts"]["theme_live"] = bool(theme.get("live"))
@@ -1260,7 +1172,11 @@ def classify_sos(
     base["facts"]["slot_1500"] = bool(_cached_snap(asof, SLOT_FINAL))
 
     if open_pos:
-        zone = {"industry": base["industry"], "buy_ma20": open_pos.get("buy_ma20")}
+        zone = {
+            "industry": base["industry"],
+            "buy_ma20": open_pos.get("buy_ma20"),
+            "buy_kind": open_pos.get("buy_kind"),
+        }
         hit, section, detail = evaluate_exit_sos(bars, open_pos, zone)
         if hit:
             base["status"] = "卖出"
@@ -1272,93 +1188,35 @@ def classify_sos(
         base["gate"] = "持有"
         base["summary_bucket"] = "持有"
         base["path_ready"] = True
-        buy_px = _num(open_pos.get("buy_price"))
-        buy_low = _num(open_pos.get("buy_low")) or _px(bars[0], "low")
-        buy_date = str(open_pos.get("buy_date") or "")[:10]
-        buy_i = 0
-        for i, row in enumerate(bars):
-            if str(row.get("date") or "")[:10] >= buy_date:
-                buy_i = i
-                buy_low = _px(row, "low")
-                break
-        close = _px(last, "close")
-        held = last_i - buy_i
-        if (
-            buy_px
-            and close
-            and close > buy_px
-            and theme.get("live")
-            and env.get("label") != "ENV_OFF"
-            and buy_low
-            and (_px(last, "low") or close) >= buy_low - 1e-12
-            and held >= 1
-        ):
-            if now_sh().strftime("%H:%M") < SLOT_LIVE:
-                base["hit_rules"].append("持有：浮盈且主题仍活、未破买入日低点，可在竞价或 13:30 前加一次，加到计划仓位的 70%。不再第三次加。")
-            else:
-                base["hit_rules"].append("持有：主题死或环境改 ENV_OFF 前可管理仓位。13:30 后不加仓。")
+        if env.get("label") == "ENV_OFF":
+            base["hit_rules"].append("持有：ENV_OFF，停止加仓。已有仓按卖出规则管。")
         else:
-            if env.get("label") == "ENV_OFF" or theme.get("dead"):
-                base["hit_rules"].append("持有：主题死或环境 ENV_OFF，停止加仓。已有仓按卖出规则管。")
-        base["hit_rules"].append("持有：未到卖出。试仓不是成交指令。")
+            base["hit_rules"].append("持有：未到卖出。次日高开不封死、回踩分时均价不破昨收 → 可加 1 次。")
         return base
 
     if env.get("label") == "ENV_OFF":
         base["missing_rules"].append("否决：环境 ENV_OFF")
         base["veto"].append("环境 ENV_OFF")
         return base
-    if mainline and base["industry"] != mainline.get("industry"):
-        base["missing_rules"].append(f"只做一条主线。主线 {mainline.get('industry') or '无'}，本票 {base['industry'] or '无主题'} 排除")
-        return base
-    if theme.get("dead") or not theme.get("live"):
-        base["missing_rules"].append("否决：主题已死" if theme.get("dead") else "主题未活")
-        if theme.get("dead"):
-            base["veto"].append("主题已死")
-        return base
-    if code in (ctx.get("other_holds") or set()):
-        base["missing_rules"].append("否决：与 RULES1–4 已持仓同一只票，不得本规则再开一笔")
-        base["veto"].append("与 RULES1–4 已持仓同一只票")
-        return base
 
     px_final, found_final, _src = _price_view(bars, t1_i, code, SLOT_FINAL)
     fails = pool_fail(bars, t1_i, code, name, meta, px_final if found_final else None, found_final)
-    kick = _kick_final(bars, t1_i, code, theme_state(base["industry"], t1_date), px_final if found_final else bars[t1_i], found_final)
-    in_final = not fails and not kick
-    if kick:
-        fails.append(kick)
-    if not in_final:
-        base["missing_rules"].extend(["池子：" + x for x in fails] or ["不在 T-1 观察池"])
-        return base
-    if _streak(bars, t1_i, code) >= 2:
-        base["missing_rules"].append("龙头 2 板可进持仓，不进新开")
+    if fails:
+        base["missing_rules"].extend(["池子：" + x for x in fails])
         return base
 
-    ev = _cached_events(asof) or {}
-    fail_codes = {ts_code(str(x.get("code") or "")) for x in (ev.get("fail") or [])}
-    zt_codes = {ts_code(str(x.get("code") or "")) for x in (ev.get("limit_up") or [])}
-    if code in fail_codes and code not in zt_codes and (base["facts"]["slot_1330"] or base["facts"]["slot_1430"]):
-        base["missing_rules"].append("否决：炸板后 30 分钟不回封")
-        base["veto"].append("炸板后 30 分钟不回封")
-        return base
-    r5 = _ret_n(bars, last_i, 5)
-    if r5 is not None and r5 >= 0.40 and _touch_limit(bars, last_i, code):
-        base["missing_rules"].append("否决：高位接力（近 5 日涨幅 ≥ 40% 且当日再冲板）")
-        base["veto"].append("高位接力")
-        return base
-
-    in_window = bool(ctx.get("in_window"))
-    if ctx.get("in_window") is None:
-        in_window = _in_buy_window()
+    in_window = bool(ctx.get("in_window")) if ctx.get("in_window") is not None else _in_buy_window()
     after = _after_buy_window() if ctx.get("after_window") is None else bool(ctx.get("after_window"))
+    backtest = bool(ctx.get("backtest"))
     base["status"] = "观察"
     base["gate"] = "观察"
     base["summary_bucket"] = "观察"
-    base["hit_rules"].append("已在 POOL_FINAL，主题仍活，环境不是 OFF。13:30 前即使分时翻红，只许观察。")
-    if after and not in_window:
+    base["hit_rules"].append("已在 T-1 过硬条件，ENV 不是 OFF。当天可点火，不要求主题昨天已活。")
+    if after and not in_window and not backtest:
         base["missing_rules"].append("T 日 14:30 后禁止新开")
         return base
-    if not in_window:
-        base["missing_rules"].append("T 日 13:30–14:30 才允许 BUY_A / BUY_B")
+    if not in_window and not backtest:
+        base["missing_rules"].append("T 日 13:30–14:30 才允许新开成交；信号可先观察")
         return base
 
     px_row, slot_found, src = _price_view(bars, last_i, code, SLOT_LIVE)
@@ -1368,72 +1226,60 @@ def classify_sos(
         px_row, slot_found, src = bars[last_i], False, "close"
         base["facts"]["slot_fallback"] = "close"
     minutes = buy_minutes(src)
-    theme_now = theme_state(base["industry"], asof, slot=SLOT_LIVE if src == SLOT_LIVE else None)
-    if src != SLOT_LIVE:
-        theme_now = theme
-    leaders = int(ctx.get("leaders") or 0)
-    ok_a, hit_a, miss_a = evaluate_buy_a(bars, last_i, code, px_row, minutes, theme_now, slot_found)
-    ok_b, hit_b, miss_b = evaluate_buy_b(bars, last_i, code, px_row, minutes, theme_now, leaders, env.get("label") or "")
-    if ok_a:
-        if env.get("label") == "ENV_WEAK" and ctx.get("buy_a_weak_full"):
-            base["missing_rules"].append("ENV_WEAK 只许半仓 BUY_A，名额已满")
-            return base
+    kind, hit, miss = signal_on_bar(
+        bars,
+        last_i,
+        code,
+        name,
+        meta,
+        theme=theme,
+        env_label=env.get("label") or "",
+        minutes=minutes,
+        row=px_row,
+        slot_found=slot_found,
+    )
+    if kind:
+        sealed = _yi_zi(px_row) and _is_limit_bar(bars, last_i, code, px_row)
         base["status"] = "试仓"
         base["gate"] = "试仓"
         base["summary_bucket"] = "试仓"
         base["path_ready"] = True
-        base["facts"]["buy_kind"] = "BUY_A"
+        base["facts"]["buy_kind"] = kind
         base["facts"]["buy_ma20"] = _ma20(bars, last_i)
+        base["facts"]["unfilled"] = bool(kind == "BUY_A" and sealed)
         base["key_price"] = _px(px_row, "close")
-        base["hit_rules"].extend(hit_a)
-        size = SIZE_A_WEAK if env.get("label") == "ENV_WEAK" else SIZE_A_OK
-        base["hit_rules"].append(f"BUY_A（SOS / 首板或突破）。仓位 {size}。试仓不是成交指令。")
+        base["hit_rules"].extend(hit)
+        size = SIZE_A_WEAK if env.get("label") == "ENV_WEAK" and kind == "BUY_A" else (SIZE_A if kind == "BUY_A" else SIZE_B)
+        extra = "封死 → TRIGGER_UNFILLED，禁止打板。" if sealed and kind == "BUY_A" else "试仓不是成交指令。"
+        base["hit_rules"].append(f"{kind}。仓位 {size}。{extra}")
         return base
-    if ok_b:
-        base["status"] = "试仓"
-        base["gate"] = "试仓"
-        base["summary_bucket"] = "试仓"
-        base["path_ready"] = True
-        base["facts"]["buy_kind"] = "BUY_B"
-        base["facts"]["buy_ma20"] = _ma20(bars, last_i)
-        base["key_price"] = _px(px_row, "close")
-        base["hit_rules"].extend(hit_b)
-        base["hit_rules"].append(f"BUY_B（补涨）。仓位 {SIZE_B}。试仓不是成交指令。")
-        return base
-    base["missing_rules"].extend(miss_a[:3])
-    if env.get("label") == "ENV_OK":
-        base["missing_rules"].extend(miss_b[:2])
+    base["missing_rules"].extend(miss[:4])
     return base
 
 
-def _build_ctx(quotes: dict, asof: str, live: bool = True, heavy: bool = False) -> dict:
+def _build_ctx(quotes: dict, asof: str, live: bool = True, heavy: bool = False, backtest: bool = False) -> dict:
     ensure_index_daily(fetch=heavy)
     _amount_map(rebuild=heavy, quotes=quotes, asof=asof)
     stats_close = market_stats_at(asof, None)
     stats_1330 = market_stats_at(asof, SLOT_LIVE)
     env = classify_env(stats_close, asof, draft_1330=False)
     env_1330 = classify_env(stats_1330, asof, draft_1330=True)
-    mainline = pick_mainline(asof, slot=SLOT_LIVE if _cached_snap(asof, SLOT_LIVE) else None)
-    if mainline is None:
-        mainline = pick_mainline(asof, slot=None)
-    theme_by_ind = {}
-    if mainline:
-        theme_by_ind[mainline["industry"]] = mainline
-    leaders = 0
-    if mainline:
-        leaders = _leaders_n(asof, mainline["industry"], quotes)
-    in_window = _in_buy_window() if live else True
-    after = _after_buy_window() if live else False
+    themes = pick_themes(asof, slot=SLOT_LIVE if _cached_snap(asof, SLOT_LIVE) else None, n=THEME_MAX)
+    if not themes:
+        themes = pick_themes(asof, slot=None, n=THEME_MAX)
+    theme_by_ind = {t["industry"]: t for t in themes if t.get("industry")}
+    in_window = True if backtest else (_in_buy_window() if live else True)
+    after = False if backtest else (_after_buy_window() if live else False)
     ctx = {
         "asof": asof,
         "env": env,
         "env_1330": env_1330,
-        "mainline": mainline,
+        "mainline": themes[0] if themes else None,
+        "themes": themes,
         "theme_by_ind": theme_by_ind,
-        "leaders": leaders,
-        "other_holds": other_rules_holds(),
         "in_window": in_window,
         "after_window": after,
+        "backtest": backtest,
         "stats": stats_close,
         "stats_1330": stats_1330,
     }
@@ -1441,18 +1287,18 @@ def _build_ctx(quotes: dict, asof: str, live: bool = True, heavy: bool = False) 
         "env": env.get("label"),
         "env_1330": env_1330.get("label"),
         "env_why": env.get("why"),
-        "mainline": (mainline or {}).get("industry") or "",
-        "mainline_why": (mainline or {}).get("why") or "没有活主线",
-        "leaders": leaders,
+        "mainline": " / ".join(t.get("industry") or "" for t in themes) or "",
+        "mainline_why": "最多 3 条活主题，当天可点火" if themes else "没有活主题（个股自身 SOS 仍可 A）",
+        "themes": [t.get("industry") for t in themes],
         "slot_1330": bool(_cached_snap(asof, SLOT_LIVE)),
         "slot_1430": bool(_cached_snap(asof, SLOT_BUY_END)),
         "slot_1500": bool(_cached_snap(asof, SLOT_FINAL)),
         "in_window": in_window,
-        "note": "缺档字段空着，不拿更晚的快照填更早的档。回测缺档按收盘价继续。龙虎榜无数据，该否决不卡。",
+        "note": "不扫 300/688/北证/ST。T-1 硬条件入池后才判 A/B。禁止双均线一票否决。缺档不拿更晚快照回填。",
         "t_date": asof,
     }
-    SosScan.market = {"env": env.get("label"), "mainline": (mainline or {}).get("industry")}
-    SosScan.funnel = [mainline] if mainline else []
+    SosScan.market = {"env": env.get("label"), "mainline": SosScan.sos["mainline"]}
+    SosScan.funnel = themes
     return ctx
 
 
@@ -1500,96 +1346,108 @@ def scan_sos(settings: dict, trades: list | None = None) -> list[dict]:
             opens[ts_code(str(item.get("code") or ""))] = item
     except Exception:
         opens = {}
-    rows = [
-        classify_sos(
-            item,
-            settings,
-            trades,
-            quotes=quotes,
-            open_pos=opens.get(ts_code(str(item.get("code") or ""))),
-            ctx=ctx,
-        )
-        for item in items
-    ]
-    trials = [r for r in rows if r.get("status") == "试仓"]
-    trials.sort(key=lambda r: (0 if (r.get("facts") or {}).get("buy_kind") == "BUY_A" else 1, r.get("code")))
-    keep = {r["code"] for r in trials[:OPEN_MAX]}
-    extra = 0
-    for row in rows:
-        if row.get("status") == "试仓" and row["code"] not in keep:
-            extra += 1
-            row["status"] = "观察"
-            row["gate"] = "观察"
-            row["summary_bucket"] = "观察"
-            row["path_ready"] = False
-            row["missing_rules"] = list(row.get("missing_rules") or []) + ["当日全账户本规则新开 ≤ 3 只"]
+    rows = []
+    pool_ranked = []
+    for item in items:
+        code = ts_code(str(item.get("code") or ""))
+        if not code:
+            continue
+        name = str(item.get("name") or (quotes.get(code) or {}).get("name") or code)
+        open_pos = opens.get(code)
+        if open_pos:
+            rows.append(classify_sos(item, settings, trades, quotes=quotes, open_pos=open_pos, ctx=ctx))
+            continue
+        if not buyable(code, name, item):
+            continue
+        bars = overlay_quote_bar(load_bars(code, last_n=120), code, quotes)
+        if len(bars) < L + 1:
+            continue
+        last_i = len(bars) - 1
+        t1_i = last_i - 1
+        fails = pool_fail(bars, t1_i, code, name, item, bars[t1_i], False)
+        if fails:
+            continue
+        row = classify_sos(item, settings, trades, quotes=quotes, open_pos=None, ctx=ctx)
+        if row.get("status") == "试仓":
+            rows.append(row)
+        else:
+            pool_ranked.append((_pool_rank_key(bars, t1_i, item.get("float_mcap_yi")), row))
+    pool_ranked.sort(key=lambda x: x[0])
+    watch = [row for _, row in pool_ranked[:POOL_MAX]]
+    rows.extend(watch)
+    trial_n = sum(1 for r in rows if r.get("status") == "试仓")
     if SosScan.sos is not None:
-        SosScan.sos["trial_capped"] = extra
-        SosScan.sos["trial_n"] = len(keep)
+        SosScan.sos["trial_n"] = trial_n
+        SosScan.sos["pool_n"] = len(watch)
+        SosScan.sos["eligible_n"] = len(pool_ranked) + trial_n
     order = {name: i for i, name in enumerate(GATES_SOS)}
     rows.sort(key=lambda item: (order.get(item["status"], 9), item.get("industry") or "", item["code"]))
     return rows
 
 
 def list_sos_cycle_universe() -> list[dict]:
-    uni = {ts_code(str(x.get("code") or "")): x for x in load_universe()}
+    """回测名单 = 扫描留下的观察/试仓/持有/卖出 + 校准 8 只。禁止 glob 全 A。"""
+    from ..config import SCAN_CACHE_DIR
+
+    blob = read_json(SCAN_CACHE_DIR / "rules5.json", {})
     out = []
-    for path in CSV_DIR.glob("*.csv"):
-        code = ts_code(path.stem)
-        if not code or _is_bj(code):
+    seen = set()
+    for row in blob.get("rows") or []:
+        if not isinstance(row, dict):
             continue
-        last = peek_last_bar(code)
-        if not last or last.get("close") is None:
+        st = row.get("status") or row.get("gate") or "排除"
+        if st == "排除":
             continue
-        name = last.get("name") or (uni.get(code) or {}).get("name") or code
-        if is_st_name(name):
+        code = ts_code(str(row.get("code") or ""))
+        if not code or code in seen or not buyable(code, str(row.get("name") or "")):
             continue
+        seen.add(code)
+        out.append({"code": code, "name": row.get("name") or code})
+    for code, name, _kind in CALIB_9_7:
+        if code in seen:
+            continue
+        seen.add(code)
         out.append({"code": code, "name": name})
     return out
 
 
 def is_buy_sos(bars: list[dict], ctx: dict | None = None) -> bool:
-    """Backtest: 13:30/14:30 snapshot if present, else close. Never reads a later slot."""
+    """Backtest: T-1 过硬条件且 T 日 A/B。用收盘；有 13:30/14:30 快照则用快照，绝不读更晚档。"""
     if not bars or len(bars) < L + 2:
         return False
     ctx = ctx or {}
     code = ts_code(str(bars[-1].get("code") or ctx.get("code") or ""))
+    name = str(ctx.get("name") or "")
+    if not buyable(code, name, ctx):
+        return False
     i = len(bars) - 1
     t1 = i - 1
     asof = str(bars[i].get("date") or "")[:10]
-    t1_date = str(bars[t1].get("date") or "")[:10]
-    industry = _industry(code) or str(ctx.get("industry") or "")
     env = classify_env(market_stats_at(asof, None), asof)
     if env.get("label") == "ENV_OFF":
         return False
-    theme_t1 = theme_state(industry, t1_date)
-    if not theme_t1.get("live"):
+    if pool_fail(bars, t1, code, name, ctx, bars[t1], False):
         return False
-    px_final, found_final, _ = _price_view(bars, t1, code, SLOT_FINAL)
-    if pool_fail(bars, t1, code, str(ctx.get("name") or code), ctx, px_final if found_final else None, found_final):
-        return False
-    kick = _kick_final(bars, t1, code, theme_t1, px_final if found_final else bars[t1], found_final)
-    if kick:
-        return False
-    if _streak(bars, t1, code) >= 2:
-        return False
-    theme_t = theme_state(industry, asof, slot=SLOT_LIVE if _cached_snap(asof, SLOT_LIVE) else None)
-    if theme_t.get("dead") or not theme_t.get("live"):
-        return False
+    industry = _industry(code) or str(ctx.get("industry") or "")
+    theme = theme_state(industry, asof)
     px_row, slot_found, src = _price_view(bars, i, code, SLOT_LIVE)
     if not slot_found:
         px_row, slot_found, src = _price_view(bars, i, code, SLOT_BUY_END)
     if not slot_found:
         px_row, slot_found, src = bars[i], False, "close"
-    minutes = buy_minutes(src)
-    leaders = _leaders_n(asof, industry, {code: px_row})
-    ok_a, _, _ = evaluate_buy_a(bars, i, code, px_row, minutes, theme_t, slot_found)
-    if ok_a:
-        return True
-    if env.get("label") != "ENV_OK":
-        return False
-    ok_b, _, _ = evaluate_buy_b(bars, i, code, px_row, minutes, theme_t, leaders, env.get("label"))
-    return ok_b
+    kind, _, _ = signal_on_bar(
+        bars,
+        i,
+        code,
+        name,
+        ctx,
+        theme=theme,
+        env_label=env.get("label") or "",
+        minutes=buy_minutes(src),
+        row=px_row,
+        slot_found=slot_found,
+    )
+    return bool(kind)
 
 
 def walk_cycles_sos(bars: list[dict], ctx: dict | None = None) -> tuple[list[dict], dict | None]:
@@ -1602,6 +1460,8 @@ def walk_cycles_sos(bars: list[dict], ctx: dict | None = None) -> tuple[list[dic
     code = ts_code(str(ctx.get("code") or bars[-1].get("code") or ""))
     ctx["code"] = code
     ctx["industry"] = _industry(code) or ""
+    if not buyable(code, str(ctx.get("name") or ""), ctx):
+        return [], None
     cycles = []
     open_i = None
     zone = None
@@ -1613,14 +1473,14 @@ def walk_cycles_sos(bars: list[dict], ctx: dict | None = None) -> tuple[list[dic
                 zone = {
                     "industry": ctx.get("industry"),
                     "buy_ma20": _ma20(sl, i),
-                    "slot_1330": bool(_cached_snap(str(bars[i].get("date") or "")[:10], SLOT_LIVE)),
-                    "slot_1430": bool(_cached_snap(str(bars[i].get("date") or "")[:10], SLOT_BUY_END)),
+                    "buy_kind": "BUY_A",
                 }
             continue
         pos = {
             "buy_date": bars[open_i].get("date"),
             "code": code,
             "buy_price": bars[open_i].get("close"),
+            "buy_kind": (zone or {}).get("buy_kind"),
         }
         hit, section, detail = evaluate_exit_sos(sl, pos, zone)
         if i > open_i and hit:
@@ -1631,3 +1491,34 @@ def walk_cycles_sos(bars: list[dict], ctx: dict | None = None) -> tuple[list[dic
     if open_i is not None:
         live = _cycle_stats(bars, open_i, n - 1, closed=False)
     return cycles, live
+
+
+def calib_signals(asof: str = "2026-09-07") -> dict[str, str | None]:
+    """正推 T 日信号。校准用，不扫全市场。"""
+    uni = {ts_code(str(x.get("code") or "")): x for x in load_universe()}
+    out: dict[str, str | None] = {}
+    ensure_index_daily(fetch=False)
+    env = classify_env(market_stats_at(asof, None), asof)
+    for code, name, _expect in CALIB_9_7:
+        meta = uni.get(code) or {"code": code, "name": name, "float_mcap_yi": None}
+        meta.setdefault("name", name)
+        bars = load_bars(code)
+        idx = None
+        for i, row in enumerate(bars):
+            if str(row.get("date") or "")[:10] == asof:
+                idx = i
+                break
+        if idx is None or idx < 1:
+            out[code] = None
+            continue
+        sl = bars[: idx + 1]
+        t1 = idx - 1
+        if env.get("label") == "ENV_OFF" or pool_fail(sl, t1, code, name, meta, sl[t1], False):
+            out[code] = None
+            continue
+        industry = _industry(code) or meta.get("industry") or ""
+        kind, _, _ = signal_on_bar(
+            sl, idx, code, name, meta, theme=theme_state(industry, asof), env_label=env.get("label") or ""
+        )
+        out[code] = kind
+    return out

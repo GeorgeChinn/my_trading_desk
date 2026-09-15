@@ -711,7 +711,7 @@ def cycles_page(
     if engine == "test_repair":
         note = "RULES4 规则回测按 Test+Repair 在全股池历史上回放试仓到卖出。不与金叉/低吸/20日线混池。试仓不是成交指令。"
     if engine == "theme_sos":
-        note = "RULES5 规则回测按主题 SOS 补涨回放试仓到卖出。13:30/14:30/15:00 有快照用快照；缺档字段空着，按收盘价继续，不用更晚档填更早档。试仓不是成交指令。"
+        note = "RULES5 回测不扫全市场 5000。按交易日只对可买前缀里 T-1 过硬条件的票判 BUY_A/B；名单=扫描观察/试仓 ∪ 校准 8 只。有 13:30/14:30/15:00 快照用快照；缺档按收盘。试仓不是成交指令。"
     if engine not in ("low_golden", "pullback_restart", "ma20_swing", "test_repair", "theme_sos"):
         payload = {
             "fact_note": "这是事实记录",

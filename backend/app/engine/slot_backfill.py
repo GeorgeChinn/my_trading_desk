@@ -364,12 +364,11 @@ def backfill_slot_snapshots(end: str = END_DEFAULT, days: int = DAYS_DEFAULT) ->
     try:
         from .cycles import cycles_page
         from .rulesets import get_ruleset
-        from .theme_sos import list_sos_cycle_universe
 
         rs = get_ruleset("rules5")
         if rs:
-            cycles_page(list_sos_cycle_universe(), None, rs, warm=True)
-            talk("RULES5 回测已开始后台预热")
+            cycles_page([], None, rs, warm=True)
+            talk("RULES5 回测已按观察/试仓名单预热")
     except Exception as exc:
         talk(f"RULES5 回测预热未启动：{exc}")
 
